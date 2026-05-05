@@ -1,3 +1,4 @@
+using CommonGround.Server.Blog.BlogImport;
 using CommonGround.Server.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -7,46 +8,39 @@ namespace CommonGround.Server.Blog;
 
 public static class AdminToolsEndpoints
 {
+    private const string ImagePathPrefix = "/api/blog/images/";
+
     public static RouteGroupBuilder MapAdminTools(this RouteGroupBuilder admin)
     {
         var tools = admin.MapGroup("/tools");
 
-        tools.MapPost("/orphan-images/cleanup", async (AppDbContext db) =>
+        tools.MapPost("/orphan-images/cleanup", async (AppDbContext db, CancellationToken ct) =>
         {
             var cutoff = DateTime.UtcNow.AddHours(-24);
-            var posts = await db.BlogPosts.AsNoTracking()
-                .Select(p => new { p.FeaturedImageId, p.BodyHtml })
-                .ToListAsync();
-
             var referencedIds = new HashSet<int>();
-            foreach (var p in posts)
+
+            await foreach (var row in db.BlogPosts
+                .AsNoTracking()
+                .Select(p => new { p.FeaturedImageId, p.BodyHtml })
+                .AsAsyncEnumerable()
+                .WithCancellation(ct))
             {
-                if (p.FeaturedImageId is int fid) referencedIds.Add(fid);
-                if (string.IsNullOrEmpty(p.BodyHtml)) continue;
-                var idx = 0;
-                while ((idx = p.BodyHtml.IndexOf("/api/blog/images/", idx, StringComparison.Ordinal)) >= 0)
-                {
-                    idx += "/api/blog/images/".Length;
-                    var end = idx;
-                    while (end < p.BodyHtml.Length && char.IsDigit(p.BodyHtml[end])) end++;
-                    if (end > idx && int.TryParse(p.BodyHtml.AsSpan(idx, end - idx), out var imgId))
-                        referencedIds.Add(imgId);
-                    idx = end;
-                }
+                if (row.FeaturedImageId is int fid) referencedIds.Add(fid);
+                CollectReferencedImageIds(row.BodyHtml, referencedIds);
             }
 
             var orphans = await db.BlogImages
                 .Where(i => i.CreatedAt < cutoff && !referencedIds.Contains(i.Id))
-                .ToListAsync();
+                .ToListAsync(ct);
 
             db.BlogImages.RemoveRange(orphans);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
 
             return Results.Ok(new { deleted = orphans.Count });
         });
 
         tools.MapPost("/import-blog", async (
-            BlogImport.BlogImporter importer,
+            BlogImporter importer,
             int? limit,
             CancellationToken ct) =>
         {
@@ -55,5 +49,21 @@ public static class AdminToolsEndpoints
         });
 
         return admin;
+    }
+
+    private static void CollectReferencedImageIds(string? bodyHtml, HashSet<int> ids)
+    {
+        if (string.IsNullOrEmpty(bodyHtml)) return;
+
+        var idx = 0;
+        while ((idx = bodyHtml.IndexOf(ImagePathPrefix, idx, StringComparison.Ordinal)) >= 0)
+        {
+            idx += ImagePathPrefix.Length;
+            var end = idx;
+            while (end < bodyHtml.Length && char.IsDigit(bodyHtml[end])) end++;
+            if (end > idx && int.TryParse(bodyHtml.AsSpan(idx, end - idx), out var imgId))
+                ids.Add(imgId);
+            idx = end;
+        }
     }
 }

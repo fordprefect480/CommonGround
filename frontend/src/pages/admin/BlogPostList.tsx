@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { deleteBlogPost, fetchAdminBlogPosts, type BlogPostAdmin } from '../../api/blog'
+import { deleteBlogPost, fetchAdminBlogPosts, type BlogPostAdminListItem } from '../../api/blog'
+
+const STATUS_PUBLISHED = 1
 
 type State =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; posts: BlogPostAdmin[] }
+  | { status: 'ready'; posts: BlogPostAdminListItem[] }
 
 export default function BlogPostList() {
   const navigate = useNavigate()
@@ -20,7 +22,7 @@ export default function BlogPostList() {
 
   useEffect(() => { reload() }, [])
 
-  const handleDelete = async (post: BlogPostAdmin) => {
+  const handleDelete = async (post: BlogPostAdminListItem) => {
     if (!confirm(`Delete "${post.title}"? This cannot be undone.`)) return
     try {
       await deleteBlogPost(post.id)
@@ -57,23 +59,26 @@ export default function BlogPostList() {
               </tr>
             </thead>
             <tbody>
-              {state.posts.map((p) => (
-                <tr key={p.id}>
-                  <td><Link to={`/admin/blog/${p.id}/edit`}>{p.title}</Link></td>
-                  <td>
-                    <span className={p.status === 1 ? 'pill pill-ok' : 'pill pill-warn'}>
-                      {p.status === 1 ? 'Published' : 'Draft'}
-                    </span>
-                  </td>
-                  <td>{p.authorName}</td>
-                  <td>{new Date(p.updatedAt).toLocaleDateString()}</td>
-                  <td>
-                    {p.status === 1 && <a className="footer-link" href={`/blog/${p.slug}`} target="_blank" rel="noopener noreferrer">View</a>}
-                    {p.status === 1 && ' · '}
-                    <button type="button" className="footer-link" onClick={() => handleDelete(p)}>Delete</button>
-                  </td>
-                </tr>
-              ))}
+              {state.posts.map((p) => {
+                const published = p.status === STATUS_PUBLISHED
+                return (
+                  <tr key={p.id}>
+                    <td><Link to={`/admin/blog/${p.id}/edit`}>{p.title}</Link></td>
+                    <td>
+                      <span className={published ? 'pill pill-ok' : 'pill pill-warn'}>
+                        {published ? 'Published' : 'Draft'}
+                      </span>
+                    </td>
+                    <td>{p.authorName}</td>
+                    <td>{new Date(p.updatedAt).toLocaleDateString()}</td>
+                    <td>
+                      {published && <a className="footer-link" href={`/blog/${p.slug}`} target="_blank" rel="noopener noreferrer">View</a>}
+                      {published && ' · '}
+                      <button type="button" className="footer-link" onClick={() => handleDelete(p)}>Delete</button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

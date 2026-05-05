@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using CommonGround.Server.Blog;
+using CommonGround.Server.Blog.BlogImport;
 using CommonGround.Server.Configuration;
 using CommonGround.Server.Data;
 using Microsoft.AspNetCore.Identity;
@@ -12,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.Services.AddProblemDetails();
-builder.Services.AddSingleton<CommonGround.Server.Blog.BlogHtmlSanitizer>();
+builder.Services.AddSingleton<BlogHtmlSanitizer>();
 builder.Services.AddOpenApi();
 
 builder.AddSqlServerDbContext<AppDbContext>("commongroundDb");
@@ -26,12 +28,12 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddHttpClient<CommonGround.Server.Blog.BlogImport.WixBlogClient>(c =>
+builder.Services.AddHttpClient<WixBlogClient>(c =>
 {
     c.Timeout = TimeSpan.FromSeconds(30);
     c.DefaultRequestHeaders.UserAgent.ParseAdd("CommonGround/1.0 (+blog-import)");
 });
-builder.Services.AddScoped<CommonGround.Server.Blog.BlogImport.BlogImporter>();
+builder.Services.AddScoped<BlogImporter>();
 
 var app = builder.Build();
 
@@ -65,7 +67,7 @@ var admin = app.MapGroup("/api/admin")
     .RequireAuthorization(p => p.RequireRole(AdminRole));
 
 admin.MapGet("/me", async (
-    System.Security.Claims.ClaimsPrincipal user,
+    ClaimsPrincipal user,
     UserManager<ApplicationUser> userManager) =>
 {
     var current = await userManager.GetUserAsync(user);
@@ -79,7 +81,7 @@ admin.MapGet("/me", async (
 
 admin.MapPut("/me", async (
     UpdateProfileDto input,
-    System.Security.Claims.ClaimsPrincipal user,
+    ClaimsPrincipal user,
     UserManager<ApplicationUser> userManager) =>
 {
     var current = await userManager.GetUserAsync(user);

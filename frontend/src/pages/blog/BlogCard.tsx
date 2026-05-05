@@ -25,7 +25,9 @@ export default function BlogCard({ post }: BlogCardProps) {
         </h3>
         <p className="blog-card-meta">
           <span>{post.authorName}</span>
-          {date && <> &middot; <time>{date}</time></>}
+          {date && post.publishedAt && (
+            <> &middot; <time dateTime={post.publishedAt}>{date}</time></>
+          )}
         </p>
         {post.excerpt && <p className="blog-card-excerpt">{post.excerpt}</p>}
         <p className="card-note">

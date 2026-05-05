@@ -4,6 +4,14 @@ namespace CommonGround.Server.Blog;
 
 public class BlogHtmlSanitizer
 {
+    private static readonly string[] AllowedTags =
+    [
+        "p", "h2", "h3", "h4", "ul", "ol", "li", "blockquote",
+        "a", "strong", "em", "code", "pre", "br", "img", "hr",
+    ];
+
+    private static readonly string[] AllowedAttributes = ["href", "src", "alt"];
+
     private readonly HtmlSanitizer _sanitizer;
 
     public BlogHtmlSanitizer()
@@ -14,19 +22,14 @@ public class BlogHtmlSanitizer
         };
 
         _sanitizer.AllowedTags.Clear();
-        foreach (var tag in new[] { "p", "h2", "h3", "h4", "ul", "ol", "li", "blockquote", "a", "strong", "em", "code", "pre", "br", "img", "hr" })
-        {
-            _sanitizer.AllowedTags.Add(tag);
-        }
+        foreach (var tag in AllowedTags) _sanitizer.AllowedTags.Add(tag);
 
         _sanitizer.AllowedAttributes.Clear();
-        _sanitizer.AllowedAttributes.Add("href");
-        _sanitizer.AllowedAttributes.Add("src");
-        _sanitizer.AllowedAttributes.Add("alt");
+        foreach (var attr in AllowedAttributes) _sanitizer.AllowedAttributes.Add(attr);
 
         _sanitizer.AllowedCssProperties.Clear();
         _sanitizer.AllowedAtRules.Clear();
     }
 
-    public string Sanitize(string html) => _sanitizer.Sanitize(html ?? "");
+    public string Sanitize(string html) => _sanitizer.Sanitize(html);
 }

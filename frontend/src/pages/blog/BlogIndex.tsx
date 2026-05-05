@@ -18,7 +18,7 @@ export default function BlogIndex() {
   useEffect(() => {
     let cancelled = false
     fetchBlogPosts()
-      .then((posts) => { if (!cancelled) setState({ status: 'ready', posts }) })
+      .then((result) => { if (!cancelled) setState({ status: 'ready', posts: result.posts }) })
       .catch((err: unknown) => {
         if (!cancelled) {
           setState({ status: 'error', message: err instanceof Error ? err.message : 'Failed to load posts' })
@@ -26,6 +26,11 @@ export default function BlogIndex() {
       })
     return () => { cancelled = true }
   }, [])
+
+  useEffect(() => {
+    document.title = `Blog | ${gardenName}`
+    return () => { document.title = gardenName }
+  }, [gardenName])
 
   const handleNav = useCallback((id: NavId) => {
     if (id === 'blog') {

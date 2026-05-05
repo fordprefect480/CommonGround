@@ -4,8 +4,8 @@ import { fetchAdminMe, updateAdminMe } from '../../api/auth'
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error'
 
 export default function AdminProfile() {
-  const [email, setEmail] = useState<string>('')
-  const [displayName, setDisplayName] = useState<string>('')
+  const [email, setEmail] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [status, setStatus] = useState<Status>('loading')
   const [error, setError] = useState<string | null>(null)
 

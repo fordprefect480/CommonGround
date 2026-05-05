@@ -6,6 +6,8 @@ namespace CommonGround.Server.Blog;
 
 public static partial class BlogSlug
 {
+    public const int MaxLength = 160;
+
     [GeneratedRegex(@"[^a-z0-9\s-]")]
     private static partial Regex InvalidChars();
 
@@ -21,25 +23,26 @@ public static partial class BlogSlug
         foreach (var c in normalized)
         {
             if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-            {
                 sb.Append(c);
-            }
         }
 
         var ascii = sb.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant();
         ascii = InvalidChars().Replace(ascii, "");
         ascii = Whitespace().Replace(ascii, "-").Trim('-');
 
-        return ascii.Length > 160 ? ascii[..160] : ascii;
+        return ascii.Length > MaxLength ? ascii[..MaxLength] : ascii;
     }
 
-    public static string Resolve(string baseSlug, Func<string, bool> exists)
+    public static async Task<string> ResolveAsync(
+        string baseSlug,
+        Func<string, CancellationToken, Task<bool>> exists,
+        CancellationToken ct = default)
     {
-        if (!exists(baseSlug)) return baseSlug;
+        if (!await exists(baseSlug, ct)) return baseSlug;
         for (var i = 2; i < 1000; i++)
         {
             var candidate = $"{baseSlug}-{i}";
-            if (!exists(candidate)) return candidate;
+            if (!await exists(candidate, ct)) return candidate;
         }
         throw new InvalidOperationException($"Could not resolve unique slug for '{baseSlug}'.");
     }

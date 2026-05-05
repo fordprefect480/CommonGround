@@ -1,16 +1,19 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-
-const BlogEditor = lazy(() => import('./BlogEditor'))
 import { useNavigate, useParams } from 'react-router-dom'
 import {
+  blogImageUrl,
   createBlogPost,
   fetchAdminBlogPost,
   fetchBlogCategories,
   updateBlogPost,
   uploadBlogImage,
-  blogImageUrl,
   type BlogCategory,
 } from '../../api/blog'
+
+const BlogEditor = lazy(() => import('./BlogEditor'))
+
+const STATUS_DRAFT = 0
+const STATUS_PUBLISHED = 1
 
 interface FormState {
   title: string
@@ -21,8 +24,11 @@ interface FormState {
 }
 
 const EMPTY: FormState = {
-  title: '', bodyHtml: '',
-  categoryId: null, featuredImageId: null, status: 0,
+  title: '',
+  bodyHtml: '',
+  categoryId: null,
+  featuredImageId: null,
+  status: STATUS_DRAFT,
 }
 
 export default function BlogPostEditor() {
@@ -35,7 +41,7 @@ export default function BlogPostEditor() {
   const [loading, setLoading] = useState(!isNew)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [originalStatus, setOriginalStatus] = useState(0)
+  const [originalStatus, setOriginalStatus] = useState(STATUS_DRAFT)
 
   useEffect(() => {
     fetchBlogCategories().then(setCategories).catch(() => setCategories([]))
@@ -78,7 +84,6 @@ export default function BlogPostEditor() {
         title: form.title,
         excerpt: null,
         bodyHtml: form.bodyHtml,
-        authorName: '',
         categoryId: form.categoryId,
         featuredImageId: form.featuredImageId,
         status,
@@ -98,7 +103,7 @@ export default function BlogPostEditor() {
   if (loading) return <p className="admin-loading">Loading&hellip;</p>
 
   const featuredUrl = blogImageUrl(form.featuredImageId)
-  const isPublished = originalStatus === 1
+  const isPublished = originalStatus === STATUS_PUBLISHED
 
   return (
     <section className="admin-page" aria-labelledby="editor-heading">
@@ -147,7 +152,7 @@ export default function BlogPostEditor() {
 
         <div className="admin-actions">
           {!isPublished && (
-            <button type="button" className="primary-button" disabled={submitting} onClick={() => submit(0)}>
+            <button type="button" className="primary-button" disabled={submitting} onClick={() => submit(STATUS_DRAFT)}>
               {submitting ? 'Saving…' : 'Save draft'}
             </button>
           )}
@@ -155,12 +160,12 @@ export default function BlogPostEditor() {
             type="button"
             className="primary-button"
             disabled={submitting}
-            onClick={() => submit(1)}
+            onClick={() => submit(STATUS_PUBLISHED)}
           >
             {isPublished ? 'Save' : 'Publish'}
           </button>
           {isPublished && (
-            <button type="button" className="footer-link" disabled={submitting} onClick={() => submit(0)}>
+            <button type="button" className="footer-link" disabled={submitting} onClick={() => submit(STATUS_DRAFT)}>
               Unpublish
             </button>
           )}

@@ -3,39 +3,37 @@ using CommonGround.Server.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace CommonGround.Server.Blog;
 
 public static class AdminBlogEndpoints
 {
+    private const int SqlUniqueConstraintError = 2627;
+    private const int SqlUniqueIndexError = 2601;
+
     public static RouteGroupBuilder MapAdminBlog(this RouteGroupBuilder admin)
     {
         var blog = admin.MapGroup("/blog");
 
-        blog.MapGet("/posts", async (AppDbContext db) =>
+        blog.MapGet("/posts", async (AppDbContext db, CancellationToken ct) =>
         {
             var posts = await db.BlogPosts
                 .AsNoTracking()
                 .OrderByDescending(p => p.UpdatedAt)
-                .Select(p => new BlogPostAdminDto(
-                    p.Id, p.Slug, p.Title, p.Excerpt, p.BodyHtml, p.AuthorName,
+                .Select(p => new BlogPostAdminListItemDto(
+                    p.Id, p.Slug, p.Title, p.AuthorName,
                     p.CategoryId, p.FeaturedImageId, (int)p.Status,
                     p.PublishedAt, p.CreatedAt, p.UpdatedAt))
-                .ToListAsync();
+                .ToListAsync(ct);
             return Results.Ok(posts);
         });
 
-        blog.MapGet("/posts/{id:int}", async (int id, AppDbContext db) =>
+        blog.MapGet("/posts/{id:int}", async (int id, AppDbContext db, CancellationToken ct) =>
         {
-            var post = await db.BlogPosts.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
-            if (post is null) return Results.NotFound();
-
-            var dto = new BlogPostAdminDto(
-                post.Id, post.Slug, post.Title, post.Excerpt, post.BodyHtml, post.AuthorName,
-                post.CategoryId, post.FeaturedImageId, (int)post.Status,
-                post.PublishedAt, post.CreatedAt, post.UpdatedAt);
-            return Results.Ok(dto);
+            var post = await db.BlogPosts.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct);
+            return post is null ? Results.NotFound() : Results.Ok(ToAdminDto(post));
         });
 
         blog.MapPost("/posts", async (
@@ -43,38 +41,41 @@ public static class AdminBlogEndpoints
             AppDbContext db,
             BlogHtmlSanitizer sanitizer,
             UserManager<ApplicationUser> userManager,
-            ClaimsPrincipal user) =>
+            ClaimsPrincipal user,
+            CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(input.Title))
                 return Results.BadRequest(new { error = "Title is required." });
 
-            var baseSlug = !string.IsNullOrWhiteSpace(input.Slug)
-                ? BlogSlug.Derive(input.Slug)
-                : BlogSlug.Derive(input.Title);
+            if (!Enum.IsDefined((BlogPostStatus)input.Status))
+                return Results.BadRequest(new { error = "Invalid status." });
 
+            var baseSlug = BlogSlug.Derive(
+                string.IsNullOrWhiteSpace(input.Slug) ? input.Title : input.Slug);
             if (string.IsNullOrEmpty(baseSlug))
                 return Results.BadRequest(new { error = "Could not derive a slug from the title." });
 
-            var resolvedSlug = BlogSlug.Resolve(baseSlug, candidate => db.BlogPosts.Any(p => p.Slug == candidate));
-
-            var now = DateTime.UtcNow;
-            var status = (BlogPostStatus)input.Status;
+            var resolvedSlug = await BlogSlug.ResolveAsync(
+                baseSlug,
+                (candidate, token) => db.BlogPosts.AnyAsync(p => p.Slug == candidate, token),
+                ct);
 
             var currentUser = await userManager.GetUserAsync(user);
-            var defaultAuthor = currentUser?.DisplayName
+            var authorName = currentUser?.DisplayName
                 ?? currentUser?.UserName
                 ?? user.Identity?.Name
                 ?? "Anonymous";
+
+            var status = (BlogPostStatus)input.Status;
+            var now = DateTime.UtcNow;
 
             var post = new BlogPost
             {
                 Slug = resolvedSlug,
                 Title = input.Title.Trim(),
-                Excerpt = string.IsNullOrWhiteSpace(input.Excerpt) ? null : input.Excerpt.Trim(),
+                Excerpt = NullIfBlank(input.Excerpt),
                 BodyHtml = sanitizer.Sanitize(input.BodyHtml ?? ""),
-                AuthorName = string.IsNullOrWhiteSpace(input.AuthorName)
-                    ? defaultAuthor
-                    : input.AuthorName.Trim(),
+                AuthorName = authorName,
                 CategoryId = input.CategoryId,
                 FeaturedImageId = input.FeaturedImageId,
                 Status = status,
@@ -85,32 +86,39 @@ public static class AdminBlogEndpoints
             };
 
             db.BlogPosts.Add(post);
-            await db.SaveChangesAsync();
+            try
+            {
+                await db.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException ex) when (IsUniqueSlugViolation(ex))
+            {
+                return Results.Conflict(new { error = $"Slug '{resolvedSlug}' is already in use." });
+            }
 
-            var dto = new BlogPostAdminDto(
-                post.Id, post.Slug, post.Title, post.Excerpt, post.BodyHtml, post.AuthorName,
-                post.CategoryId, post.FeaturedImageId, (int)post.Status,
-                post.PublishedAt, post.CreatedAt, post.UpdatedAt);
-            return Results.Created($"/api/admin/blog/posts/{post.Id}", dto);
+            return Results.Created($"/api/admin/blog/posts/{post.Id}", ToAdminDto(post));
         });
 
         blog.MapPut("/posts/{id:int}", async (
             int id,
             BlogPostWriteDto input,
             AppDbContext db,
-            BlogHtmlSanitizer sanitizer) =>
+            BlogHtmlSanitizer sanitizer,
+            CancellationToken ct) =>
         {
-            var post = await db.BlogPosts.FirstOrDefaultAsync(p => p.Id == id);
+            var post = await db.BlogPosts.FirstOrDefaultAsync(p => p.Id == id, ct);
             if (post is null) return Results.NotFound();
 
             if (string.IsNullOrWhiteSpace(input.Title))
                 return Results.BadRequest(new { error = "Title is required." });
 
-            var requestedSlug = !string.IsNullOrWhiteSpace(input.Slug) ? BlogSlug.Derive(input.Slug) : post.Slug;
+            if (!Enum.IsDefined((BlogPostStatus)input.Status))
+                return Results.BadRequest(new { error = "Invalid status." });
+
+            var requestedSlug = string.IsNullOrWhiteSpace(input.Slug) ? post.Slug : BlogSlug.Derive(input.Slug);
             if (string.IsNullOrEmpty(requestedSlug))
                 return Results.BadRequest(new { error = "Slug cannot be empty." });
 
-            if (requestedSlug != post.Slug && await db.BlogPosts.AnyAsync(p => p.Slug == requestedSlug))
+            if (requestedSlug != post.Slug && await db.BlogPosts.AnyAsync(p => p.Slug == requestedSlug, ct))
                 return Results.Conflict(new { error = $"Slug '{requestedSlug}' is already in use." });
 
             var status = (BlogPostStatus)input.Status;
@@ -118,9 +126,8 @@ public static class AdminBlogEndpoints
 
             post.Slug = requestedSlug;
             post.Title = input.Title.Trim();
-            post.Excerpt = string.IsNullOrWhiteSpace(input.Excerpt) ? null : input.Excerpt.Trim();
+            post.Excerpt = NullIfBlank(input.Excerpt);
             post.BodyHtml = sanitizer.Sanitize(input.BodyHtml ?? "");
-            post.AuthorName = string.IsNullOrWhiteSpace(input.AuthorName) ? post.AuthorName : input.AuthorName.Trim();
             post.CategoryId = input.CategoryId;
             post.FeaturedImageId = input.FeaturedImageId;
             post.Status = status;
@@ -128,51 +135,55 @@ public static class AdminBlogEndpoints
             if (becomingPublished && post.PublishedAt is null)
                 post.PublishedAt = post.UpdatedAt;
 
-            await db.SaveChangesAsync();
+            try
+            {
+                await db.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException ex) when (IsUniqueSlugViolation(ex))
+            {
+                return Results.Conflict(new { error = $"Slug '{requestedSlug}' is already in use." });
+            }
 
-            var dto = new BlogPostAdminDto(
-                post.Id, post.Slug, post.Title, post.Excerpt, post.BodyHtml, post.AuthorName,
-                post.CategoryId, post.FeaturedImageId, (int)post.Status,
-                post.PublishedAt, post.CreatedAt, post.UpdatedAt);
-            return Results.Ok(dto);
+            return Results.Ok(ToAdminDto(post));
         });
 
-        blog.MapDelete("/posts/{id:int}", async (int id, AppDbContext db) =>
+        blog.MapDelete("/posts/{id:int}", async (int id, AppDbContext db, CancellationToken ct) =>
         {
-            var post = await db.BlogPosts.FirstOrDefaultAsync(p => p.Id == id);
+            var post = await db.BlogPosts.FirstOrDefaultAsync(p => p.Id == id, ct);
             if (post is null) return Results.NotFound();
 
             db.BlogPosts.Remove(post);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
             return Results.NoContent();
         });
 
         blog.MapPost("/images", async (
             HttpRequest request,
             AppDbContext db,
-            ClaimsPrincipal user) =>
+            ClaimsPrincipal user,
+            CancellationToken ct) =>
         {
             if (!request.HasFormContentType)
                 return Results.BadRequest(new { error = "Expected multipart form data." });
 
-            var form = await request.ReadFormAsync();
+            var form = await request.ReadFormAsync(ct);
             var file = form.Files.GetFile("file");
             if (file is null || file.Length == 0)
                 return Results.BadRequest(new { error = "No file was uploaded." });
 
-            if (file.Length > 10 * 1024 * 1024)
+            if (file.Length > BlogImageContentType.MaxBytes)
                 return Results.BadRequest(new { error = "File exceeds 10 MB limit." });
 
-            var allowed = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
-            if (!allowed.Contains(file.ContentType))
-                return Results.BadRequest(new { error = $"Content type '{file.ContentType}' is not allowed." });
-
             using var stream = new MemoryStream();
-            await file.CopyToAsync(stream);
+            await file.CopyToAsync(stream, ct);
+
+            var detected = BlogImageContentType.DetectFromBytes(stream.GetBuffer().AsSpan(0, (int)stream.Length));
+            if (detected is null)
+                return Results.BadRequest(new { error = "File contents do not match a supported image format." });
 
             var image = new BlogImage
             {
-                ContentType = file.ContentType,
+                ContentType = detected,
                 Bytes = stream.ToArray(),
                 OriginalFileName = file.FileName,
                 CreatedAt = DateTime.UtcNow,
@@ -180,7 +191,7 @@ public static class AdminBlogEndpoints
             };
 
             db.BlogImages.Add(image);
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
 
             return Results.Ok(new BlogImageUploadDto(image.Id, $"/api/blog/images/{image.Id}"));
         })
@@ -188,4 +199,16 @@ public static class AdminBlogEndpoints
 
         return admin;
     }
+
+    private static BlogPostAdminDto ToAdminDto(BlogPost p) => new(
+        p.Id, p.Slug, p.Title, p.Excerpt, p.BodyHtml, p.AuthorName,
+        p.CategoryId, p.FeaturedImageId, (int)p.Status,
+        p.PublishedAt, p.CreatedAt, p.UpdatedAt);
+
+    private static string? NullIfBlank(string? s) =>
+        string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
+    private static bool IsUniqueSlugViolation(DbUpdateException ex) =>
+        ex.InnerException is SqlException sql &&
+        (sql.Number == SqlUniqueConstraintError || sql.Number == SqlUniqueIndexError);
 }

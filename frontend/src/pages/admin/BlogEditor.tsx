@@ -50,6 +50,10 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
       editor.chain().focus().unsetLink().run()
       return
     }
+    if (!/^(https?:|mailto:)/i.test(url)) {
+      alert('Links must start with http://, https://, or mailto:')
+      return
+    }
     editor.chain().focus().setLink({ href: url }).run()
   }
 

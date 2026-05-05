@@ -39,17 +39,15 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
         "post-description",
     };
 
+    private static readonly HashSet<string> PassthroughTags = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "P", "H2", "H3", "H4", "UL", "OL", "LI", "BLOCKQUOTE", "STRONG", "EM", "CODE", "PRE", "BR",
+    };
+
     public async Task<IReadOnlyList<string>> EnumeratePostSlugsAsync(CancellationToken ct)
     {
         var url = $"{SiteRoot.TrimEnd('/')}/blog";
-        using var response = await http.GetAsync(url, ct);
-        response.EnsureSuccessStatusCode();
-
-        var html = await response.Content.ReadAsStringAsync(ct);
-
-        var context = BrowsingContext.New(AngleSharp.Configuration.Default);
-        var parser = context.GetService<IHtmlParser>()!;
-        using var document = await parser.ParseDocumentAsync(html, ct);
+        using var document = await LoadDocumentAsync(url, ct);
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var slugs = new List<string>();
@@ -58,7 +56,6 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
         {
             var href = anchor.GetAttribute("href") ?? "";
 
-            // Handle both absolute and root-relative URLs
             string path;
             if (href.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                 href.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -71,16 +68,13 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
                 path = href;
             }
 
-            // Strip query string from path for matching
             var qIdx = path.IndexOf('?');
             if (qIdx >= 0) path = path[..qIdx];
 
             if (!path.StartsWith("/post/", StringComparison.OrdinalIgnoreCase)) continue;
 
             var slug = ExtractSlug(path);
-            if (slug is null) continue;
-
-            if (seen.Add(slug))
+            if (slug is not null && seen.Add(slug))
                 slugs.Add(slug);
         }
 
@@ -90,127 +84,27 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
     public async Task<RemotePost?> FetchPostAsync(string slug, CancellationToken ct)
     {
         var url = $"{SiteRoot.TrimEnd('/')}/post/{slug}";
-        using var response = await http.GetAsync(url, ct);
-        response.EnsureSuccessStatusCode();
+        using var document = await LoadDocumentAsync(url, ct);
 
-        var html = await response.Content.ReadAsStringAsync(ct);
+        var ldData = ExtractBlogPostingJsonLd(document);
 
-        var context = BrowsingContext.New(AngleSharp.Configuration.Default);
-        var parser = context.GetService<IHtmlParser>()!;
-        using var document = await parser.ParseDocumentAsync(html, ct);
+        var ogTitle = OgMeta(document, "og:title");
+        var ogDescription = OgMeta(document, "og:description");
+        var ogImage = OgMeta(document, "og:image");
+        var articleAuthor = OgMeta(document, "article:author");
+        var articlePublishedTime = OgMeta(document, "article:published_time");
 
-        // --- JSON-LD extraction ---
-        string? ldTitle = null;
-        string? ldAuthor = null;
-        DateTime? ldPublishedAt = null;
+        var h1Title = document.QuerySelector("[data-hook='post-title']")?.TextContent?.Trim();
+        var spanAuthor = document.QuerySelector("[data-hook='user-name']")?.TextContent?.Trim();
 
-        foreach (var script in document.QuerySelectorAll("script[type='application/ld+json']"))
-        {
-            var json = script.TextContent;
-            if (string.IsNullOrWhiteSpace(json)) continue;
+        var title = NonEmpty(ldData.Title) ?? NonEmpty(ogTitle) ?? NonEmpty(h1Title) ?? slug;
+        var authorName = NonEmpty(ldData.Author) ?? NonEmpty(articleAuthor) ?? NonEmpty(spanAuthor) ?? "Unknown";
+        var publishedAt = ResolvePublishedAt(ldData.PublishedAt, articlePublishedTime);
 
-            try
-            {
-                using var doc = JsonDocument.Parse(json);
-                var root = doc.RootElement;
-
-                JsonElement? posting = null;
-
-                if (root.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var el in root.EnumerateArray())
-                    {
-                        if (el.TryGetProperty("@type", out var t) &&
-                            t.GetString()?.Equals("BlogPosting", StringComparison.OrdinalIgnoreCase) == true)
-                        {
-                            posting = el;
-                            break;
-                        }
-                    }
-                }
-                else if (root.ValueKind == JsonValueKind.Object)
-                {
-                    if (root.TryGetProperty("@type", out var t) &&
-                        t.GetString()?.Equals("BlogPosting", StringComparison.OrdinalIgnoreCase) == true)
-                    {
-                        posting = root;
-                    }
-                }
-
-                if (posting is null) continue;
-
-                if (posting.Value.TryGetProperty("headline", out var headline))
-                    ldTitle = headline.GetString();
-
-                if (posting.Value.TryGetProperty("author", out var authorEl))
-                {
-                    if (authorEl.ValueKind == JsonValueKind.Object &&
-                        authorEl.TryGetProperty("name", out var nameProp))
-                        ldAuthor = nameProp.GetString();
-                    else if (authorEl.ValueKind == JsonValueKind.String)
-                        ldAuthor = authorEl.GetString();
-                }
-
-                if (posting.Value.TryGetProperty("datePublished", out var datePub))
-                {
-                    var raw = datePub.GetString();
-                    if (raw is not null && DateTimeOffset.TryParse(raw, out var dto))
-                        ldPublishedAt = dto.UtcDateTime;
-                }
-
-                break; // found a BlogPosting — no need to check further scripts
-            }
-            catch (JsonException)
-            {
-                // malformed — try next script
-            }
-        }
-
-        // --- OG / article meta extraction ---
-        string? ogTitle = OgMeta(document, "og:title");
-        string? ogDescription = OgMeta(document, "og:description");
-        string? ogImage = OgMeta(document, "og:image");
-        string? articleAuthor = OgMeta(document, "article:author");
-        string? articlePublishedTime = OgMeta(document, "article:published_time");
-
-        // --- Fallback element extraction ---
-        string? h1Title = document.QuerySelector("[data-hook='post-title']")?.TextContent?.Trim();
-        string? spanAuthor = document.QuerySelector("[data-hook='user-name']")?.TextContent?.Trim();
-
-        // --- Resolve title ---
-        var title = NonEmpty(ldTitle)
-            ?? NonEmpty(ogTitle)
-            ?? NonEmpty(h1Title)
-            ?? slug;
-
-        // --- Resolve author ---
-        var authorName = NonEmpty(ldAuthor)
-            ?? NonEmpty(articleAuthor)
-            ?? NonEmpty(spanAuthor)
-            ?? "Unknown";
-
-        // --- Resolve published date ---
-        DateTime publishedAt;
-        if (ldPublishedAt.HasValue)
-        {
-            publishedAt = ldPublishedAt.Value;
-        }
-        else if (articlePublishedTime is not null &&
-                 DateTimeOffset.TryParse(articlePublishedTime, out var ogDto))
-        {
-            publishedAt = ogDto.UtcDateTime;
-        }
-        else
-        {
-            publishedAt = DateTime.UtcNow;
-        }
-
-        // --- Resolve cover image ---
         string? coverImageUrl = null;
         if (!string.IsNullOrWhiteSpace(ogImage))
             coverImageUrl = WixTransformSegment().Replace(ogImage, "/").TrimEnd('/');
 
-        // --- Body extraction ---
         var article = document.QuerySelector("article");
         if (article is null) return null;
 
@@ -233,12 +127,25 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
     {
         try
         {
-            using var response = await http.GetAsync(url, ct);
+            using var response = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
             if (!response.IsSuccessStatusCode) return null;
 
-            var bytes = await response.Content.ReadAsByteArrayAsync(ct);
+            if (response.Content.Headers.ContentLength is long declared &&
+                declared > BlogImageContentType.MaxBytes)
+                return null;
+
+            await using var source = await response.Content.ReadAsStreamAsync(ct);
+            using var buffer = new MemoryStream();
+            var rented = new byte[81920];
+            int read;
+            while ((read = await source.ReadAsync(rented, ct)) > 0)
+            {
+                if (buffer.Length + read > BlogImageContentType.MaxBytes) return null;
+                buffer.Write(rented, 0, read);
+            }
+
             var contentType = response.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
-            return (bytes, contentType);
+            return (buffer.ToArray(), contentType);
         }
         catch
         {
@@ -246,86 +153,163 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
         }
     }
 
-    private static string? OgMeta(IDocument document, string property)
+    private async Task<IDocument> LoadDocumentAsync(string url, CancellationToken ct)
     {
-        var el = document.QuerySelector($"meta[property='{property}']");
-        return el?.GetAttribute("content")?.Trim();
+        using var response = await http.GetAsync(url, ct);
+        response.EnsureSuccessStatusCode();
+
+        var html = await response.Content.ReadAsStringAsync(ct);
+        var context = BrowsingContext.New(AngleSharp.Configuration.Default);
+        var parser = context.GetService<IHtmlParser>()!;
+        return await parser.ParseDocumentAsync(html, ct);
     }
 
-    private static string? NonEmpty(string? s) =>
-        string.IsNullOrWhiteSpace(s) ? null : s;
+    private record LdBlogPosting(string? Title, string? Author, DateTime? PublishedAt);
+
+    private static LdBlogPosting ExtractBlogPostingJsonLd(IDocument document)
+    {
+        foreach (var script in document.QuerySelectorAll("script[type='application/ld+json']"))
+        {
+            var json = script.TextContent;
+            if (string.IsNullOrWhiteSpace(json)) continue;
+
+            JsonElement? posting;
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                posting = FindBlogPosting(doc.RootElement);
+                if (posting is null) continue;
+
+                string? title = null;
+                string? author = null;
+                DateTime? publishedAt = null;
+
+                if (posting.Value.TryGetProperty("headline", out var headline))
+                    title = headline.GetString();
+
+                if (posting.Value.TryGetProperty("author", out var authorEl))
+                    author = ReadAuthorName(authorEl);
+
+                if (posting.Value.TryGetProperty("datePublished", out var datePub) &&
+                    DateTimeOffset.TryParse(datePub.GetString(), out var dto))
+                    publishedAt = dto.UtcDateTime;
+
+                return new LdBlogPosting(title, author, publishedAt);
+            }
+            catch (JsonException)
+            {
+                // malformed — try next script
+            }
+        }
+
+        return new LdBlogPosting(null, null, null);
+    }
+
+    private static JsonElement? FindBlogPosting(JsonElement root)
+    {
+        if (root.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var el in root.EnumerateArray())
+                if (IsBlogPosting(el)) return el;
+            return null;
+        }
+
+        return root.ValueKind == JsonValueKind.Object && IsBlogPosting(root) ? root : null;
+    }
+
+    private static bool IsBlogPosting(JsonElement el) =>
+        el.TryGetProperty("@type", out var t) &&
+        t.GetString()?.Equals("BlogPosting", StringComparison.OrdinalIgnoreCase) == true;
+
+    private static string? ReadAuthorName(JsonElement authorEl) => authorEl.ValueKind switch
+    {
+        JsonValueKind.Object when authorEl.TryGetProperty("name", out var nameProp) => nameProp.GetString(),
+        JsonValueKind.String => authorEl.GetString(),
+        _ => null,
+    };
+
+    private static DateTime ResolvePublishedAt(DateTime? fromLd, string? articlePublishedTime)
+    {
+        if (fromLd.HasValue) return fromLd.Value;
+        if (DateTimeOffset.TryParse(articlePublishedTime, out var dto)) return dto.UtcDateTime;
+        return DateTime.UtcNow;
+    }
+
+    private static string? OgMeta(IDocument document, string property) =>
+        document.QuerySelector($"meta[property='{property}']")?.GetAttribute("content")?.Trim();
+
+    private static string? NonEmpty(string? s) => string.IsNullOrWhiteSpace(s) ? null : s;
 
     private void WalkNode(INode node, StringBuilder sb, List<string> imageUrls)
     {
-        if (node is IElement el)
+        switch (node)
         {
-            var hook = el.GetAttribute("data-hook")?.Trim() ?? "";
-
-            if (DroppedHooks.Contains(hook)) return;
-
-            var tagName = el.TagName.ToUpperInvariant();
-
-            if (hook.Equals("figure-IMAGE", StringComparison.OrdinalIgnoreCase))
-            {
-                EmitFigureImage(el, sb, imageUrls);
-                return;
-            }
-
-            if (hook is "divider divider-single" || hook == "divider")
-            {
-                sb.Append("<hr>");
-                return;
-            }
-
-            if (hook.Equals("web-link", StringComparison.OrdinalIgnoreCase) || tagName == "A")
-            {
-                var href = el.GetAttribute("href") ?? "#";
-                sb.Append($"<a href=\"{System.Net.WebUtility.HtmlEncode(href)}\">");
-                foreach (var child in el.ChildNodes)
-                    WalkNode(child, sb, imageUrls);
-                sb.Append("</a>");
-                return;
-            }
-
-            if (tagName is "P" or "H2" or "H3" or "H4" or "UL" or "OL" or "LI"
-                or "BLOCKQUOTE" or "STRONG" or "EM" or "CODE" or "PRE" or "BR")
-            {
-                var lowerTag = tagName.ToLowerInvariant();
-                sb.Append($"<{lowerTag}>");
-                foreach (var child in el.ChildNodes)
-                    WalkNode(child, sb, imageUrls);
-                sb.Append($"</{lowerTag}>");
-                return;
-            }
-
-            if (tagName == "HR")
-            {
-                sb.Append("<hr>");
-                return;
-            }
-
-            if (tagName == "IMG")
-            {
-                EmitImg(el, sb, imageUrls);
-                return;
-            }
-
-            foreach (var child in el.ChildNodes)
-                WalkNode(child, sb, imageUrls);
+            case IElement el:
+                WalkElement(el, sb, imageUrls);
+                break;
+            case IText text when !string.IsNullOrEmpty(text.TextContent):
+                sb.Append(System.Net.WebUtility.HtmlEncode(text.TextContent));
+                break;
         }
-        else if (node is IText text)
+    }
+
+    private void WalkElement(IElement el, StringBuilder sb, List<string> imageUrls)
+    {
+        var hook = el.GetAttribute("data-hook")?.Trim() ?? "";
+
+        if (DroppedHooks.Contains(hook)) return;
+
+        var tagName = el.TagName.ToUpperInvariant();
+
+        if (string.Equals(hook, "figure-IMAGE", StringComparison.OrdinalIgnoreCase))
         {
-            var value = text.TextContent;
-            if (!string.IsNullOrEmpty(value))
-                sb.Append(System.Net.WebUtility.HtmlEncode(value));
+            EmitFigureImage(el, sb, imageUrls);
+            return;
         }
+
+        if (hook is "divider divider-single" or "divider")
+        {
+            sb.Append("<hr>");
+            return;
+        }
+
+        if (string.Equals(hook, "web-link", StringComparison.OrdinalIgnoreCase) || tagName == "A")
+        {
+            var href = el.GetAttribute("href") ?? "#";
+            sb.Append($"<a href=\"{System.Net.WebUtility.HtmlEncode(href)}\">");
+            foreach (var child in el.ChildNodes) WalkNode(child, sb, imageUrls);
+            sb.Append("</a>");
+            return;
+        }
+
+        if (PassthroughTags.Contains(tagName))
+        {
+            var lowerTag = tagName.ToLowerInvariant();
+            sb.Append($"<{lowerTag}>");
+            foreach (var child in el.ChildNodes) WalkNode(child, sb, imageUrls);
+            sb.Append($"</{lowerTag}>");
+            return;
+        }
+
+        if (tagName == "HR")
+        {
+            sb.Append("<hr>");
+            return;
+        }
+
+        if (tagName == "IMG")
+        {
+            EmitImg(el, sb, imageUrls);
+            return;
+        }
+
+        foreach (var child in el.ChildNodes) WalkNode(child, sb, imageUrls);
     }
 
     private static void EmitFigureImage(IElement figure, StringBuilder sb, List<string> imageUrls)
     {
         var img = figure.QuerySelector("img");
-        if (img is null) return;
-        EmitImg(img, sb, imageUrls);
+        if (img is not null) EmitImg(img, sb, imageUrls);
     }
 
     private static void EmitImg(IElement img, StringBuilder sb, List<string> imageUrls)
@@ -333,9 +317,7 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
         var rawSrc = img.GetAttribute("src") ?? img.GetAttribute("data-src") ?? "";
         if (string.IsNullOrWhiteSpace(rawSrc)) return;
 
-        var cleanSrc = WixTransformSegment().Replace(rawSrc, "/");
-        cleanSrc = cleanSrc.TrimEnd('/');
-
+        var cleanSrc = WixTransformSegment().Replace(rawSrc, "/").TrimEnd('/');
         var alt = System.Net.WebUtility.HtmlEncode(img.GetAttribute("alt") ?? "");
         sb.Append($"<img src=\"{System.Net.WebUtility.HtmlEncode(cleanSrc)}\" alt=\"{alt}\">");
 
@@ -343,9 +325,8 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
             imageUrls.Add(cleanSrc);
     }
 
-    private static string? ExtractSlug(string? url)
+    private static string? ExtractSlug(string url)
     {
-        if (string.IsNullOrEmpty(url)) return null;
         var idx = url.LastIndexOf('/');
         if (idx < 0) return null;
         var slug = url[(idx + 1)..].Trim();

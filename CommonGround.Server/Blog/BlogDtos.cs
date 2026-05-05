@@ -20,7 +20,19 @@ public record BlogPostDto(
     DateTime? PublishedAt,
     string? CategoryName,
     int? FeaturedImageId,
-    IReadOnlyList<BlogPostSummaryDto> RelatedPosts);
+    IReadOnlyList<BlogPostSummaryDto> MorePosts);
+
+public record BlogPostAdminListItemDto(
+    int Id,
+    string Slug,
+    string Title,
+    string AuthorName,
+    int? CategoryId,
+    int? FeaturedImageId,
+    int Status,
+    DateTime? PublishedAt,
+    DateTime CreatedAt,
+    DateTime UpdatedAt);
 
 public record BlogPostAdminDto(
     int Id,
@@ -41,7 +53,6 @@ public record BlogPostWriteDto(
     string? Slug,
     string? Excerpt,
     string BodyHtml,
-    string AuthorName,
     int? CategoryId,
     int? FeaturedImageId,
     int Status);
@@ -57,3 +68,9 @@ public record ImportBlogResultDto(
     IReadOnlyList<ImportBlogErrorDto> Errors);
 
 public record ImportBlogErrorDto(string? Slug, string Message);
+
+public record BlogPostListDto(
+    IReadOnlyList<BlogPostSummaryDto> Posts,
+    int Page,
+    int PageSize,
+    int Total);
