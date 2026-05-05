@@ -50,9 +50,13 @@ export default function AdminLayout() {
         </div>
         <nav className="admin-nav" aria-label="Admin">
           <NavLink to="/admin/members" className="admin-nav-link">Members</NavLink>
+          <NavLink to="/admin/blog" className="admin-nav-link">Blog</NavLink>
+          <NavLink to="/admin/tools" className="admin-nav-link">Tools</NavLink>
         </nav>
         <div className="admin-actions">
-          <span className="admin-whoami">{auth.me.email}</span>
+          <NavLink to="/admin/profile" className="admin-whoami" title="Edit profile">
+            {auth.me.displayName ?? auth.me.email}
+          </NavLink>
           <button type="button" className="admin-logout" onClick={handleLogout}>
             Sign out
           </button>

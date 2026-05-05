@@ -124,6 +124,7 @@ function MembersTable({ members, emptyText }: MembersTableProps) {
       <table className="admin-table">
         <thead>
           <tr>
+            <th scope="col">Display name</th>
             <th scope="col">Email</th>
             <th scope="col">Username</th>
             <th scope="col">Email confirmed</th>
@@ -132,6 +133,7 @@ function MembersTable({ members, emptyText }: MembersTableProps) {
         <tbody>
           {members.map((member) => (
             <tr key={member.id}>
+              <td>{member.displayName ?? '—'}</td>
               <td>{member.email ?? '—'}</td>
               <td>{member.userName ?? '—'}</td>
               <td>

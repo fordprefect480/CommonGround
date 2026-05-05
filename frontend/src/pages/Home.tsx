@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { MSFooter, MSHeader, type NavId } from './home/Chrome'
 import {
   ContactPage,
@@ -13,8 +14,13 @@ import {
 
 export default function Home() {
   const [active, setActive] = useState<NavId>('home')
+  const navigate = useNavigate()
 
   const handleNav = useCallback((id: NavId) => {
+    if (id === 'blog') {
+      navigate('/blog')
+      return
+    }
     setActive(id)
     if (id === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -22,7 +28,7 @@ export default function Home() {
     }
     const target = document.getElementById(`section-${id}`)
     target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [])
+  }, [navigate])
 
   return (
     <div data-screen-label="SWCG · home">
