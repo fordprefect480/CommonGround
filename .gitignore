@@ -429,3 +429,5 @@ FodyWeavers.xsd
 *.msp
 CommonGround.AppHost/appsettings.Development.json
 CommonGround.Server/appsettings.Development.json
+.superpowers
+docs
