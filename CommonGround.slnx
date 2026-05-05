@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="CommonGround.AppHost/CommonGround.AppHost.csproj" />
+  <Project Path="CommonGround.Server/CommonGround.Server.csproj" />
+  <Project Path="frontend/frontend.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+</Solution>
