@@ -168,7 +168,9 @@ textarea:focus {
   color: var(--ink-700);
 }
 
-.field input {
+.field input,
+.field select,
+.field textarea {
   background: var(--input-bg);
   border: 1px solid var(--input-border);
   border-radius: var(--r-md);
@@ -179,7 +181,20 @@ textarea:focus {
   transition: border-color var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out);
 }
 
-.field input:focus {
+.field select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%235b6770' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1.5l5 5 5-5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 0.7rem;
+  padding-right: 2.25rem;
+  cursor: pointer;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
   outline: none;
   border-color: var(--apple-600);
   box-shadow: var(--ring-focus);
@@ -261,6 +276,19 @@ textarea:focus {
 }
 
 .footer-link:hover { color: var(--apple-800); }
+
+button.footer-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.footer-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 
 /* ---------------------------------------------------------------------
    Admin shell
@@ -783,6 +811,10 @@ textarea:focus {
   margin: 1.5rem auto;
 }
 
+.blog-post-body img.blog-img-small { max-width: 320px; }
+.blog-post-body img.blog-img-medium { max-width: 560px; }
+.blog-post-body img.blog-img-wide { max-width: 100%; }
+
 .blog-post-body a {
   color: var(--apple-700);
   text-underline-offset: 0.2em;
@@ -841,8 +873,14 @@ textarea:focus {
 .tiptap-toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; background: #f3f4f6; border-bottom: 1px solid #d1d5db; }
 .tiptap-toolbar button, .tiptap-image-button { padding: 4px 8px; cursor: pointer; background: white; border: 1px solid #d1d5db; border-radius: 4px; }
 .tiptap-toolbar button[aria-pressed="true"] { background: #1f2937; color: white; }
+.tiptap-toolbar button:disabled { opacity: 0.45; cursor: not-allowed; }
+.tiptap-toolbar-divider { width: 1px; align-self: stretch; background: #d1d5db; margin: 0 4px; }
 .tiptap-image-button { display: inline-block; }
 .tiptap-content { padding: 12px; min-height: 300px; }
 .tiptap-content :focus { outline: none; }
 .tiptap-content p { margin: 0 0 1em; }
-.tiptap-content img { max-width: 100%; height: auto; }
+.tiptap-content img { max-width: 100%; height: auto; display: block; margin: 1rem auto; }
+.tiptap-content img.blog-img-small { max-width: 320px; }
+.tiptap-content img.blog-img-medium { max-width: 560px; }
+.tiptap-content img.blog-img-wide { max-width: 100%; }
+.tiptap-content img.ProseMirror-selectednode { outline: 2px solid var(--apple-600); outline-offset: 2px; }

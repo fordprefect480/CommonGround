@@ -10,7 +10,10 @@ public class BlogHtmlSanitizer
         "a", "strong", "em", "code", "pre", "br", "img", "hr",
     ];
 
-    private static readonly string[] AllowedAttributes = ["href", "src", "alt"];
+    private static readonly string[] AllowedAttributes = ["href", "src", "alt", "class"];
+
+    public static readonly string[] AllowedImageClasses =
+        ["blog-img-small", "blog-img-medium", "blog-img-wide"];
 
     private readonly HtmlSanitizer _sanitizer;
 
@@ -26,6 +29,9 @@ public class BlogHtmlSanitizer
 
         _sanitizer.AllowedAttributes.Clear();
         foreach (var attr in AllowedAttributes) _sanitizer.AllowedAttributes.Add(attr);
+
+        _sanitizer.AllowedClasses.Clear();
+        foreach (var cls in AllowedImageClasses) _sanitizer.AllowedClasses.Add(cls);
 
         _sanitizer.AllowedCssProperties.Clear();
         _sanitizer.AllowedAtRules.Clear();

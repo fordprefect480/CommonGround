@@ -10,6 +10,29 @@ interface BlogEditorProps {
   onChange: (html: string) => void
 }
 
+const IMAGE_SIZE_CLASSES = ['blog-img-small', 'blog-img-medium', 'blog-img-wide'] as const
+type ImageSizeClass = typeof IMAGE_SIZE_CLASSES[number]
+
+const SIZE_LABELS: Record<ImageSizeClass, string> = {
+  'blog-img-small': 'S',
+  'blog-img-medium': 'M',
+  'blog-img-wide': 'W',
+}
+
+const SizedImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      class: {
+        default: 'blog-img-medium',
+        parseHTML: (el) => el.getAttribute('class'),
+        renderHTML: (attrs: { class?: string | null }) =>
+          attrs.class ? { class: attrs.class } : {},
+      },
+    }
+  },
+})
+
 export default function BlogEditor({ value, onChange }: BlogEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -21,7 +44,7 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
         openOnClick: false,
         HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' },
       }),
-      Image,
+      SizedImage,
     ],
     content: value,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
@@ -36,7 +59,7 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
   const insertImage = async (file: File) => {
     try {
       const result = await uploadBlogImage(file)
-      editor.chain().focus().setImage({ src: result.url, alt: '' }).run()
+      editor.chain().focus().setImage({ src: result.url, alt: '', class: 'blog-img-medium' }).run()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Upload failed')
     }
@@ -56,6 +79,11 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
     }
     editor.chain().focus().setLink({ href: url }).run()
   }
+
+  const setImageSize = (size: ImageSizeClass) =>
+    editor.chain().focus().updateAttributes('image', { class: size }).run()
+
+  const imageSelected = editor.isActive('image')
 
   return (
     <div className="tiptap-wrapper">
@@ -83,6 +111,19 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
             }}
           />
         </label>
+        <span className="tiptap-toolbar-divider" aria-hidden="true" />
+        {IMAGE_SIZE_CLASSES.map((size) => (
+          <button
+            key={size}
+            type="button"
+            onClick={() => setImageSize(size)}
+            aria-pressed={editor.isActive('image', { class: size })}
+            disabled={!imageSelected}
+            title={`Image size: ${SIZE_LABELS[size] === 'S' ? 'small' : SIZE_LABELS[size] === 'M' ? 'medium' : 'wide'}`}
+          >
+            {SIZE_LABELS[size]}
+          </button>
+        ))}
       </div>
       <EditorContent editor={editor} className="tiptap-content" />
     </div>
