@@ -1,7 +1,11 @@
 <Solution>
-  <Project Path="CommonGround.AppHost/CommonGround.AppHost.csproj" />
-  <Project Path="CommonGround.Server/CommonGround.Server.csproj" />
-  <Project Path="frontend/frontend.esproj">
+  <Folder Name="/Solution Items/">
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="D:/git/CommonGround/CommonGround.AppHost/CommonGround.AppHost.csproj" />
+  <Project Path="D:/git/CommonGround/CommonGround.Server/CommonGround.Server.csproj" />
+  <Project Path="D:/git/CommonGround/frontend/frontend.esproj">
     <Build />
     <Deploy />
   </Project>
