@@ -3,9 +3,11 @@ using CommonGround.Server.Blog;
 using CommonGround.Server.Blog.BlogImport;
 using CommonGround.Server.Configuration;
 using CommonGround.Server.Data;
+using CommonGround.Server.Email;
 using FastEndpoints;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,12 @@ builder.Services.AddFastEndpoints();
 builder.AddSqlServerDbContext<AppDbContext>("commongroundDb");
 
 builder.Services.Configure<GardenOptions>(builder.Configuration.GetSection(GardenOptions.SectionName));
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+
+builder.Services.AddHttpClient<ResendClient>();
+builder.Services.Configure<ResendClientOptions>(o =>
+    o.ApiToken = builder.Configuration[$"{EmailOptions.SectionName}:ApiToken"] ?? "");
+builder.Services.AddTransient<IResend, ResendClient>();
 
 builder.Services
     .AddIdentityApiEndpoints<ApplicationUser>()
