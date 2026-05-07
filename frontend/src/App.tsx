@@ -1,7 +1,9 @@
 import type { ReactElement } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { AppInsightsContext, AppInsightsErrorBoundary } from '@microsoft/applicationinsights-react-js'
 import './App.css'
 import { AppConfigProvider } from './AppConfigContext'
+import { reactPlugin } from './applicationInsights'
 import { AuthProvider, useAuth } from './AuthContext'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -18,31 +20,42 @@ import BlogPost from './pages/blog/BlogPost'
 
 export default function App() {
   return (
-    <AppConfigProvider>
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/blog" element={<BlogIndex />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-          <Route
-            path="/admin"
-            element={<RequireAuth requireAdmin><AdminLayout /></RequireAuth>}
-          >
-            <Route index element={<Navigate to="members" replace />} />
-            <Route path="members" element={<Members />} />
-            <Route path="members/:id" element={<MemberDetail />} />
-            <Route path="blog" element={<BlogPostList />} />
-            <Route path="blog/new" element={<BlogPostEditor />} />
-            <Route path="blog/:id/edit" element={<BlogPostEditor />} />
-            <Route path="tools" element={<AdminTools />} />
-            <Route path="profile" element={<AdminProfile />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AuthProvider>
-    </AppConfigProvider>
+    <AppInsightsContext.Provider value={reactPlugin}>
+      <AppInsightsErrorBoundary
+        appInsights={reactPlugin}
+        onError={() => (
+          <main className="app-bootstrap-error" role="alert">
+            <p>Something went wrong. Please refresh the page.</p>
+          </main>
+        )}
+      >
+        <AppConfigProvider>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/blog" element={<BlogIndex />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+              <Route
+                path="/admin"
+                element={<RequireAuth requireAdmin><AdminLayout /></RequireAuth>}
+              >
+                <Route index element={<Navigate to="members" replace />} />
+                <Route path="members" element={<Members />} />
+                <Route path="members/:id" element={<MemberDetail />} />
+                <Route path="blog" element={<BlogPostList />} />
+                <Route path="blog/new" element={<BlogPostEditor />} />
+                <Route path="blog/:id/edit" element={<BlogPostEditor />} />
+                <Route path="tools" element={<AdminTools />} />
+                <Route path="profile" element={<AdminProfile />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </AuthProvider>
+        </AppConfigProvider>
+      </AppInsightsErrorBoundary>
+    </AppInsightsContext.Provider>
   )
 }
 

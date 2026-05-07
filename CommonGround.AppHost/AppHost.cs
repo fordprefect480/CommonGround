@@ -12,6 +12,12 @@ var server = builder.AddProject<Projects.CommonGround_Server>("server")
 	.WaitFor(commonGroundDb)
 	.WithExternalHttpEndpoints();
 
+if (!string.IsNullOrWhiteSpace(builder.Configuration["ConnectionStrings:appinsights"]))
+{
+	var appInsights = builder.AddConnectionString("appinsights");
+	server.WithReference(appInsights);
+}
+
 var webfrontend = builder.AddViteApp("webfrontend", "../frontend")
 	.WithReference(server)
 	.WaitFor(server);
