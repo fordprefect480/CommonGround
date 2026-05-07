@@ -18,6 +18,12 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["ConnectionStrings:appinsig
 	server.WithReference(appInsights);
 }
 
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-api-key"]))
+{
+	var resendApiKey = builder.AddParameter("resend-api-key", secret: true);
+	server.WithEnvironment("Email__ApiToken", resendApiKey);
+}
+
 var webfrontend = builder.AddViteApp("webfrontend", "../frontend")
 	.WithReference(server)
 	.WaitFor(server);
