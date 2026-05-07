@@ -1,5 +1,6 @@
 export interface AppConfig {
   gardenName: string
+  applicationInsightsConnectionString?: string | null
 }
 
 export async function fetchAppConfig(): Promise<AppConfig> {

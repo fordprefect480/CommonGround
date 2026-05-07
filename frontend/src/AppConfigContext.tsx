@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { fetchAppConfig, type AppConfig } from './api/config'
+import { initializeApplicationInsights } from './applicationInsights'
 
 const AppConfigContext = createContext<AppConfig | null>(null)
 
@@ -10,6 +11,7 @@ export function AppConfigProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchAppConfig()
       .then((c) => {
+        initializeApplicationInsights(c.applicationInsightsConnectionString)
         setConfig(c)
         document.title = c.gardenName
       })

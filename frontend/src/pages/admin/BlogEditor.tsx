@@ -59,7 +59,12 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
   const insertImage = async (file: File) => {
     try {
       const result = await uploadBlogImage(file)
-      editor.chain().focus().setImage({ src: result.url, alt: '', class: 'blog-img-medium' }).run()
+      editor
+        .chain()
+        .focus()
+        .setImage({ src: result.url, alt: '' })
+        .updateAttributes('image', { class: 'blog-img-medium' })
+        .run()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Upload failed')
     }
