@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { changePassword, fetchAdminMe, updateAdminMe } from '../../api/auth'
+import { changePassword, fetchMe, updateMe } from '../../api/auth'
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error'
 type PwStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -12,7 +12,7 @@ export default function AdminProfile() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchAdminMe()
+    fetchMe()
       .then((me) => {
         if (!me) {
           setStatus('error')
@@ -35,7 +35,7 @@ export default function AdminProfile() {
     setStatus('saving')
     setError(null)
     try {
-      const me = await updateAdminMe(firstName.trim() || null, lastName.trim() || null)
+      const me = await updateMe(firstName.trim() || null, lastName.trim() || null)
       setFirstName(me.firstName ?? '')
       setLastName(me.lastName ?? '')
       setStatus('saved')

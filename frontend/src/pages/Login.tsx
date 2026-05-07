@@ -1,18 +1,20 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { login, type AdminMe } from '../../api/auth'
-import { useAppConfig } from '../../AppConfigContext'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAppConfig } from '../AppConfigContext'
+import { useAuth } from '../AuthContext'
+import { login } from '../api/auth'
 
-interface AdminLoginProps {
-  onLoggedIn: () => Promise<AdminMe | null>
-}
-
-export default function AdminLogin({ onLoggedIn }: AdminLoginProps) {
+export default function Login() {
   const { gardenName } = useAppConfig()
+  const { refresh } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const next = new URLSearchParams(location.search).get('next')
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -20,10 +22,13 @@ export default function AdminLogin({ onLoggedIn }: AdminLoginProps) {
     setSubmitting(true)
     try {
       await login(email, password)
-      const me = await onLoggedIn()
+      const me = await refresh()
       if (!me) {
-        setError("This account doesn't have admin access.")
+        setError('Sign-in failed.')
+        return
       }
+      const destination = chooseDestination(me.isAdmin, next)
+      navigate(destination, { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign-in failed')
     } finally {
@@ -34,8 +39,8 @@ export default function AdminLogin({ onLoggedIn }: AdminLoginProps) {
   return (
     <main className="admin-login">
       <form className="card admin-login-card" onSubmit={handleSubmit} noValidate>
-        <h1 className="section-title">Admin sign-in</h1>
-        <p className="card-note">Sign in to manage {gardenName}.</p>
+        <h1 className="section-title">Sign in</h1>
+        <p className="card-note">Sign in to {gardenName}.</p>
 
         <label className="field">
           <span className="field-label">Email</span>
@@ -59,9 +64,7 @@ export default function AdminLogin({ onLoggedIn }: AdminLoginProps) {
           />
         </label>
 
-        {error && (
-          <div className="form-error" role="alert">{error}</div>
-        )}
+        {error && <div className="form-error" role="alert">{error}</div>}
 
         <button type="submit" className="primary-button" disabled={submitting}>
           {submitting ? 'Signing in…' : 'Sign in'}
@@ -73,4 +76,9 @@ export default function AdminLogin({ onLoggedIn }: AdminLoginProps) {
       </form>
     </main>
   )
+}
+
+function chooseDestination(isAdmin: boolean, next: string | null): string {
+  if (next && (isAdmin || !next.startsWith('/admin'))) return next
+  return isAdmin ? '/admin' : '/profile'
 }

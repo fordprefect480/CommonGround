@@ -264,7 +264,7 @@ textarea:focus {
   font-size: 0.9rem;
 }
 
-/* The `.card` class is used by AdminLogin's form panel */
+/* The `.card` class is used by the Login page form panel */
 .card {
   background: var(--ivory);
   border: 1px solid var(--ink-200);

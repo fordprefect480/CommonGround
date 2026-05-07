@@ -64,25 +64,27 @@ auth.MapPost("/logout", async (SignInManager<ApplicationUser> signInManager) =>
     return Results.NoContent();
 }).RequireAuthorization();
 
-var admin = app.MapGroup("/api/admin")
-    .RequireAuthorization(p => p.RequireRole(AdminRole));
+var account = app.MapGroup("/api/account").RequireAuthorization();
 
-admin.MapGet("/me", async (
+account.MapGet("/me", async (
     ClaimsPrincipal user,
     UserManager<ApplicationUser> userManager) =>
 {
     var current = await userManager.GetUserAsync(user);
+    if (current is null) return Results.Unauthorized();
+
+    var isAdmin = await userManager.IsInRoleAsync(current, AdminRole);
     return Results.Ok(new
     {
-        email = user.Identity?.Name,
-        firstName = current?.FirstName,
-        lastName = current?.LastName,
-        displayName = current?.DisplayName,
-        isAdmin = true,
+        email = current.Email,
+        firstName = current.FirstName,
+        lastName = current.LastName,
+        displayName = current.DisplayName,
+        isAdmin,
     });
 });
 
-admin.MapPut("/me", async (
+account.MapPut("/me", async (
     UpdateProfileDto input,
     ClaimsPrincipal user,
     UserManager<ApplicationUser> userManager) =>
@@ -97,15 +99,19 @@ admin.MapPut("/me", async (
     if (!result.Succeeded)
         return Results.BadRequest(new { error = string.Join("; ", result.Errors.Select(e => e.Description)) });
 
+    var isAdmin = await userManager.IsInRoleAsync(current, AdminRole);
     return Results.Ok(new
     {
-        email = user.Identity?.Name,
+        email = current.Email,
         firstName = current.FirstName,
         lastName = current.LastName,
         displayName = current.DisplayName,
-        isAdmin = true,
+        isAdmin,
     });
 });
+
+var admin = app.MapGroup("/api/admin")
+    .RequireAuthorization(p => p.RequireRole(AdminRole));
 
 admin.MapGet("/members", async (AppDbContext db) =>
 {

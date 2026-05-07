@@ -1,4 +1,4 @@
-export interface AdminMe {
+export interface Me {
   email: string
   firstName: string | null
   lastName: string | null
@@ -47,15 +47,15 @@ export async function logout(): Promise<void> {
   await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
 }
 
-export async function fetchAdminMe(): Promise<AdminMe | null> {
-  const res = await fetch('/api/admin/me', { credentials: 'include' })
+export async function fetchMe(): Promise<Me | null> {
+  const res = await fetch('/api/account/me', { credentials: 'include' })
   if (res.status === 401 || res.status === 403) return null
   if (!res.ok) throw new Error(`Unexpected status ${res.status}`)
   return res.json()
 }
 
-export async function updateAdminMe(firstName: string | null, lastName: string | null): Promise<AdminMe> {
-  const res = await fetch('/api/admin/me', {
+export async function updateMe(firstName: string | null, lastName: string | null): Promise<Me> {
+  const res = await fetch('/api/account/me', {
     method: 'PUT',
     headers: json,
     credentials: 'include',

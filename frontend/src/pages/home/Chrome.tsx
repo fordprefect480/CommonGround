@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../AuthContext'
 import { MSButton } from './Primitives'
 
 export type NavId =
@@ -139,9 +140,100 @@ export function MSHeader({ active, onNav }: ChromeProps) {
           >
             Join
           </MSButton>
+          <AuthChip />
         </nav>
       </div>
     </header>
+  )
+}
+
+function AuthChip() {
+  const { state, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  if (state.status !== 'authenticated') {
+    if (state.status === 'loading') return null
+    return (
+      <Link
+        to="/login"
+        style={{
+          fontFamily: 'var(--font-sans)',
+          fontWeight: 500,
+          fontSize: 13,
+          color: 'var(--ink-700)',
+          textDecoration: 'none',
+          padding: '7px 9px',
+          borderRadius: 'var(--r-md)',
+          marginLeft: 6,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Sign in
+      </Link>
+    )
+  }
+
+  const { me } = state
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/')
+  }
+
+  return (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
+      <Link
+        to="/profile"
+        style={{
+          fontFamily: 'var(--font-sans)',
+          fontWeight: 500,
+          fontSize: 13,
+          color: 'var(--ink-900)',
+          textDecoration: 'none',
+          padding: '7px 9px',
+          borderRadius: 'var(--r-md)',
+          background: 'var(--apple-100)',
+          whiteSpace: 'nowrap',
+        }}
+        title="Your profile"
+      >
+        {me.displayName ?? me.email}
+      </Link>
+      {me.isAdmin && (
+        <Link
+          to="/admin"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 500,
+            fontSize: 13,
+            color: 'var(--apple-700)',
+            textDecoration: 'none',
+            padding: '7px 9px',
+            borderRadius: 'var(--r-md)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Admin
+        </Link>
+      )}
+      <button
+        type="button"
+        onClick={handleSignOut}
+        style={{
+          fontFamily: 'var(--font-sans)',
+          fontWeight: 500,
+          fontSize: 13,
+          color: 'var(--ink-700)',
+          background: 'transparent',
+          border: 'none',
+          padding: '7px 9px',
+          borderRadius: 'var(--r-md)',
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Sign out
+      </button>
+    </span>
   )
 }
 

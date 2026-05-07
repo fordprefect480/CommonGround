@@ -1,43 +1,17 @@
-import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { fetchAdminMe, logout, type AdminMe } from '../../api/auth'
-import AdminLogin from './AdminLogin'
-
-type AuthState =
-  | { status: 'loading' }
-  | { status: 'anonymous' }
-  | { status: 'authenticated'; me: AdminMe }
+import { useAuth } from '../../AuthContext'
 
 export default function AdminLayout() {
-  const [auth, setAuth] = useState<AuthState>({ status: 'loading' })
+  const { state, signOut } = useAuth()
   const navigate = useNavigate()
 
-  const refresh = async (): Promise<AdminMe | null> => {
-    const me = await fetchAdminMe()
-    setAuth(me ? { status: 'authenticated', me } : { status: 'anonymous' })
-    return me
-  }
+  if (state.status !== 'authenticated') return null
 
-  useEffect(() => {
-    refresh().catch(() => setAuth({ status: 'anonymous' }))
-  }, [])
+  const me = state.me
 
   const handleLogout = async () => {
-    await logout()
-    setAuth({ status: 'anonymous' })
-    navigate('/admin')
-  }
-
-  if (auth.status === 'loading') {
-    return (
-      <main className="admin-shell">
-        <p className="admin-loading">Checking your session&hellip;</p>
-      </main>
-    )
-  }
-
-  if (auth.status === 'anonymous') {
-    return <AdminLogin onLoggedIn={refresh} />
+    await signOut()
+    navigate('/')
   }
 
   return (
@@ -65,7 +39,7 @@ export default function AdminLayout() {
             <NavLink to="/admin/blog" className="admin-nav-link">Blog</NavLink>
             <NavLink to="/admin/tools" className="admin-nav-link">Tools</NavLink>
             <NavLink to="/admin/profile" className="admin-nav-link" title="Edit profile">
-              {auth.me.displayName ?? auth.me.email}
+              {me.displayName ?? me.email}
             </NavLink>
             <button type="button" className="admin-logout" onClick={handleLogout}>
               Sign out

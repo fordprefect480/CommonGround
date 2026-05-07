@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MSFooter, MSHeader, type NavId } from './home/Chrome'
 import {
@@ -15,6 +15,17 @@ import {
 export default function Home() {
   const [active, setActive] = useState<NavId>('home')
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const hash = window.location.hash
+    if (!hash) return
+    const target = document.getElementById(hash.slice(1))
+    if (target) {
+      target.scrollIntoView({ behavior: 'instant', block: 'start' })
+      const sectionId = hash.slice(1).replace(/^section-/, '') as NavId
+      setActive(sectionId)
+    }
+  }, [])
 
   const handleNav = useCallback((id: NavId) => {
     if (id === 'blog') {
