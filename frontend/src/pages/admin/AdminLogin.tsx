@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { login } from '../../api/auth'
+import { login, type AdminMe } from '../../api/auth'
 import { useAppConfig } from '../../AppConfigContext'
 
 interface AdminLoginProps {
-  onLoggedIn: () => Promise<void>
+  onLoggedIn: () => Promise<AdminMe | null>
 }
 
 export default function AdminLogin({ onLoggedIn }: AdminLoginProps) {
@@ -20,7 +20,10 @@ export default function AdminLogin({ onLoggedIn }: AdminLoginProps) {
     setSubmitting(true)
     try {
       await login(email, password)
-      await onLoggedIn()
+      const me = await onLoggedIn()
+      if (!me) {
+        setError("This account doesn't have admin access.")
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign-in failed')
     } finally {

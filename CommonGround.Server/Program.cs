@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using ClosedXML.Excel;
 using CommonGround.Server.Blog;
 using CommonGround.Server.Blog.BlogImport;
 using CommonGround.Server.Configuration;
@@ -74,6 +75,8 @@ admin.MapGet("/me", async (
     return Results.Ok(new
     {
         email = user.Identity?.Name,
+        firstName = current?.FirstName,
+        lastName = current?.LastName,
         displayName = current?.DisplayName,
         isAdmin = true,
     });
@@ -87,8 +90,8 @@ admin.MapPut("/me", async (
     var current = await userManager.GetUserAsync(user);
     if (current is null) return Results.Unauthorized();
 
-    var trimmed = input.DisplayName?.Trim();
-    current.DisplayName = string.IsNullOrEmpty(trimmed) ? null : trimmed;
+    current.FirstName = NullIfBlank(input.FirstName);
+    current.LastName = NullIfBlank(input.LastName);
 
     var result = await userManager.UpdateAsync(current);
     if (!result.Succeeded)
@@ -97,6 +100,8 @@ admin.MapPut("/me", async (
     return Results.Ok(new
     {
         email = user.Identity?.Name,
+        firstName = current.FirstName,
+        lastName = current.LastName,
         displayName = current.DisplayName,
         isAdmin = true,
     });
@@ -118,11 +123,165 @@ admin.MapGet("/members", async (AppDbContext db) =>
 
     var members = users
         .Select(u => new MemberDto(
-            u.Id, u.Email, u.UserName, u.DisplayName, u.EmailConfirmed,
+            u.Id, u.Email, u.UserName, u.FirstName, u.LastName, u.DisplayName,
+            u.PhoneNumber, u.JoinedAt, u.EmailConfirmed,
             rolesByUser.GetValueOrDefault(u.Id, [])))
         .ToList();
 
     return Results.Ok(members);
+});
+
+admin.MapGet("/members/export.xlsx", async (AppDbContext db) =>
+{
+    var users = await db.Users.OrderBy(u => u.Email).ToListAsync();
+
+    var rolePairs = await (
+        from ur in db.UserRoles
+        join r in db.Roles on ur.RoleId equals r.Id
+        select new { ur.UserId, RoleName = r.Name! })
+        .ToListAsync();
+
+    var rolesByUser = rolePairs
+        .GroupBy(x => x.UserId)
+        .ToDictionary(g => g.Key, g => string.Join(", ", g.Select(x => x.RoleName).Order()));
+
+    using var wb = new XLWorkbook();
+    var ws = wb.Worksheets.Add("Members");
+
+    string[] headers = ["First name", "Last name", "Email", "Username", "Phone", "Member since", "Roles", "Email confirmed"];
+    for (var c = 0; c < headers.Length; c++)
+        ws.Cell(1, c + 1).Value = headers[c];
+    ws.Row(1).Style.Font.Bold = true;
+
+    for (var i = 0; i < users.Count; i++)
+    {
+        var u = users[i];
+        var row = i + 2;
+        ws.Cell(row, 1).Value = u.FirstName;
+        ws.Cell(row, 2).Value = u.LastName;
+        ws.Cell(row, 3).Value = u.Email;
+        ws.Cell(row, 4).Value = u.UserName;
+        ws.Cell(row, 5).Value = u.PhoneNumber;
+        ws.Cell(row, 6).Value = u.JoinedAt;
+        ws.Cell(row, 6).Style.DateFormat.Format = "yyyy-mm-dd";
+        ws.Cell(row, 7).Value = rolesByUser.GetValueOrDefault(u.Id, "");
+        ws.Cell(row, 8).Value = u.EmailConfirmed ? "Yes" : "No";
+    }
+
+    ws.Columns().AdjustToContents();
+
+    var stream = new MemoryStream();
+    wb.SaveAs(stream);
+    stream.Position = 0;
+
+    var fileName = $"members-{DateTime.UtcNow:yyyyMMdd-HHmmss}.xlsx";
+    return Results.File(
+        stream,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        fileName);
+});
+
+admin.MapGet("/members/{id}", async (
+    string id,
+    AppDbContext db,
+    UserManager<ApplicationUser> userManager) =>
+{
+    var user = await db.Users.FirstOrDefaultAsync(u => u.Id == id);
+    if (user is null) return Results.NotFound();
+
+    var roles = await userManager.GetRolesAsync(user);
+
+    return Results.Ok(new MemberDto(
+        user.Id, user.Email, user.UserName, user.FirstName, user.LastName, user.DisplayName,
+        user.PhoneNumber, user.JoinedAt, user.EmailConfirmed,
+        roles.ToArray()));
+});
+
+admin.MapPut("/members/{id}", async (
+    string id,
+    UpdateMemberDto input,
+    UserManager<ApplicationUser> userManager) =>
+{
+    var user = await userManager.FindByIdAsync(id);
+    if (user is null) return Results.NotFound();
+
+    user.FirstName = NullIfBlank(input.FirstName);
+    user.LastName = NullIfBlank(input.LastName);
+    user.PhoneNumber = NullIfBlank(input.PhoneNumber);
+
+    var updateResult = await userManager.UpdateAsync(user);
+    if (!updateResult.Succeeded)
+        return Results.BadRequest(new { error = string.Join("; ", updateResult.Errors.Select(e => e.Description)) });
+
+    var isAdmin = await userManager.IsInRoleAsync(user, AdminRole);
+    if (input.IsAdmin && !isAdmin)
+    {
+        var addResult = await userManager.AddToRoleAsync(user, AdminRole);
+        if (!addResult.Succeeded)
+            return Results.BadRequest(new { error = string.Join("; ", addResult.Errors.Select(e => e.Description)) });
+    }
+    else if (!input.IsAdmin && isAdmin)
+    {
+        var removeResult = await userManager.RemoveFromRoleAsync(user, AdminRole);
+        if (!removeResult.Succeeded)
+            return Results.BadRequest(new { error = string.Join("; ", removeResult.Errors.Select(e => e.Description)) });
+    }
+
+    var roles = await userManager.GetRolesAsync(user);
+
+    return Results.Ok(new MemberDto(
+        user.Id, user.Email, user.UserName, user.FirstName, user.LastName, user.DisplayName,
+        user.PhoneNumber, user.JoinedAt, user.EmailConfirmed,
+        roles.ToArray()));
+});
+
+admin.MapPost("/members", async (
+    CreateMemberDto input,
+    UserManager<ApplicationUser> userManager) =>
+{
+    if (string.IsNullOrWhiteSpace(input.Email))
+        return Results.BadRequest(new { error = "Email is required." });
+    if (string.IsNullOrWhiteSpace(input.Password))
+        return Results.BadRequest(new { error = "Password is required." });
+
+    var email = input.Email.Trim();
+
+    var user = new ApplicationUser
+    {
+        UserName = email,
+        Email = email,
+        EmailConfirmed = true,
+        FirstName = NullIfBlank(input.FirstName),
+        LastName = NullIfBlank(input.LastName),
+        PhoneNumber = NullIfBlank(input.PhoneNumber),
+    };
+
+    var createResult = await userManager.CreateAsync(user, input.Password);
+    if (!createResult.Succeeded)
+        return Results.BadRequest(new
+        {
+            error = string.Join("; ", createResult.Errors.Select(e => e.Description)),
+        });
+
+    var roles = new List<string>();
+    if (input.IsAdmin)
+    {
+        var roleResult = await userManager.AddToRoleAsync(user, AdminRole);
+        if (!roleResult.Succeeded)
+        {
+            await userManager.DeleteAsync(user);
+            return Results.BadRequest(new
+            {
+                error = string.Join("; ", roleResult.Errors.Select(e => e.Description)),
+            });
+        }
+        roles.Add(AdminRole);
+    }
+
+    return Results.Created(
+        $"/api/admin/members/{user.Id}",
+        new MemberDto(user.Id, user.Email, user.UserName, user.FirstName, user.LastName, user.DisplayName,
+            user.PhoneNumber, user.JoinedAt, user.EmailConfirmed, roles.ToArray()));
 });
 
 admin.MapAdminBlog();
@@ -149,7 +308,8 @@ static async Task SeedDevAdminAsync(IServiceProvider sp)
 
     var userManager = sp.GetRequiredService<UserManager<ApplicationUser>>();
     const string adminEmail = "admin@local";
-    const string adminDisplayName = "Site Admin";
+    const string adminFirstName = "Site";
+    const string adminLastName = "Admin";
     var admin = await userManager.FindByEmailAsync(adminEmail);
     if (admin is null)
     {
@@ -158,14 +318,16 @@ static async Task SeedDevAdminAsync(IServiceProvider sp)
             UserName = adminEmail,
             Email = adminEmail,
             EmailConfirmed = true,
-            DisplayName = adminDisplayName,
+            FirstName = adminFirstName,
+            LastName = adminLastName,
         };
         var result = await userManager.CreateAsync(admin, "Password123!");
         if (!result.Succeeded) return;
     }
-    else if (string.IsNullOrWhiteSpace(admin.DisplayName))
+    else if (string.IsNullOrWhiteSpace(admin.FirstName) && string.IsNullOrWhiteSpace(admin.LastName))
     {
-        admin.DisplayName = adminDisplayName;
+        admin.FirstName = adminFirstName;
+        admin.LastName = adminLastName;
         await userManager.UpdateAsync(admin);
     }
 
@@ -173,8 +335,16 @@ static async Task SeedDevAdminAsync(IServiceProvider sp)
         await userManager.AddToRoleAsync(admin, AdminRole);
 }
 
+static string? NullIfBlank(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
 internal record MemberDto(
-    string Id, string? Email, string? UserName, string? DisplayName,
+    string Id, string? Email, string? UserName,
+    string? FirstName, string? LastName, string? DisplayName,
+    string? PhoneNumber, DateTime JoinedAt,
     bool EmailConfirmed, string[] Roles);
 
-internal record UpdateProfileDto(string? DisplayName);
+internal record UpdateProfileDto(string? FirstName, string? LastName);
+
+internal record CreateMemberDto(string Email, string? FirstName, string? LastName, string? PhoneNumber, string Password, bool IsAdmin);
+
+internal record UpdateMemberDto(string? FirstName, string? LastName, string? PhoneNumber, bool IsAdmin);

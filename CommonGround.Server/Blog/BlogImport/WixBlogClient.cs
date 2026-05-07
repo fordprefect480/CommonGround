@@ -22,7 +22,7 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
 {
     private string SiteRoot => config["WixSiteRoot"] ?? "https://www.seafordwetlandscommunitygarden.com";
 
-    [GeneratedRegex(@"/v1/[^/]+/")]
+    [GeneratedRegex(@"/([^/?]+\.\w+)/[^?]+/\1")]
     private static partial Regex WixTransformSegment();
 
     private static readonly HashSet<string> DroppedHooks = new(StringComparer.OrdinalIgnoreCase)
@@ -103,7 +103,7 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
 
         string? coverImageUrl = null;
         if (!string.IsNullOrWhiteSpace(ogImage))
-            coverImageUrl = WixTransformSegment().Replace(ogImage, "/").TrimEnd('/');
+            coverImageUrl = WixTransformSegment().Replace(ogImage, "/$1");
 
         var article = document.QuerySelector("article");
         if (article is null) return null;
@@ -317,7 +317,7 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
         var rawSrc = img.GetAttribute("src") ?? img.GetAttribute("data-src") ?? "";
         if (string.IsNullOrWhiteSpace(rawSrc)) return;
 
-        var cleanSrc = WixTransformSegment().Replace(rawSrc, "/").TrimEnd('/');
+        var cleanSrc = WixTransformSegment().Replace(rawSrc, "/$1");
         var alt = System.Net.WebUtility.HtmlEncode(img.GetAttribute("alt") ?? "");
         sb.Append($"<img src=\"{System.Net.WebUtility.HtmlEncode(cleanSrc)}\" alt=\"{alt}\">");
 

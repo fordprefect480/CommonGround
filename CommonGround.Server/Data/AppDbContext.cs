@@ -13,6 +13,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     {
         base.OnModelCreating(builder);
 
+        builder.Entity<ApplicationUser>(b =>
+        {
+            b.Property(u => u.JoinedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+        });
+
         builder.Entity<BlogCategory>(b =>
         {
             b.Property(x => x.Name).HasMaxLength(50).IsRequired();

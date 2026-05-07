@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
-import { fetchAdminMe, updateAdminMe } from '../../api/auth'
+import { changePassword, fetchAdminMe, updateAdminMe } from '../../api/auth'
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error'
+type PwStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export default function AdminProfile() {
   const [email, setEmail] = useState('')
-  const [displayName, setDisplayName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [status, setStatus] = useState<Status>('loading')
   const [error, setError] = useState<string | null>(null)
 
@@ -18,7 +20,8 @@ export default function AdminProfile() {
           return
         }
         setEmail(me.email)
-        setDisplayName(me.displayName ?? '')
+        setFirstName(me.firstName ?? '')
+        setLastName(me.lastName ?? '')
         setStatus('idle')
       })
       .catch((err: unknown) => {
@@ -32,9 +35,9 @@ export default function AdminProfile() {
     setStatus('saving')
     setError(null)
     try {
-      const trimmed = displayName.trim()
-      const me = await updateAdminMe(trimmed.length === 0 ? null : trimmed)
-      setDisplayName(me.displayName ?? '')
+      const me = await updateAdminMe(firstName.trim() || null, lastName.trim() || null)
+      setFirstName(me.firstName ?? '')
+      setLastName(me.lastName ?? '')
       setStatus('saved')
     } catch (err) {
       setStatus('error')
@@ -43,6 +46,11 @@ export default function AdminProfile() {
   }
 
   if (status === 'loading') return <p className="admin-loading">Loading&hellip;</p>
+
+  const onNameChange = (setter: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setter(e.target.value)
+    if (status === 'saved') setStatus('idle')
+  }
 
   return (
     <section className="admin-page" aria-labelledby="profile-heading">
@@ -59,15 +67,20 @@ export default function AdminProfile() {
         </label>
 
         <label className="field">
-          <span className="field-label">Display name</span>
+          <span className="field-label">First name</span>
           <input
-            value={displayName}
-            onChange={(e) => {
-              setDisplayName(e.target.value)
-              if (status === 'saved') setStatus('idle')
-            }}
+            value={firstName}
+            onChange={onNameChange(setFirstName)}
             maxLength={100}
-            placeholder="Shown as the author on blog posts"
+          />
+        </label>
+
+        <label className="field">
+          <span className="field-label">Last name</span>
+          <input
+            value={lastName}
+            onChange={onNameChange(setLastName)}
+            maxLength={100}
           />
         </label>
 
@@ -82,6 +95,99 @@ export default function AdminProfile() {
           {status === 'saved' && <span className="admin-whoami">Saved.</span>}
         </div>
       </form>
+
+      <ChangePasswordForm />
     </section>
+  )
+}
+
+function ChangePasswordForm() {
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [status, setStatus] = useState<PwStatus>('idle')
+  const [error, setError] = useState<string | null>(null)
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    if (next !== confirm) {
+      setStatus('error')
+      setError('New password and confirmation do not match.')
+      return
+    }
+
+    setStatus('saving')
+    try {
+      await changePassword(current, next)
+      setCurrent('')
+      setNext('')
+      setConfirm('')
+      setStatus('saved')
+    } catch (err) {
+      setStatus('error')
+      setError(err instanceof Error ? err.message : 'Password change failed')
+    }
+  }
+
+  const onChange = (setter: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setter(e.target.value)
+    if (status === 'saved' || status === 'error') {
+      setStatus('idle')
+      setError(null)
+    }
+  }
+
+  return (
+    <form className="card admin-form" onSubmit={submit}>
+      <h2 className="section-title">Change password</h2>
+
+      {error && <div className="form-error" role="alert">{error}</div>}
+
+      <label className="field">
+        <span className="field-label">Current password</span>
+        <input
+          type="password"
+          required
+          autoComplete="current-password"
+          value={current}
+          onChange={onChange(setCurrent)}
+        />
+      </label>
+
+      <label className="field">
+        <span className="field-label">New password</span>
+        <input
+          type="password"
+          required
+          autoComplete="new-password"
+          value={next}
+          onChange={onChange(setNext)}
+        />
+      </label>
+
+      <label className="field">
+        <span className="field-label">Confirm new password</span>
+        <input
+          type="password"
+          required
+          autoComplete="new-password"
+          value={confirm}
+          onChange={onChange(setConfirm)}
+        />
+      </label>
+
+      <div className="admin-actions">
+        <button
+          type="submit"
+          className="primary-button"
+          disabled={status === 'saving'}
+        >
+          {status === 'saving' ? 'Updating…' : 'Update password'}
+        </button>
+        {status === 'saved' && <span className="admin-whoami">Password updated.</span>}
+      </div>
+    </form>
   )
 }
