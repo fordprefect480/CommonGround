@@ -29,6 +29,7 @@ public sealed class GetMeEndpoint(UserManager<ApplicationUser> userManager)
             current.FirstName,
             current.LastName,
             current.DisplayName,
-            isAdmin), ct);
+            isAdmin,
+            current.IsSubscribedToMailingList), ct);
     }
 }

@@ -16,6 +16,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<ApplicationUser>(b =>
         {
             b.Property(u => u.JoinedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+            b.Property(u => u.IsSubscribedToMailingList).HasDefaultValue(true);
         });
 
         builder.Entity<BlogCategory>(b =>

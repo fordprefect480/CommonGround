@@ -15,6 +15,7 @@ public sealed class UpdateMemberEndpoint(UserManager<ApplicationUser> userManage
         public string? LastName { get; set; }
         public string? PhoneNumber { get; set; }
         public bool IsAdmin { get; set; }
+        public bool IsSubscribedToMailingList { get; set; }
     }
 
     public override void Configure()
@@ -35,6 +36,7 @@ public sealed class UpdateMemberEndpoint(UserManager<ApplicationUser> userManage
         user.FirstName = MemberHelpers.NullIfBlank(req.FirstName);
         user.LastName = MemberHelpers.NullIfBlank(req.LastName);
         user.PhoneNumber = MemberHelpers.NullIfBlank(req.PhoneNumber);
+        user.IsSubscribedToMailingList = req.IsSubscribedToMailingList;
 
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
@@ -67,7 +69,7 @@ public sealed class UpdateMemberEndpoint(UserManager<ApplicationUser> userManage
 
         await Send.OkAsync(new MemberDto(
             user.Id, user.Email, user.UserName, user.FirstName, user.LastName, user.DisplayName,
-            user.PhoneNumber, user.JoinedAt, user.EmailConfirmed,
+            user.PhoneNumber, user.JoinedAt, user.EmailConfirmed, user.IsSubscribedToMailingList,
             roles.ToArray()), ct);
     }
 

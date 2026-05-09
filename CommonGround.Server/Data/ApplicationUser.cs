@@ -14,6 +14,8 @@ public class ApplicationUser : IdentityUser
 
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
+    public bool IsSubscribedToMailingList { get; set; } = true;
+
     [NotMapped]
     public string? DisplayName => Compose(FirstName, LastName);
 

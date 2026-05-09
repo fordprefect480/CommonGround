@@ -16,6 +16,7 @@ interface FormState {
   phoneNumber: string
   password: string
   isAdmin: boolean
+  isSubscribedToMailingList: boolean
 }
 
 const EMPTY_FORM: FormState = {
@@ -25,6 +26,7 @@ const EMPTY_FORM: FormState = {
   phoneNumber: '',
   password: '',
   isAdmin: false,
+  isSubscribedToMailingList: true,
 }
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
@@ -75,6 +77,7 @@ export default function Members() {
         phoneNumber: form.phoneNumber.trim() || null,
         password: form.password,
         isAdmin: form.isAdmin,
+        isSubscribedToMailingList: form.isSubscribedToMailingList,
       })
       cancelAdd()
       await reload()
@@ -169,6 +172,15 @@ export default function Members() {
             <span>Make administrator</span>
           </label>
 
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={form.isSubscribedToMailingList}
+              onChange={(e) => updateForm({ isSubscribedToMailingList: e.target.checked })}
+            />
+            <span>Subscribe to mailing list</span>
+          </label>
+
           <div className="admin-actions">
             <button type="submit" className="primary-button" disabled={submitting}>
               {submitting ? 'Creating…' : 'Create user'}
@@ -211,6 +223,7 @@ function MembersTable({ members }: { members: Member[] }) {
             <th scope="col">Member since</th>
             <th scope="col">Is admin</th>
             <th scope="col">Email confirmed</th>
+            <th scope="col">Mailing list</th>
           </tr>
         </thead>
         <tbody>
@@ -234,6 +247,11 @@ function MembersTable({ members }: { members: Member[] }) {
                 <td>
                   <span className={member.emailConfirmed ? 'pill pill-ok' : 'pill pill-warn'}>
                     {member.emailConfirmed ? 'Yes' : 'No'}
+                  </span>
+                </td>
+                <td>
+                  <span className={member.isSubscribedToMailingList ? 'pill pill-ok' : 'pill'}>
+                    {member.isSubscribedToMailingList ? 'Subscribed' : 'Unsubscribed'}
                   </span>
                 </td>
               </tr>

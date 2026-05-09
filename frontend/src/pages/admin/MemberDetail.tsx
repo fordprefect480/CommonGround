@@ -14,6 +14,7 @@ interface FormState {
   lastName: string
   phoneNumber: string
   isAdmin: boolean
+  isSubscribedToMailingList: boolean
 }
 
 const dateFormatter = new Intl.DateTimeFormat('en-AU', {
@@ -33,6 +34,7 @@ function memberToForm(member: Member): FormState {
     lastName: member.lastName ?? '',
     phoneNumber: member.phoneNumber ?? '',
     isAdmin: member.roles.includes(ADMIN_ROLE),
+    isSubscribedToMailingList: member.isSubscribedToMailingList,
   }
 }
 
@@ -91,6 +93,7 @@ export default function MemberDetail() {
         lastName: form.lastName.trim() || null,
         phoneNumber: form.phoneNumber.trim() || null,
         isAdmin: form.isAdmin,
+        isSubscribedToMailingList: form.isSubscribedToMailingList,
       })
       setState({ status: 'ready', member: updated })
       setForm(memberToForm(updated))
@@ -158,6 +161,15 @@ export default function MemberDetail() {
             onChange={(e) => updateForm({ isAdmin: e.target.checked })}
           />
           <span>Administrator</span>
+        </label>
+
+        <label className="checkbox-field">
+          <input
+            type="checkbox"
+            checked={form.isSubscribedToMailingList}
+            onChange={(e) => updateForm({ isSubscribedToMailingList: e.target.checked })}
+          />
+          <span>Subscribed to mailing list</span>
         </label>
 
         <div className="admin-actions">

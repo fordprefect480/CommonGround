@@ -31,7 +31,7 @@ public sealed class ExportMembersEndpoint(AppDbContext db) : EndpointWithoutRequ
         using var wb = new XLWorkbook();
         var ws = wb.Worksheets.Add("Members");
 
-        string[] headers = ["First name", "Last name", "Email", "Username", "Phone", "Member since", "Roles", "Email confirmed"];
+        string[] headers = ["First name", "Last name", "Email", "Username", "Phone", "Member since", "Roles", "Email confirmed", "Subscribed to mailing list"];
         for (var c = 0; c < headers.Length; c++)
             ws.Cell(1, c + 1).Value = headers[c];
         ws.Row(1).Style.Font.Bold = true;
@@ -49,6 +49,7 @@ public sealed class ExportMembersEndpoint(AppDbContext db) : EndpointWithoutRequ
             ws.Cell(row, 6).Style.DateFormat.Format = "yyyy-mm-dd";
             ws.Cell(row, 7).Value = rolesByUser.GetValueOrDefault(u.Id, "");
             ws.Cell(row, 8).Value = u.EmailConfirmed ? "Yes" : "No";
+            ws.Cell(row, 9).Value = u.IsSubscribedToMailingList ? "Yes" : "No";
         }
 
         ws.Columns().AdjustToContents();

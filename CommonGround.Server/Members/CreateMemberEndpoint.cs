@@ -37,6 +37,7 @@ public sealed class CreateMemberEndpoint(UserManager<ApplicationUser> userManage
             FirstName = MemberHelpers.NullIfBlank(req.FirstName),
             LastName = MemberHelpers.NullIfBlank(req.LastName),
             PhoneNumber = MemberHelpers.NullIfBlank(req.PhoneNumber),
+            IsSubscribedToMailingList = req.IsSubscribedToMailingList,
         };
 
         var createResult = await userManager.CreateAsync(user, req.Password);
@@ -61,7 +62,8 @@ public sealed class CreateMemberEndpoint(UserManager<ApplicationUser> userManage
 
         var dto = new MemberDto(
             user.Id, user.Email, user.UserName, user.FirstName, user.LastName, user.DisplayName,
-            user.PhoneNumber, user.JoinedAt, user.EmailConfirmed, roles.ToArray());
+            user.PhoneNumber, user.JoinedAt, user.EmailConfirmed, user.IsSubscribedToMailingList,
+            roles.ToArray());
 
         await Send.ResultAsync(Results.Created($"/api/admin/members/{user.Id}", dto));
     }

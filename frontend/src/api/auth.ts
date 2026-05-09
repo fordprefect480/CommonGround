@@ -4,6 +4,7 @@ export interface Me {
   lastName: string | null
   displayName: string | null
   isAdmin: boolean
+  isSubscribedToMailingList: boolean
 }
 
 export interface Member {
@@ -16,6 +17,7 @@ export interface Member {
   phoneNumber: string | null
   joinedAt: string
   emailConfirmed: boolean
+  isSubscribedToMailingList: boolean
   roles: string[]
 }
 
@@ -54,12 +56,18 @@ export async function fetchMe(): Promise<Me | null> {
   return res.json()
 }
 
-export async function updateMe(firstName: string | null, lastName: string | null): Promise<Me> {
+export interface UpdateMeInput {
+  firstName: string | null
+  lastName: string | null
+  isSubscribedToMailingList: boolean
+}
+
+export async function updateMe(input: UpdateMeInput): Promise<Me> {
   const res = await fetch('/api/account/me', {
     method: 'PUT',
     headers: json,
     credentials: 'include',
-    body: JSON.stringify({ firstName, lastName }),
+    body: JSON.stringify(input),
   })
   if (!res.ok) throw new Error(await res.text())
   return res.json()
@@ -109,6 +117,7 @@ export interface CreateMemberInput {
   phoneNumber: string | null
   password: string
   isAdmin: boolean
+  isSubscribedToMailingList: boolean
 }
 
 export async function createMember(input: CreateMemberInput): Promise<Member> {
@@ -133,6 +142,7 @@ export interface UpdateMemberInput {
   lastName: string | null
   phoneNumber: string | null
   isAdmin: boolean
+  isSubscribedToMailingList: boolean
 }
 
 export async function updateMember(id: string, input: UpdateMemberInput): Promise<Member> {

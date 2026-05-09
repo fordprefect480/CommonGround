@@ -5,6 +5,10 @@ public record MeDto(
     string? FirstName,
     string? LastName,
     string? DisplayName,
-    bool IsAdmin);
+    bool IsAdmin,
+    bool IsSubscribedToMailingList);
 
-public record UpdateProfileDto(string? FirstName, string? LastName);
+public record UpdateProfileDto(
+    string? FirstName,
+    string? LastName,
+    bool IsSubscribedToMailingList);

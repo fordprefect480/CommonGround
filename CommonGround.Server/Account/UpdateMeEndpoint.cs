@@ -24,6 +24,7 @@ public sealed class UpdateMeEndpoint(UserManager<ApplicationUser> userManager)
 
         current.FirstName = NullIfBlank(req.FirstName);
         current.LastName = NullIfBlank(req.LastName);
+        current.IsSubscribedToMailingList = req.IsSubscribedToMailingList;
 
         var result = await userManager.UpdateAsync(current);
         if (!result.Succeeded)
@@ -42,7 +43,8 @@ public sealed class UpdateMeEndpoint(UserManager<ApplicationUser> userManager)
             current.FirstName,
             current.LastName,
             current.DisplayName,
-            isAdmin), ct);
+            isAdmin,
+            current.IsSubscribedToMailingList), ct);
     }
 
     private static string? NullIfBlank(string? s) =>

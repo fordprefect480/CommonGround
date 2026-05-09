@@ -8,6 +8,7 @@ export default function AdminProfile() {
   const [email, setEmail] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [isSubscribedToMailingList, setIsSubscribedToMailingList] = useState(true)
   const [status, setStatus] = useState<Status>('loading')
   const [error, setError] = useState<string | null>(null)
 
@@ -22,6 +23,7 @@ export default function AdminProfile() {
         setEmail(me.email)
         setFirstName(me.firstName ?? '')
         setLastName(me.lastName ?? '')
+        setIsSubscribedToMailingList(me.isSubscribedToMailingList)
         setStatus('idle')
       })
       .catch((err: unknown) => {
@@ -35,9 +37,14 @@ export default function AdminProfile() {
     setStatus('saving')
     setError(null)
     try {
-      const me = await updateMe(firstName.trim() || null, lastName.trim() || null)
+      const me = await updateMe({
+        firstName: firstName.trim() || null,
+        lastName: lastName.trim() || null,
+        isSubscribedToMailingList,
+      })
       setFirstName(me.firstName ?? '')
       setLastName(me.lastName ?? '')
+      setIsSubscribedToMailingList(me.isSubscribedToMailingList)
       setStatus('saved')
     } catch (err) {
       setStatus('error')
@@ -49,6 +56,11 @@ export default function AdminProfile() {
 
   const onNameChange = (setter: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setter(e.target.value)
+    if (status === 'saved') setStatus('idle')
+  }
+
+  const onSubscriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsSubscribedToMailingList(e.target.checked)
     if (status === 'saved') setStatus('idle')
   }
 
@@ -82,6 +94,15 @@ export default function AdminProfile() {
             onChange={onNameChange(setLastName)}
             maxLength={100}
           />
+        </label>
+
+        <label className="checkbox-field">
+          <input
+            type="checkbox"
+            checked={isSubscribedToMailingList}
+            onChange={onSubscriptionChange}
+          />
+          <span>Subscribe to mailing list</span>
         </label>
 
         <div className="admin-actions">

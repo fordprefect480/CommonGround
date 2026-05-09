@@ -10,6 +10,7 @@ public record MemberDto(
     string? PhoneNumber,
     DateTime JoinedAt,
     bool EmailConfirmed,
+    bool IsSubscribedToMailingList,
     string[] Roles);
 
 public record CreateMemberDto(
@@ -18,7 +19,8 @@ public record CreateMemberDto(
     string? LastName,
     string? PhoneNumber,
     string Password,
-    bool IsAdmin);
+    bool IsAdmin,
+    bool IsSubscribedToMailingList);
 
 internal static class MemberHelpers
 {
