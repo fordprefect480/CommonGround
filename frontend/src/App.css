@@ -456,6 +456,83 @@ button.footer-link:disabled {
   background: var(--apple-50);
 }
 
+.admin-user-menu {
+  position: relative;
+  margin-left: 6px;
+}
+
+.admin-user-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--ink-900);
+  background: var(--apple-100);
+  border: none;
+  padding: 7px 9px;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+
+.admin-user-menu-trigger:hover {
+  background: var(--apple-200, var(--apple-100));
+  color: var(--apple-700);
+}
+
+.admin-user-menu-chevron {
+  display: inline-block;
+  font-size: 10px;
+  line-height: 1;
+  transition: transform var(--dur-1) var(--ease-out);
+}
+
+.admin-user-menu-trigger[aria-expanded="true"] .admin-user-menu-chevron {
+  transform: rotate(180deg);
+}
+
+.admin-user-menu-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 180px;
+  background: var(--paper, #fff);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--r-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-user-menu-item {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--ink-900);
+  text-decoration: none;
+  padding: 9px 12px;
+  border-radius: var(--r-sm, 6px);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  display: block;
+  width: 100%;
+  transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+
+.admin-user-menu-item:hover {
+  background: var(--apple-50);
+  color: var(--apple-700);
+}
+
 .admin-main {
   flex: 1;
   width: 100%;

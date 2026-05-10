@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
 import { MSButton } from './Primitives'
@@ -150,6 +151,24 @@ export function MSHeader({ active, onNav }: ChromeProps) {
 function AuthChip() {
   const { state, signOut } = useAuth()
   const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
 
   if (state.status !== 'authenticated') {
     if (state.status === 'loading') return null
@@ -175,65 +194,117 @@ function AuthChip() {
 
   const { me } = state
   const handleSignOut = async () => {
+    setOpen(false)
     await signOut()
     navigate('/')
   }
 
+  const itemStyle: React.CSSProperties = {
+    fontFamily: 'var(--font-sans)',
+    fontWeight: 500,
+    fontSize: 13,
+    color: 'var(--ink-900)',
+    textDecoration: 'none',
+    padding: '9px 12px',
+    borderRadius: 'var(--r-sm, 6px)',
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    textAlign: 'left',
+    whiteSpace: 'nowrap',
+    display: 'block',
+    width: '100%',
+  }
+
   return (
-    <span style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
-      <Link
-        to="/profile"
+    <div
+      ref={wrapperRef}
+      style={{ position: 'relative', marginLeft: 6 }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="Account menu"
         style={{
           fontFamily: 'var(--font-sans)',
           fontWeight: 500,
           fontSize: 13,
           color: 'var(--ink-900)',
-          textDecoration: 'none',
-          padding: '7px 9px',
-          borderRadius: 'var(--r-md)',
           background: 'var(--apple-100)',
-          whiteSpace: 'nowrap',
-        }}
-        title="Your profile"
-      >
-        {me.displayName ?? me.email}
-      </Link>
-      {me.isAdmin && (
-        <Link
-          to="/admin"
-          style={{
-            fontFamily: 'var(--font-sans)',
-            fontWeight: 500,
-            fontSize: 13,
-            color: 'var(--apple-700)',
-            textDecoration: 'none',
-            padding: '7px 9px',
-            borderRadius: 'var(--r-md)',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Admin
-        </Link>
-      )}
-      <button
-        type="button"
-        onClick={handleSignOut}
-        style={{
-          fontFamily: 'var(--font-sans)',
-          fontWeight: 500,
-          fontSize: 13,
-          color: 'var(--ink-700)',
-          background: 'transparent',
           border: 'none',
           padding: '7px 9px',
           borderRadius: 'var(--r-md)',
           cursor: 'pointer',
           whiteSpace: 'nowrap',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
         }}
       >
-        Sign out
+        {me.displayName ?? me.email}
+        <span
+          aria-hidden="true"
+          style={{
+            display: 'inline-block',
+            transition: 'transform 120ms var(--ease-out)',
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            fontSize: 10,
+            lineHeight: 1,
+          }}
+        >
+          ▾
+        </span>
       </button>
-    </span>
+      {open && (
+        <div
+          role="menu"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            right: 0,
+            minWidth: 180,
+            background: 'var(--paper, #fff)',
+            border: '1px solid var(--ink-100)',
+            borderRadius: 'var(--r-md)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+            padding: 4,
+            zIndex: 60,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
+          <Link
+            to="/profile"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            style={itemStyle}
+          >
+            Profile
+          </Link>
+          {me.isAdmin && (
+            <Link
+              to="/admin"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              style={{ ...itemStyle, color: 'var(--apple-700)' }}
+            >
+              Admin
+            </Link>
+          )}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={handleSignOut}
+            style={{ ...itemStyle, color: 'var(--ink-700)' }}
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 

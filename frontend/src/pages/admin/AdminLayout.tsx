@@ -1,15 +1,35 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
 
 export default function AdminLayout() {
   const { state, signOut } = useAuth()
   const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false)
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [menuOpen])
 
   if (state.status !== 'authenticated') return null
 
   const me = state.me
 
   const handleLogout = async () => {
+    setMenuOpen(false)
     await signOut()
     navigate('/')
   }
@@ -40,12 +60,39 @@ export default function AdminLayout() {
             <NavLink to="/admin/blog" className="admin-nav-link">Blog</NavLink>
             <NavLink to="/admin/tools" className="admin-nav-link">Tools</NavLink>
             <NavLink to="/admin/activity" className="admin-nav-link">Activity</NavLink>
-            <NavLink to="/admin/profile" className="admin-nav-link" title="Edit profile">
-              {me.displayName ?? me.email}
-            </NavLink>
-            <button type="button" className="admin-logout" onClick={handleLogout}>
-              Sign out
-            </button>
+            <div ref={menuRef} className="admin-user-menu">
+              <button
+                type="button"
+                className="admin-user-menu-trigger"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                title="Account menu"
+                onClick={() => setMenuOpen((v) => !v)}
+              >
+                {me.displayName ?? me.email}
+                <span aria-hidden="true" className="admin-user-menu-chevron">▾</span>
+              </button>
+              {menuOpen && (
+                <div role="menu" className="admin-user-menu-panel">
+                  <Link
+                    to="/admin/profile"
+                    role="menuitem"
+                    className="admin-user-menu-item"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="admin-user-menu-item"
+                    onClick={handleLogout}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
           </nav>
         </div>
       </header>
