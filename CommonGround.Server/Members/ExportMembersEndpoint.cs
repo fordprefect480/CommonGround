@@ -31,7 +31,7 @@ public sealed class ExportMembersEndpoint(AppDbContext db) : EndpointWithoutRequ
         using var wb = new XLWorkbook();
         var ws = wb.Worksheets.Add("Members");
 
-        string[] headers = ["First name", "Last name", "Email", "Username", "Phone", "Member since", "Roles", "Email confirmed", "Subscribed to mailing list"];
+        string[] headers = ["First name", "Last name", "Email", "Username", "Phone", "Member since", "Roles", "Email confirmed", "Subscribed to newsletter"];
         for (var c = 0; c < headers.Length; c++)
             ws.Cell(1, c + 1).Value = headers[c];
         ws.Row(1).Style.Font.Bold = true;

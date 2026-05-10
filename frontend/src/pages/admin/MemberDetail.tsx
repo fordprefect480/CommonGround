@@ -169,7 +169,7 @@ export default function MemberDetail() {
             checked={form.isSubscribedToMailingList}
             onChange={(e) => updateForm({ isSubscribedToMailingList: e.target.checked })}
           />
-          <span>Subscribed to mailing list</span>
+          <span>Subscribed to newsletter</span>
         </label>
 
         <div className="admin-actions">

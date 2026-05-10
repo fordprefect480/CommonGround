@@ -36,7 +36,6 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
         "time-to-read",
         "post-title",
         "user-name",
-        "post-description",
     };
 
     private static readonly HashSet<string> PassthroughTags = new(StringComparer.OrdinalIgnoreCase)
@@ -260,6 +259,8 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
         if (DroppedHooks.Contains(hook)) return;
 
         var tagName = el.TagName.ToUpperInvariant();
+
+        if (tagName is "HEADER" or "FOOTER" or "BUTTON" or "SVG" or "NAV") return;
 
         if (string.Equals(hook, "figure-IMAGE", StringComparison.OrdinalIgnoreCase))
         {

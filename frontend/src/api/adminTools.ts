@@ -6,7 +6,12 @@ export interface ImportBlogResult {
 }
 
 async function postJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { method: 'POST', credentials: 'include' })
+  const res = await fetch(url, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}',
+  })
   if (!res.ok) throw new Error(await res.text())
   return res.json()
 }
