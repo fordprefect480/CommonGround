@@ -1,3 +1,4 @@
+using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
 using CommonGround.Server.Data;
 using FastEndpoints;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CommonGround.Server.Blog.Admin;
 
-public sealed class DeleteBlogPostEndpoint(AppDbContext db)
+public sealed class DeleteBlogPostEndpoint(AppDbContext db, IActivityLogger activityLogger)
     : Endpoint<DeleteBlogPostEndpoint.Request>
 {
     public sealed class Request
@@ -28,8 +29,19 @@ public sealed class DeleteBlogPostEndpoint(AppDbContext db)
             return;
         }
 
+        var deletedTitle = post.Title;
+        var deletedId = post.Id;
+
         db.BlogPosts.Remove(post);
         await db.SaveChangesAsync(ct);
+
+        await activityLogger.LogAsync(
+            "blog.post_deleted",
+            $"Deleted blog post '{deletedTitle}'",
+            targetType: "BlogPost",
+            targetId: deletedId.ToString(),
+            ct: ct);
+
         await Send.NoContentAsync(ct);
     }
 }

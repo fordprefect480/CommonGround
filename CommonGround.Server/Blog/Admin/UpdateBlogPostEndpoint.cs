@@ -1,3 +1,4 @@
+using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
 using CommonGround.Server.Data;
 using FastEndpoints;
@@ -5,7 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CommonGround.Server.Blog.Admin;
 
-public sealed class UpdateBlogPostEndpoint(AppDbContext db, BlogHtmlSanitizer sanitizer)
+public sealed class UpdateBlogPostEndpoint(
+    AppDbContext db,
+    BlogHtmlSanitizer sanitizer,
+    IActivityLogger activityLogger)
     : Endpoint<UpdateBlogPostEndpoint.Request, BlogPostAdminDto>
 {
     public sealed class Request
@@ -83,6 +87,13 @@ public sealed class UpdateBlogPostEndpoint(AppDbContext db, BlogHtmlSanitizer sa
             await Send.ResultAsync(Results.Conflict(new { error = $"Slug '{requestedSlug}' is already in use." }));
             return;
         }
+
+        await activityLogger.LogAsync(
+            "blog.post_updated",
+            $"Updated blog post '{post.Title}' ({post.Status})",
+            targetType: "BlogPost",
+            targetId: post.Id.ToString(),
+            ct: ct);
 
         await Send.OkAsync(BlogPostMapping.ToAdminDto(post), ct);
     }

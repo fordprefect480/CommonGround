@@ -1,4 +1,5 @@
 using ClosedXML.Excel;
+using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
 using CommonGround.Server.Data;
 using FastEndpoints;
@@ -6,7 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CommonGround.Server.Members;
 
-public sealed class ExportMembersEndpoint(AppDbContext db) : EndpointWithoutRequest
+public sealed class ExportMembersEndpoint(
+    AppDbContext db,
+    IActivityLogger activityLogger) : EndpointWithoutRequest
 {
     public override void Configure()
     {
@@ -58,6 +61,13 @@ public sealed class ExportMembersEndpoint(AppDbContext db) : EndpointWithoutRequ
         wb.SaveAs(stream);
 
         var fileName = $"members-{DateTime.UtcNow:yyyyMMdd-HHmmss}.xlsx";
+
+        await activityLogger.LogAsync(
+            "tool.members_exported",
+            $"Exported {users.Count} member(s) to {fileName}",
+            details: new { Count = users.Count, FileName = fileName },
+            ct: ct);
+
         await Send.BytesAsync(
             stream.ToArray(),
             fileName,

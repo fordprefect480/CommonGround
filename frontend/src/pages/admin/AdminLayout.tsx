@@ -38,6 +38,7 @@ export default function AdminLayout() {
             <NavLink to="/admin/members" className="admin-nav-link">Members</NavLink>
             <NavLink to="/admin/blog" className="admin-nav-link">Blog</NavLink>
             <NavLink to="/admin/tools" className="admin-nav-link">Tools</NavLink>
+            <NavLink to="/admin/activity" className="admin-nav-link">Activity</NavLink>
             <NavLink to="/admin/profile" className="admin-nav-link" title="Edit profile">
               {me.displayName ?? me.email}
             </NavLink>

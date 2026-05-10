@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './AuthContext'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Profile from './pages/Profile'
+import Activity from './pages/admin/Activity'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminProfile from './pages/admin/AdminProfile'
 import AdminTools from './pages/admin/AdminTools'
@@ -48,6 +49,7 @@ export default function App() {
                 <Route path="blog/new" element={<BlogPostEditor />} />
                 <Route path="blog/:id/edit" element={<BlogPostEditor />} />
                 <Route path="tools" element={<AdminTools />} />
+                <Route path="activity" element={<Activity />} />
                 <Route path="profile" element={<AdminProfile />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

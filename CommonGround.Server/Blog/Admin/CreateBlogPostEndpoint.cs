@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
 using CommonGround.Server.Data;
 using FastEndpoints;
@@ -10,7 +11,8 @@ namespace CommonGround.Server.Blog.Admin;
 public sealed class CreateBlogPostEndpoint(
     AppDbContext db,
     BlogHtmlSanitizer sanitizer,
-    UserManager<ApplicationUser> userManager)
+    UserManager<ApplicationUser> userManager,
+    IActivityLogger activityLogger)
     : Endpoint<BlogPostWriteDto, BlogPostAdminDto>
 {
     public override void Configure()
@@ -81,6 +83,13 @@ public sealed class CreateBlogPostEndpoint(
             await Send.ResultAsync(Results.Conflict(new { error = $"Slug '{resolvedSlug}' is already in use." }));
             return;
         }
+
+        await activityLogger.LogAsync(
+            "blog.post_created",
+            $"Created blog post '{post.Title}' ({post.Status})",
+            targetType: "BlogPost",
+            targetId: post.Id.ToString(),
+            ct: ct);
 
         await Send.ResultAsync(Results.Created(
             $"/api/admin/blog/posts/{post.Id}",

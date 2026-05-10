@@ -1,3 +1,4 @@
+using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
 using CommonGround.Server.Data;
 using FastEndpoints;
@@ -5,7 +6,9 @@ using Microsoft.AspNetCore.Identity;
 
 namespace CommonGround.Server.Account;
 
-public sealed class UpdateMeEndpoint(UserManager<ApplicationUser> userManager)
+public sealed class UpdateMeEndpoint(
+    UserManager<ApplicationUser> userManager,
+    IActivityLogger activityLogger)
     : Endpoint<UpdateProfileDto, MeDto>
 {
     public override void Configure()
@@ -35,6 +38,13 @@ public sealed class UpdateMeEndpoint(UserManager<ApplicationUser> userManager)
             }));
             return;
         }
+
+        await activityLogger.LogAsync(
+            "member.profile_updated",
+            "Updated own profile",
+            targetType: "Member",
+            targetId: current.Id,
+            ct: ct);
 
         var isAdmin = await userManager.IsInRoleAsync(current, AppRoles.Admin);
 

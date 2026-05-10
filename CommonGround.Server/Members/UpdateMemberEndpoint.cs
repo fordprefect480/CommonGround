@@ -1,3 +1,4 @@
+using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
 using CommonGround.Server.Data;
 using FastEndpoints;
@@ -5,7 +6,9 @@ using Microsoft.AspNetCore.Identity;
 
 namespace CommonGround.Server.Members;
 
-public sealed class UpdateMemberEndpoint(UserManager<ApplicationUser> userManager)
+public sealed class UpdateMemberEndpoint(
+    UserManager<ApplicationUser> userManager,
+    IActivityLogger activityLogger)
     : Endpoint<UpdateMemberEndpoint.Request, MemberDto>
 {
     public sealed class Request
@@ -64,6 +67,13 @@ public sealed class UpdateMemberEndpoint(UserManager<ApplicationUser> userManage
                 return;
             }
         }
+
+        await activityLogger.LogAsync(
+            "member.updated",
+            $"Updated member {user.Email}",
+            targetType: "Member",
+            targetId: user.Id,
+            ct: ct);
 
         var roles = await userManager.GetRolesAsync(user);
 

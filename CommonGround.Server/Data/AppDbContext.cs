@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
     public DbSet<BlogCategory> BlogCategories => Set<BlogCategory>();
     public DbSet<BlogImage> BlogImages => Set<BlogImage>();
+    public DbSet<Activity> Activities => Set<Activity>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -68,6 +69,34 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
                 .WithMany()
                 .HasForeignKey(x => x.CreatedByUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        builder.Entity<Activity>(b =>
+        {
+            b.Property(a => a.OccurredAt).HasDefaultValueSql("SYSUTCDATETIME()");
+            b.Property(a => a.ActivityType).HasMaxLength(64).IsRequired();
+            b.Property(a => a.ActorUserId).HasMaxLength(450);
+            b.Property(a => a.ActorEmailSnapshot).HasMaxLength(256);
+            b.Property(a => a.Summary).HasMaxLength(400).IsRequired();
+            b.Property(a => a.TargetType).HasMaxLength(64);
+            b.Property(a => a.TargetId).HasMaxLength(64);
+
+            b.HasOne(a => a.Actor)
+                .WithMany()
+                .HasForeignKey(a => a.ActorUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            b.HasIndex(a => a.OccurredAt)
+                .IsDescending()
+                .HasDatabaseName("IX_Activity_OccurredAt");
+
+            b.HasIndex(a => new { a.ActorUserId, a.OccurredAt })
+                .IsDescending(false, true)
+                .HasDatabaseName("IX_Activity_Actor_OccurredAt");
+
+            b.HasIndex(a => new { a.ActivityType, a.OccurredAt })
+                .IsDescending(false, true)
+                .HasDatabaseName("IX_Activity_Type_OccurredAt");
         });
     }
 }

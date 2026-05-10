@@ -1,3 +1,4 @@
+using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
 using FastEndpoints;
 using Microsoft.Extensions.Options;
@@ -5,7 +6,10 @@ using Resend;
 
 namespace CommonGround.Server.Email;
 
-public sealed class SendTestEmailEndpoint(IResend resend, IOptions<EmailOptions> options)
+public sealed class SendTestEmailEndpoint(
+    IResend resend,
+    IOptions<EmailOptions> options,
+    IActivityLogger activityLogger)
     : Endpoint<SendTestEmailEndpoint.Request, SendTestEmailEndpoint.Result>
 {
     public sealed record Request(string To);
@@ -44,6 +48,12 @@ public sealed class SendTestEmailEndpoint(IResend resend, IOptions<EmailOptions>
         message.To.Add(req.To.Trim());
 
         var result = await resend.EmailSendAsync(message, ct);
+
+        await activityLogger.LogAsync(
+            "email.test_sent",
+            $"Sent test email to {req.To}",
+            details: new { To = req.To.Trim() },
+            ct: ct);
 
         await Send.OkAsync(new Result(result.Content.ToString()), ct);
     }

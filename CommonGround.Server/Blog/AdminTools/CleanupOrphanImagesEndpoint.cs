@@ -1,3 +1,4 @@
+using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
 using CommonGround.Server.Data;
 using FastEndpoints;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CommonGround.Server.Blog.AdminTools;
 
-public sealed class CleanupOrphanImagesEndpoint(AppDbContext db)
+public sealed class CleanupOrphanImagesEndpoint(AppDbContext db, IActivityLogger activityLogger)
     : EndpointWithoutRequest<CleanupOrphanImagesEndpoint.CleanupResult>
 {
     private const string ImagePathPrefix = "/api/blog/images/";
@@ -39,6 +40,12 @@ public sealed class CleanupOrphanImagesEndpoint(AppDbContext db)
 
         db.BlogImages.RemoveRange(orphans);
         await db.SaveChangesAsync(ct);
+
+        await activityLogger.LogAsync(
+            "tool.orphan_cleanup_run",
+            $"Cleaned up {orphans.Count} orphan image(s)",
+            details: new { Deleted = orphans.Count },
+            ct: ct);
 
         await Send.OkAsync(new CleanupResult(orphans.Count), ct);
     }

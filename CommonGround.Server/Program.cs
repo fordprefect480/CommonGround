@@ -1,3 +1,4 @@
+using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
 using CommonGround.Server.Blog;
 using CommonGround.Server.Blog.BlogImport;
@@ -20,6 +21,8 @@ builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<BlogHtmlSanitizer>();
 builder.Services.AddOpenApi();
 builder.Services.AddFastEndpoints();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
 
 builder.AddSqlServerDbContext<AppDbContext>("commongroundDb");
 

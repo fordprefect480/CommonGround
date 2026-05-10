@@ -1,3 +1,4 @@
+using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
 using CommonGround.Server.Data;
 using FastEndpoints;
@@ -5,7 +6,9 @@ using Microsoft.AspNetCore.Identity;
 
 namespace CommonGround.Server.Members;
 
-public sealed class CreateMemberEndpoint(UserManager<ApplicationUser> userManager)
+public sealed class CreateMemberEndpoint(
+    UserManager<ApplicationUser> userManager,
+    IActivityLogger activityLogger)
     : Endpoint<CreateMemberDto, MemberDto>
 {
     public override void Configure()
@@ -59,6 +62,13 @@ public sealed class CreateMemberEndpoint(UserManager<ApplicationUser> userManage
             }
             roles.Add(AppRoles.Admin);
         }
+
+        await activityLogger.LogAsync(
+            "member.created",
+            $"Created member {user.Email}{(req.IsAdmin ? " (admin)" : "")}",
+            targetType: "Member",
+            targetId: user.Id,
+            ct: ct);
 
         var dto = new MemberDto(
             user.Id, user.Email, user.UserName, user.FirstName, user.LastName, user.DisplayName,
