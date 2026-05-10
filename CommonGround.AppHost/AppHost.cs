@@ -27,7 +27,6 @@ if (builder.ExecutionContext.IsPublishMode)
 		};
 		db.MinCapacity = 0.5;
 		db.AutoPauseDelay = 60;
-		db.MaxSizeBytes = 2L * 1024 * 1024 * 1024;
 	});
 }
 
