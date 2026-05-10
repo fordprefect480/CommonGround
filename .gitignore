@@ -432,3 +432,6 @@ CommonGround.Server/appsettings.Development.json
 .superpowers
 docs
 .claude
+
+# Aspire publish output (Bicep + container artifacts)
+aspire-output/
