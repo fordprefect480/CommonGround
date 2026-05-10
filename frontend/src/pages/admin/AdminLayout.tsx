@@ -35,6 +35,7 @@ export default function AdminLayout() {
             <span className="admin-brand-tag">Admin</span>
           </div>
           <nav className="admin-nav" aria-label="Admin">
+            <NavLink to="/admin" end className="admin-nav-link">Dashboard</NavLink>
             <NavLink to="/admin/members" className="admin-nav-link">Members</NavLink>
             <NavLink to="/admin/blog" className="admin-nav-link">Blog</NavLink>
             <NavLink to="/admin/tools" className="admin-nav-link">Tools</NavLink>

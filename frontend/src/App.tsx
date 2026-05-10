@@ -14,6 +14,7 @@ import AdminProfile from './pages/admin/AdminProfile'
 import AdminTools from './pages/admin/AdminTools'
 import BlogPostEditor from './pages/admin/BlogPostEditor'
 import BlogPostList from './pages/admin/BlogPostList'
+import Dashboard from './pages/admin/Dashboard'
 import MemberDetail from './pages/admin/MemberDetail'
 import Members from './pages/admin/Members'
 import BlogIndex from './pages/blog/BlogIndex'
@@ -42,7 +43,7 @@ export default function App() {
                 path="/admin"
                 element={<RequireAuth requireAdmin><AdminLayout /></RequireAuth>}
               >
-                <Route index element={<Navigate to="members" replace />} />
+                <Route index element={<Dashboard />} />
                 <Route path="members" element={<Members />} />
                 <Route path="members/:id" element={<MemberDetail />} />
                 <Route path="blog" element={<BlogPostList />} />
