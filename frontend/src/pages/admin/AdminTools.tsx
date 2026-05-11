@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { cleanupOrphanImages, importBlog, type ImportBlogResult } from '../../api/adminTools'
 
 type ImportState =
@@ -14,6 +15,7 @@ type CleanupState =
   | { status: 'error'; message: string }
 
 export default function AdminTools() {
+  const navigate = useNavigate()
   const [importState, setImportState] = useState<ImportState>({ status: 'idle' })
   const [cleanupState, setCleanupState] = useState<CleanupState>({ status: 'idle' })
 
@@ -56,6 +58,14 @@ export default function AdminTools() {
       </header>
 
       <div className="admin-tools-grid">
+      <div className="card">
+        <h2 className="section-title">Send test email</h2>
+        <p className="card-note">Compose a one-off email and send it to specific addresses without touching the mailing list. Useful for previewing templates.</p>
+        <button type="button" className="primary-button" onClick={() => navigate('/admin/tools/email-test')}>
+          Open
+        </button>
+      </div>
+
       <div className="card">
         <h2 className="section-title">Import historical blog posts</h2>
         <p className="card-note">Pulls newsletters from the existing reference site. Idempotent — already-imported posts are skipped.</p>

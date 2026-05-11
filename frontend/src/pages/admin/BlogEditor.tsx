@@ -130,7 +130,7 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
           </button>
         ))}
       </div>
-      <EditorContent editor={editor} className="tiptap-content" />
+      <EditorContent editor={editor} className="tiptap-content blog-post-body" />
     </div>
   )
 }

@@ -4,6 +4,7 @@ export interface ActivityItem {
   activityType: string
   actorUserId: string | null
   actorEmail: string | null
+  actorName: string | null
   summary: string
   targetType: string | null
   targetId: string | null

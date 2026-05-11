@@ -9,6 +9,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<BlogCategory> BlogCategories => Set<BlogCategory>();
     public DbSet<BlogImage> BlogImages => Set<BlogImage>();
     public DbSet<Activity> Activities => Set<Activity>();
+    public DbSet<SentEmail> SentEmails => Set<SentEmail>();
+    public DbSet<SentEmailRecipient> SentEmailRecipients => Set<SentEmailRecipient>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -97,6 +99,44 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             b.HasIndex(a => new { a.ActivityType, a.OccurredAt })
                 .IsDescending(false, true)
                 .HasDatabaseName("IX_Activity_Type_OccurredAt");
+        });
+
+        builder.Entity<SentEmail>(b =>
+        {
+            b.Property(e => e.SentAt).HasDefaultValueSql("SYSUTCDATETIME()");
+            b.Property(e => e.Subject).HasMaxLength(200).IsRequired();
+            b.Property(e => e.HtmlBody).IsRequired();
+            b.Property(e => e.TextBody).IsRequired();
+            b.Property(e => e.SenderUserId).HasMaxLength(450);
+            b.Property(e => e.SenderEmailSnapshot).HasMaxLength(256);
+
+            b.HasOne(e => e.Sender)
+                .WithMany()
+                .HasForeignKey(e => e.SenderUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            b.HasIndex(e => e.SentAt)
+                .IsDescending()
+                .HasDatabaseName("IX_SentEmail_SentAt");
+        });
+
+        builder.Entity<SentEmailRecipient>(b =>
+        {
+            b.Property(r => r.Email).HasMaxLength(256).IsRequired();
+            b.Property(r => r.UserId).HasMaxLength(450);
+            b.Property(r => r.ErrorMessage).HasMaxLength(1000);
+
+            b.HasOne(r => r.SentEmail)
+                .WithMany(e => e.Recipients)
+                .HasForeignKey(r => r.SentEmailId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            b.HasIndex(r => r.SentEmailId).HasDatabaseName("IX_SentEmailRecipient_SentEmailId");
         });
     }
 }
