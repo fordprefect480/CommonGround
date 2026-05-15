@@ -7,7 +7,7 @@ public sealed class EmailOptions
     public string? ApiToken { get; set; }
     public string FromAddress { get; set; } = "";
     public string? FromName { get; set; }
-    public string? TemplateBroadcastId { get; set; }
+    public string? TemplateId { get; set; }
 
     public string From =>
         string.IsNullOrWhiteSpace(FromName) ? FromAddress : $"{FromName} <{FromAddress}>";

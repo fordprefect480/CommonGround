@@ -1,7 +1,7 @@
 using AngleSharp;
 using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
-using CommonGround.Server.Blog;
+using CommonGround.Server.Configuration;
 using CommonGround.Server.Data;
 using FastEndpoints;
 using Microsoft.AspNetCore.Identity;
@@ -14,11 +14,12 @@ namespace CommonGround.Server.Email;
 public sealed class SendNewsletterEndpoint(
     IResend resend,
     IOptions<EmailOptions> options,
+    IOptions<GardenOptions> gardenOptions,
     AppDbContext db,
-    BlogHtmlSanitizer sanitizer,
     UserManager<ApplicationUser> userManager,
     IHttpContextAccessor httpContextAccessor,
     IActivityLogger activityLogger,
+    UnsubscribeTokenService unsubscribeTokens,
     ILogger<SendNewsletterEndpoint> logger)
     : Endpoint<SendNewsletterEndpoint.Request, SendNewsletterEndpoint.Result>
 {
@@ -34,6 +35,9 @@ public sealed class SendNewsletterEndpoint(
     private const string ModeAllSubscribers = "all_subscribers";
     private const string ModeSpecificMembers = "specific_members";
     private const string ModeCustomEmails = "custom_emails";
+
+    private const string UnsubscribePlaceholder = "{{{RESEND_UNSUBSCRIBE_URL}}}";
+    private const string UnsubscribeSentinelUrl = "https://commonground.local/__unsubscribe_sentinel__";
 
     private sealed record ResolvedRecipient(string? UserId, string Email);
 
@@ -55,7 +59,7 @@ public sealed class SendNewsletterEndpoint(
         }
 
         var subject = (req.Subject ?? "").Trim();
-        var html = sanitizer.Sanitize((req.HtmlBody ?? "").Trim());
+        var html = (req.HtmlBody ?? "").Trim().Replace(UnsubscribePlaceholder, UnsubscribeSentinelUrl);
 
         if (subject.Length == 0)
         {
@@ -69,6 +73,7 @@ public sealed class SendNewsletterEndpoint(
             await Send.ResultAsync(Results.BadRequest(new { error = "Body is required." }));
             return;
         }
+        textBody += $"\n\n---\nUnsubscribe: {UnsubscribeSentinelUrl}";
 
         var mode = string.IsNullOrWhiteSpace(req.Mode) ? ModeAllSubscribers : req.Mode!.Trim();
         List<ResolvedRecipient> recipients;
@@ -140,6 +145,18 @@ public sealed class SendNewsletterEndpoint(
             }
         }
 
+        var publicBaseUrl = ResolvePublicBaseUrl(gardenOptions.Value.PublicUrl, http);
+
+        string BuildUnsubscribeUrl(ResolvedRecipient r)
+        {
+            if (r.UserId is null)
+            {
+                return $"mailto:{options.Value.FromAddress}?subject=Unsubscribe";
+            }
+            var token = unsubscribeTokens.CreateToken(r.UserId);
+            return $"{publicBaseUrl}/unsubscribe?token={Uri.EscapeDataString(token)}";
+        }
+
         var sentEmail = new SentEmail
         {
             Subject = subject,
@@ -156,12 +173,27 @@ public sealed class SendNewsletterEndpoint(
         foreach (var r in recipients)
         {
             ct.ThrowIfCancellationRequested();
+
+            var unsubscribeUrl = BuildUnsubscribeUrl(r);
+            var personalizedHtml = html.Replace(UnsubscribeSentinelUrl, unsubscribeUrl);
+            var personalizedText = textBody.Replace(UnsubscribeSentinelUrl, unsubscribeUrl);
+
+            var headers = new Dictionary<string, string>
+            {
+                ["List-Unsubscribe"] = $"<{unsubscribeUrl}>",
+            };
+            if (unsubscribeUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+            }
+
             var message = new EmailMessage
             {
                 From = options.Value.From,
                 Subject = subject,
-                HtmlBody = html,
-                TextBody = textBody,
+                HtmlBody = personalizedHtml,
+                TextBody = personalizedText,
+                Headers = headers,
             };
             message.To.Add(r.Email);
 
@@ -207,6 +239,15 @@ public sealed class SendNewsletterEndpoint(
 
     private static string Truncate(string value, int max) =>
         value.Length <= max ? value : value[..max];
+
+    private static string ResolvePublicBaseUrl(string? configured, HttpContext? http)
+    {
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            return configured.TrimEnd('/');
+        }
+        return http is not null ? $"{http.Request.Scheme}://{http.Request.Host}" : "";
+    }
 
     private static async Task<string> HtmlToTextAsync(string html, CancellationToken ct)
     {

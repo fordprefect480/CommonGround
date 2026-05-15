@@ -3,6 +3,37 @@ import { useNavigate } from 'react-router-dom'
 import { fetchEmailTemplate, fetchSubscriberCount, sendNewsletter, type NewsletterRecipients } from '../../api/email'
 import { fetchMembers, type Member } from '../../api/auth'
 
+interface HtmlEditorProps {
+  value: string
+  onChange: (html: string) => void
+  disabled: boolean
+}
+
+function HtmlEditor({ value, onChange, disabled }: HtmlEditorProps) {
+  const ref = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (el && el.innerHTML !== value) {
+      el.innerHTML = value
+    }
+  }, [value])
+
+  return (
+    <div
+      ref={ref}
+      id="email-html-body"
+      className="email-html-editor"
+      contentEditable={!disabled}
+      role="textbox"
+      aria-multiline="true"
+      aria-disabled={disabled}
+      suppressContentEditableWarning
+      onInput={(e) => onChange((e.currentTarget as HTMLDivElement).innerHTML)}
+    />
+  )
+}
+
 type SubscriberCountState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
@@ -25,7 +56,79 @@ type SendState =
 type TemplateState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready' }
+  | { status: 'ready'; header: string; footer: string }
+
+const BODY_SLOT_ATTR = 'data-cg-body-slot'
+
+function splitTemplate(html: string): { header: string; footer: string } {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+
+  const variableSpan = Array.from(doc.querySelectorAll('span[data-type="variable"]'))
+    .find((s) => s.textContent?.includes('{{{BODY}}}'))
+
+  let anchor: Element | null = null
+  if (variableSpan) {
+    let walker: Element | null = variableSpan
+    while (walker && walker.tagName !== 'TR') walker = walker.parentElement
+    anchor = walker ?? variableSpan
+  } else {
+    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT)
+    let node = walker.nextNode()
+    while (node && !node.nodeValue?.includes('{{{BODY}}}')) node = walker.nextNode()
+    if (node?.parentElement) anchor = node.parentElement
+  }
+
+  if (!anchor) return { header: html, footer: '' }
+
+  anchor.setAttribute(BODY_SLOT_ATTR, '')
+
+  const headerDoc = doc.cloneNode(true) as Document
+  const headerAnchor = headerDoc.querySelector(`[${BODY_SLOT_ATTR}]`)
+  if (headerAnchor) {
+    trimFollowing(headerAnchor)
+    headerAnchor.remove()
+  }
+
+  const footerDoc = doc.cloneNode(true) as Document
+  const footerAnchor = footerDoc.querySelector(`[${BODY_SLOT_ATTR}]`)
+  if (footerAnchor) {
+    trimPreceding(footerAnchor)
+    footerAnchor.remove()
+  }
+
+  return {
+    header: headerDoc.body.innerHTML,
+    footer: footerDoc.body.innerHTML,
+  }
+}
+
+function trimFollowing(start: Element) {
+  let current: Node = start
+  while (current.parentNode) {
+    let next = current.nextSibling
+    while (next) {
+      const after = next.nextSibling
+      current.parentNode.removeChild(next)
+      next = after
+    }
+    if (current.parentNode.nodeName === 'BODY') break
+    current = current.parentNode
+  }
+}
+
+function trimPreceding(start: Element) {
+  let current: Node = start
+  while (current.parentNode) {
+    let prev = current.previousSibling
+    while (prev) {
+      const before = prev.previousSibling
+      current.parentNode.removeChild(prev)
+      prev = before
+    }
+    if (current.parentNode.nodeName === 'BODY') break
+    current = current.parentNode
+  }
+}
 
 const EMPTY_BODY_HTML_PATTERNS = [/^\s*$/, /^<p>\s*<\/p>$/i]
 
@@ -84,8 +187,8 @@ export default function EmailCompose() {
       try {
         const html = await fetchEmailTemplate()
         if (cancelled) return
-        setBody((current) => (current.length === 0 ? html : current))
-        setTemplate({ status: 'ready' })
+        const { header, footer } = splitTemplate(html)
+        setTemplate({ status: 'ready', header, footer })
       } catch (err) {
         if (cancelled) return
         setTemplate({ status: 'error', message: err instanceof Error ? err.message : 'Failed to load template' })
@@ -235,7 +338,10 @@ export default function EmailCompose() {
   const performSend = async () => {
     setSend({ status: 'sending' })
     try {
-      const result = await sendNewsletter(subjectTrimmed, body, buildRecipients())
+      const fullHtml = template.status === 'ready'
+        ? template.header + body + template.footer
+        : body
+      const result = await sendNewsletter(subjectTrimmed, fullHtml, buildRecipients())
       navigate(`/admin/email/${result.id}`, { replace: true })
     } catch (err) {
       setSend({ status: 'error', message: err instanceof Error ? err.message : 'Send failed' })
@@ -421,21 +527,35 @@ export default function EmailCompose() {
         </div>
 
         <div className="field">
-          <label className="field-label" htmlFor="email-html-body">Body (HTML)</label>
+          <label className="field-label" htmlFor="email-html-body">Body</label>
           {template.status === 'error' && (
             <div className="form-error" role="alert">Couldn't load template from Resend: {template.message}</div>
           )}
-          <textarea
-            id="email-html-body"
-            className="email-html-editor"
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            disabled={send.status === 'sending' || template.status === 'loading'}
-            rows={24}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder={template.status === 'loading' ? 'Loading template from Resend…' : ''}
-          />
+          {template.status === 'loading' ? (
+            <p className="admin-loading">Loading template from Resend&hellip;</p>
+          ) : (
+            <div className="email-compose-preview">
+              {template.status === 'ready' && (
+                <div
+                  className="email-compose-chrome"
+                  aria-hidden="true"
+                  dangerouslySetInnerHTML={{ __html: template.header }}
+                />
+              )}
+              <HtmlEditor
+                value={body}
+                onChange={setBody}
+                disabled={send.status === 'sending'}
+              />
+              {template.status === 'ready' && (
+                <div
+                  className="email-compose-chrome"
+                  aria-hidden="true"
+                  dangerouslySetInnerHTML={{ __html: template.footer }}
+                />
+              )}
+            </div>
+          )}
         </div>
 
         {send.status === 'idle' && (

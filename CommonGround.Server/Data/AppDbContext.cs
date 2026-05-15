@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace CommonGround.Server.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<ApplicationUser>(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options)
+    : IdentityDbContext<ApplicationUser>(options), IDataProtectionKeyContext
 {
     public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
     public DbSet<BlogCategory> BlogCategories => Set<BlogCategory>();
@@ -11,6 +14,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<Activity> Activities => Set<Activity>();
     public DbSet<SentEmail> SentEmails => Set<SentEmail>();
     public DbSet<SentEmailRecipient> SentEmailRecipients => Set<SentEmailRecipient>();
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -1,7 +1,6 @@
 using AngleSharp;
 using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
-using CommonGround.Server.Blog;
 using FastEndpoints;
 using Microsoft.Extensions.Options;
 using Resend;
@@ -11,7 +10,6 @@ namespace CommonGround.Server.Email;
 public sealed class SendTestEmailEndpoint(
     IResend resend,
     IOptions<EmailOptions> options,
-    BlogHtmlSanitizer sanitizer,
     IActivityLogger activityLogger,
     ILogger<SendTestEmailEndpoint> logger)
     : Endpoint<SendTestEmailEndpoint.Request, SendTestEmailEndpoint.Result>
@@ -46,7 +44,7 @@ public sealed class SendTestEmailEndpoint(
             return;
         }
 
-        var html = sanitizer.Sanitize((req.HtmlBody ?? "").Trim());
+        var html = (req.HtmlBody ?? "").Trim();
         var textBody = await HtmlToTextAsync(html, ct);
         if (textBody.Length == 0)
         {

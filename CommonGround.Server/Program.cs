@@ -6,6 +6,7 @@ using CommonGround.Server.Configuration;
 using CommonGround.Server.Data;
 using CommonGround.Server.Email;
 using FastEndpoints;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
@@ -23,6 +24,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddFastEndpoints();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<AppDbContext>()
+    .SetApplicationName("CommonGround");
+builder.Services.AddSingleton<UnsubscribeTokenService>();
 
 builder.AddSqlServerDbContext<AppDbContext>("commongroundDb");
 
@@ -80,6 +85,19 @@ if (app.Environment.IsDevelopment())
     await DevSeed.SeedAdminAsync(sp);
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    var protection = scope.ServiceProvider.GetRequiredService<IDataProtectionProvider>();
+    try
+    {
+        protection.CreateProtector("startup-warmup").Protect("");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Data protection warmup failed; keys will be created on first use.");
+    }
+}
+
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
@@ -96,6 +114,8 @@ app.UseFastEndpoints(c =>
 });
 
 app.MapGroup("/api/auth").MapIdentityApi<ApplicationUser>();
+
+app.MapUnsubscribeEndpoint();
 
 app.MapDefaultEndpoints();
 
