@@ -72,7 +72,8 @@ export default function AdminProfile() {
 
       {error && <div className="form-error" role="alert">{error}</div>}
 
-      <form className="card admin-form" onSubmit={save}>
+      <div className="profile-forms">
+        <form className="card admin-form" onSubmit={save}>
         <label className="field">
           <span className="field-label">Email</span>
           <input value={email} readOnly disabled />
@@ -115,9 +116,10 @@ export default function AdminProfile() {
           </button>
           {status === 'saved' && <span className="admin-whoami">Saved.</span>}
         </div>
-      </form>
+        </form>
 
-      <ChangePasswordForm />
+        <ChangePasswordForm />
+      </div>
     </section>
   )
 }

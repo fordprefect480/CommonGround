@@ -580,6 +580,13 @@ button.footer-link:disabled {
   font-size: 0.95rem;
 }
 
+.profile-forms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+}
+
 .admin-table-wrap {
   background: var(--ivory);
   border: 1px solid var(--ink-200);
