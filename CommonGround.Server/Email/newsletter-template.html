@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
+  <title>Seaford Wetlands Community Garden Newsletter</title>
+  <!--[if mso]>
+  <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+  <![endif]-->
+  <style>
+    /* Resets — kept in <style> for clients that honour it; critical rules are also inline below. */
+    body, table, td, p, a, li, blockquote { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; display: block; }
+    a { color: #2F7D32; text-decoration: underline; }
+
+    /* Mobile tweaks */
+    @media screen and (max-width: 620px) {
+      .container { width: 100% !important; }
+      .px { padding-left: 24px !important; padding-right: 24px !important; }
+      .hero-title { font-size: 26px !important; line-height: 32px !important; }
+      .section-title { font-size: 20px !important; line-height: 26px !important; }
+      .stack { display: block !important; width: 100% !important; }
+      .stack-img { margin: 0 auto 16px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#F4EFE6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#2A2A2A;">
+
+  <!-- Hidden preheader: shows in the inbox preview line beside the subject. Keep under ~90 chars. -->
+  <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#F4EFE6;">
+    What's growing this month at the garden &mdash; events, harvests, and ways to get involved.
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F4EFE6;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+
+        <!-- Outer container -->
+        <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px; background-color:#FFFFFF; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+
+          <!-- Header / logo -->
+          <tr>
+            <td align="center" style="background-color:#FFFFFF; padding:24px 24px 8px 24px;">
+              <!-- TODO: replace src with a hosted version of the horizontal banner logo. -->
+              <img
+                src="https://YOUR-DOMAIN.example.com/seaford-wetlands-banner.png"
+                width="520"
+                height="130"
+                alt="Mid Coast Sustainability Inc. — Seaford Wetlands Community Garden &amp; Urban Biodiversity Project"
+                style="display:block; width:100%; max-width:520px; height:auto; border:0;"
+              />
+            </td>
+          </tr>
+
+          <!-- Hero / month banner -->
+          <tr>
+            <td class="px" style="padding:32px 40px 8px 40px;">
+              <p style="margin:0 0 8px 0; font-size:13px; line-height:18px; letter-spacing:1.5px; text-transform:uppercase; color:#7A6E5A; font-weight:600;">
+                Monthly Newsletter &middot; {{MONTH_YEAR}}
+              </p>
+              <h1 class="hero-title" style="margin:0; font-size:32px; line-height:38px; color:#1F3A1B; font-weight:800; letter-spacing:-0.5px;">
+                {{HERO_HEADLINE}}
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Greeting / intro -->
+          <tr>
+            <td class="px" style="padding:20px 40px 0 40px;">
+              <p style="margin:0 0 16px 0; font-size:16px; line-height:26px; color:#2A2A2A;">
+                Hi {{FIRST_NAME|there}},
+              </p>
+              <p style="margin:0 0 16px 0; font-size:16px; line-height:26px; color:#2A2A2A;">
+                {{INTRO_PARAGRAPH}}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td class="px" style="padding:24px 40px 0 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td style="border-top:1px solid #E8E2D4; font-size:0; line-height:0;">&nbsp;</td></tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Section 1: What's growing -->
+          <tr>
+            <td class="px" style="padding:28px 40px 0 40px;">
+              <h2 class="section-title" style="margin:0 0 12px 0; font-size:22px; line-height:28px; color:#1F3A1B; font-weight:700;">
+                What's growing this month
+              </h2>
+              <p style="margin:0 0 16px 0; font-size:16px; line-height:26px; color:#2A2A2A;">
+                {{GROWING_PARAGRAPH}}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Section 2: Upcoming events (two-column on desktop, stacks on mobile) -->
+          <tr>
+            <td class="px" style="padding:28px 40px 0 40px;">
+              <h2 class="section-title" style="margin:0 0 16px 0; font-size:22px; line-height:28px; color:#1F3A1B; font-weight:700;">
+                Upcoming events
+              </h2>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="stack" valign="top" width="50%" style="padding:0 8px 16px 0;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F4EFE6; border-radius:8px;">
+                      <tr>
+                        <td style="padding:16px 18px;">
+                          <p style="margin:0 0 4px 0; font-size:12px; line-height:16px; letter-spacing:1px; text-transform:uppercase; color:#5D7A4F; font-weight:700;">
+                            {{EVENT_1_DATE}}
+                          </p>
+                          <p style="margin:0 0 6px 0; font-size:16px; line-height:22px; color:#1F3A1B; font-weight:700;">
+                            {{EVENT_1_TITLE}}
+                          </p>
+                          <p style="margin:0; font-size:14px; line-height:20px; color:#4A4A4A;">
+                            {{EVENT_1_DESCRIPTION}}
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td class="stack" valign="top" width="50%" style="padding:0 0 16px 8px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F4EFE6; border-radius:8px;">
+                      <tr>
+                        <td style="padding:16px 18px;">
+                          <p style="margin:0 0 4px 0; font-size:12px; line-height:16px; letter-spacing:1px; text-transform:uppercase; color:#5D7A4F; font-weight:700;">
+                            {{EVENT_2_DATE}}
+                          </p>
+                          <p style="margin:0 0 6px 0; font-size:16px; line-height:22px; color:#1F3A1B; font-weight:700;">
+                            {{EVENT_2_TITLE}}
+                          </p>
+                          <p style="margin:0; font-size:14px; line-height:20px; color:#4A4A4A;">
+                            {{EVENT_2_DESCRIPTION}}
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Section 3: Volunteer / call to action -->
+          <tr>
+            <td class="px" style="padding:28px 40px 0 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1F3A1B; border-radius:10px;">
+                <tr>
+                  <td style="padding:24px 28px;">
+                    <h2 style="margin:0 0 8px 0; font-size:20px; line-height:26px; color:#FFFFFF; font-weight:700;">
+                      {{CTA_HEADLINE}}
+                    </h2>
+                    <p style="margin:0 0 18px 0; font-size:15px; line-height:22px; color:#E6EFE0;">
+                      {{CTA_DESCRIPTION}}
+                    </p>
+                    <!-- Bulletproof button (works in Outlook too) -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center" bgcolor="#C84A30" style="border-radius:6px;">
+                          <a href="{{CTA_URL}}"
+                             style="display:inline-block; padding:12px 24px; font-size:15px; line-height:20px; font-weight:700; color:#FFFFFF; text-decoration:none; border-radius:6px;">
+                            {{CTA_BUTTON_LABEL}}
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Section 4: Tips / sign-off -->
+          <tr>
+            <td class="px" style="padding:28px 40px 0 40px;">
+              <h2 class="section-title" style="margin:0 0 12px 0; font-size:22px; line-height:28px; color:#1F3A1B; font-weight:700;">
+                Tip of the month
+              </h2>
+              <p style="margin:0 0 16px 0; font-size:16px; line-height:26px; color:#2A2A2A;">
+                {{TIP_PARAGRAPH}}
+              </p>
+              <p style="margin:0 0 4px 0; font-size:16px; line-height:26px; color:#2A2A2A;">
+                See you in the garden,
+              </p>
+              <p style="margin:0; font-size:16px; line-height:26px; color:#2A2A2A; font-weight:700;">
+                The Seaford Wetlands team
+              </p>
+            </td>
+          </tr>
+
+          <!-- Spacer before footer -->
+          <tr><td style="padding:32px 0 0 0; font-size:0; line-height:0;">&nbsp;</td></tr>
+
+          <!-- Footer -->
+          <tr>
+            <td class="px" style="padding:24px 40px 32px 40px; background-color:#F4EFE6; border-top:1px solid #E8E2D4;">
+              <p style="margin:0 0 6px 0; font-size:13px; line-height:20px; color:#5A5247; font-weight:700;">
+                Mid Coast Sustainability Inc.
+              </p>
+              <p style="margin:0 0 12px 0; font-size:13px; line-height:20px; color:#5A5247;">
+                Seaford Wetlands Community Garden &amp; Urban Biodiversity Project
+              </p>
+              <p style="margin:0 0 12px 0; font-size:13px; line-height:20px; color:#5A5247;">
+                You're receiving this because you subscribed to our mailing list.
+              </p>
+              <p style="margin:0; font-size:13px; line-height:20px; color:#5A5247;">
+                <a href="{{{RESEND_UNSUBSCRIBE_URL}}}" style="color:#2F7D32; text-decoration:underline;">Unsubscribe</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /Outer container -->
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -10,6 +10,7 @@ public sealed record ActivityItemDto(
     string ActivityType,
     string? ActorUserId,
     string? ActorEmail,
+    string? ActorName,
     string Summary,
     string? TargetType,
     string? TargetId,

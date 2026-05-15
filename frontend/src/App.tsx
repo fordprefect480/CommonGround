@@ -15,6 +15,10 @@ import AdminTools from './pages/admin/AdminTools'
 import BlogPostEditor from './pages/admin/BlogPostEditor'
 import BlogPostList from './pages/admin/BlogPostList'
 import Dashboard from './pages/admin/Dashboard'
+import EmailCompose from './pages/admin/EmailCompose'
+import EmailDetail from './pages/admin/EmailDetail'
+import EmailList from './pages/admin/EmailList'
+import EmailTestTool from './pages/admin/EmailTestTool'
 import MemberDetail from './pages/admin/MemberDetail'
 import Members from './pages/admin/Members'
 import BlogIndex from './pages/blog/BlogIndex'
@@ -49,7 +53,11 @@ export default function App() {
                 <Route path="blog" element={<BlogPostList />} />
                 <Route path="blog/new" element={<BlogPostEditor />} />
                 <Route path="blog/:id/edit" element={<BlogPostEditor />} />
+                <Route path="email" element={<EmailList />} />
+                <Route path="email/new" element={<EmailCompose />} />
+                <Route path="email/:id" element={<EmailDetail />} />
                 <Route path="tools" element={<AdminTools />} />
+                <Route path="tools/email-test" element={<EmailTestTool />} />
                 <Route path="activity" element={<Activity />} />
                 <Route path="profile" element={<AdminProfile />} />
               </Route>

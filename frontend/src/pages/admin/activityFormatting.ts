@@ -6,6 +6,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   'blog.post_updated': 'Blog post updated',
   'blog.post_deleted': 'Blog post deleted',
   'email.test_sent': 'Test email sent',
+  'email.newsletter_sent': 'Newsletter sent',
   'tool.blog_import_run': 'Blog import run',
   'tool.orphan_cleanup_run': 'Orphan image cleanup',
   'tool.members_exported': 'Members exported',

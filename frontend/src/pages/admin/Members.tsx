@@ -91,7 +91,7 @@ export default function Members() {
   return (
     <section className="admin-page" aria-labelledby="members-heading">
       <header className="admin-page-header">
-        <h1 id="members-heading" className="admin-page-title">Members</h1>
+        <h1 id="members-heading" className="admin-page-title">Membership</h1>
         {!showForm && (
           <div className="admin-actions">
             <button
