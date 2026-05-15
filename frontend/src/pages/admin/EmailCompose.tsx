@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import BlogEditor from './BlogEditor'
-import { fetchSubscriberCount, sendNewsletter, type NewsletterRecipients } from '../../api/email'
+import { fetchEmailTemplate, fetchSubscriberCount, sendNewsletter, type NewsletterRecipients } from '../../api/email'
 import { fetchMembers, type Member } from '../../api/auth'
 
 type SubscriberCountState =
@@ -22,6 +21,11 @@ type SendState =
   | { status: 'confirming' }
   | { status: 'sending' }
   | { status: 'error'; message: string }
+
+type TemplateState =
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'ready' }
 
 const EMPTY_BODY_HTML_PATTERNS = [/^\s*$/, /^<p>\s*<\/p>$/i]
 
@@ -45,6 +49,7 @@ export default function EmailCompose() {
   const navigate = useNavigate()
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
+  const [template, setTemplate] = useState<TemplateState>({ status: 'loading' })
   const [mode, setMode] = useState<RecipientMode>('all_subscribers')
   const [subscriberCount, setSubscriberCount] = useState<SubscriberCountState>({ status: 'loading' })
   const [members, setMembers] = useState<MembersState>({ status: 'idle' })
@@ -70,6 +75,22 @@ export default function EmailCompose() {
       }
     }
     load()
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const html = await fetchEmailTemplate()
+        if (cancelled) return
+        setBody((current) => (current.length === 0 ? html : current))
+        setTemplate({ status: 'ready' })
+      } catch (err) {
+        if (cancelled) return
+        setTemplate({ status: 'error', message: err instanceof Error ? err.message : 'Failed to load template' })
+      }
+    })()
     return () => { cancelled = true }
   }, [])
 
@@ -400,8 +421,21 @@ export default function EmailCompose() {
         </div>
 
         <div className="field">
-          <label className="field-label">Body</label>
-          <BlogEditor value={body} onChange={setBody} />
+          <label className="field-label" htmlFor="email-html-body">Body (HTML)</label>
+          {template.status === 'error' && (
+            <div className="form-error" role="alert">Couldn't load template from Resend: {template.message}</div>
+          )}
+          <textarea
+            id="email-html-body"
+            className="email-html-editor"
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            disabled={send.status === 'sending' || template.status === 'loading'}
+            rows={24}
+            spellCheck={false}
+            autoComplete="off"
+            placeholder={template.status === 'loading' ? 'Loading template from Resend…' : ''}
+          />
         </div>
 
         {send.status === 'idle' && (

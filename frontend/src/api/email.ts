@@ -57,6 +57,13 @@ export async function sendTestEmail(
   return res.json()
 }
 
+export async function fetchEmailTemplate(): Promise<string> {
+  const res = await fetch('/api/admin/tools/email/template', { credentials: 'include' })
+  if (!res.ok) throw new Error(await res.text())
+  const body = (await res.json()) as { htmlBody: string }
+  return body.htmlBody
+}
+
 export async function fetchSubscriberCount(): Promise<number> {
   const res = await fetch('/api/admin/tools/email/subscribers/count', {
     credentials: 'include',

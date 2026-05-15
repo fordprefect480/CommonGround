@@ -604,10 +604,12 @@ button.footer-link:disabled {
 }
 
 .profile-forms {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
-  align-items: start;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+}
+
 .recipient-mode-options {
   display: flex;
   flex-direction: column;
@@ -1301,3 +1303,13 @@ button.footer-link:disabled {
 }
 .tiptap-content :focus { outline: none; }
 .tiptap-content img.ProseMirror-selectednode { outline: 2px solid var(--apple-600); outline-offset: 2px; }
+
+.email-html-editor {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  tab-size: 2;
+}
