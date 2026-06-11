@@ -1,0 +1,184 @@
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { fetchMember, updateMember, type Member } from '../../api/auth'
+
+const ADMIN_ROLE = 'Admin'
+
+type State =
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; member: Member }
+
+interface FormState {
+  firstName: string
+  lastName: string
+  phoneNumber: string
+  isAdmin: boolean
+  isSubscribedToMailingList: boolean
+}
+
+const dateFormatter = new Intl.DateTimeFormat('en-AU', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+
+function formatJoinedAt(iso: string): string {
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '—' : dateFormatter.format(d)
+}
+
+function memberToForm(member: Member): FormState {
+  return {
+    firstName: member.firstName ?? '',
+    lastName: member.lastName ?? '',
+    phoneNumber: member.phoneNumber ?? '',
+    isAdmin: member.roles.includes(ADMIN_ROLE),
+    isSubscribedToMailingList: member.isSubscribedToMailingList,
+  }
+}
+
+export default function MemberDetail() {
+  const { id } = useParams<{ id: string }>()
+  const [state, setState] = useState<State>({ status: 'loading' })
+  const [form, setForm] = useState<FormState | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    if (!id) return
+    setState({ status: 'loading' })
+    fetchMember(id)
+      .then((member) => {
+        setState({ status: 'ready', member })
+        setForm(memberToForm(member))
+      })
+      .catch((err: unknown) => {
+        setState({ status: 'error', message: err instanceof Error ? err.message : 'Failed to load member' })
+      })
+  }, [id])
+
+  if (!id) return <p className="form-error" role="alert">Missing member id.</p>
+
+  if (state.status === 'loading') return <p className="admin-loading">Loading&hellip;</p>
+
+  if (state.status === 'error') {
+    return (
+      <section className="admin-page" aria-labelledby="member-heading">
+        <header className="admin-page-header">
+          <h1 id="member-heading" className="admin-page-title">Member</h1>
+          <Link to="/admin/members" className="footer-link">Back to members</Link>
+        </header>
+        <div className="form-error" role="alert">{state.message}</div>
+      </section>
+    )
+  }
+
+  const { member } = state
+  if (!form) return null
+
+  const updateForm = (patch: Partial<FormState>) => {
+    setForm((prev) => (prev ? { ...prev, ...patch } : prev))
+    if (saved) setSaved(false)
+  }
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    setSaveError(null)
+    try {
+      const updated = await updateMember(member.id, {
+        firstName: form.firstName.trim() || null,
+        lastName: form.lastName.trim() || null,
+        phoneNumber: form.phoneNumber.trim() || null,
+        isAdmin: form.isAdmin,
+        isSubscribedToMailingList: form.isSubscribedToMailingList,
+      })
+      setState({ status: 'ready', member: updated })
+      setForm(memberToForm(updated))
+      setSaved(true)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const heading = member.displayName ?? member.email ?? 'Member'
+
+  return (
+    <section className="admin-page" aria-labelledby="member-heading">
+      <header className="admin-page-header">
+        <h1 id="member-heading" className="admin-page-title">{heading}</h1>
+        <Link to="/admin/members" className="footer-link">Back to members</Link>
+      </header>
+
+      <form className="card admin-form" onSubmit={submit}>
+        {saveError && <div className="form-error" role="alert">{saveError}</div>}
+
+        <label className="field">
+          <span className="field-label">Email</span>
+          <input value={member.email ?? ''} readOnly disabled />
+        </label>
+
+        <div className="field">
+          <span className="field-label">Member since</span>
+          <span className="field-readonly">{formatJoinedAt(member.joinedAt)}</span>
+        </div>
+
+        <label className="field">
+          <span className="field-label">First name</span>
+          <input
+            value={form.firstName}
+            onChange={(e) => updateForm({ firstName: e.target.value })}
+            maxLength={100}
+          />
+        </label>
+
+        <label className="field">
+          <span className="field-label">Last name</span>
+          <input
+            value={form.lastName}
+            onChange={(e) => updateForm({ lastName: e.target.value })}
+            maxLength={100}
+          />
+        </label>
+
+        <label className="field">
+          <span className="field-label">Phone</span>
+          <input
+            type="tel"
+            value={form.phoneNumber}
+            onChange={(e) => updateForm({ phoneNumber: e.target.value })}
+          />
+        </label>
+
+        <label className="checkbox-field">
+          <input
+            type="checkbox"
+            checked={form.isAdmin}
+            onChange={(e) => updateForm({ isAdmin: e.target.checked })}
+          />
+          <span>Administrator</span>
+        </label>
+
+        <label className="checkbox-field">
+          <input
+            type="checkbox"
+            checked={form.isSubscribedToMailingList}
+            onChange={(e) => updateForm({ isSubscribedToMailingList: e.target.checked })}
+          />
+          <span>Subscribed to newsletter</span>
+        </label>
+
+        <div className="admin-actions">
+          <button type="submit" className="primary-button" disabled={saving}>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          {saved && <span className="admin-whoami">Saved.</span>}
+        </div>
+      </form>
+    </section>
+  )
+}
