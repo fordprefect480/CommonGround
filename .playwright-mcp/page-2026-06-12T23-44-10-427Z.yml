@@ -1,0 +1,78 @@
+- generic [ref=e3]:
+  - region "top of page"
+  - generic [ref=e9]:
+    - banner [ref=e10]:
+      - generic [ref=e16]:
+        - generic:
+          - generic:
+            - generic "Home" [ref=e17] [cursor=pointer]:
+              - link "SWCG logo" [ref=e18]:
+                - /url: https://www.seafordwetlandscommunitygarden.com
+                - img "SWCG logo" [ref=e19]
+            - navigation "Site" [ref=e21]:
+              - list [ref=e22]:
+                - listitem [ref=e23] [cursor=pointer]:
+                  - link "Membership" [ref=e24]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/membership
+                    - paragraph [ref=e27]: Membership
+                - listitem [ref=e28] [cursor=pointer]:
+                  - link "Lease A Plot" [ref=e29]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/lease-a-plot
+                    - paragraph [ref=e32]: Lease A Plot
+                - listitem [ref=e33] [cursor=pointer]:
+                  - link "Blog" [ref=e34]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/blog
+                    - paragraph [ref=e37]: Blog
+                - listitem [ref=e38] [cursor=pointer]:
+                  - link "Events" [ref=e39]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/garden-events
+                    - paragraph [ref=e42]: Events
+                - listitem [ref=e43] [cursor=pointer]:
+                  - link "Donate" [ref=e44]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/donate
+                    - paragraph [ref=e47]: Donate
+                - listitem [ref=e48] [cursor=pointer]:
+                  - link "Partners" [ref=e49]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/partners
+                    - paragraph [ref=e52]: Partners
+                - listitem [ref=e53] [cursor=pointer]:
+                  - link "Resources" [ref=e54]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/resources
+                    - paragraph [ref=e57]: Resources
+    - main [ref=e58]:
+      - generic [ref=e64]:
+        - generic:
+          - generic:
+            - heading "Resources" [level=2] [ref=e69]:
+              - generic [ref=e70]: Resources
+            - img "PXL_20220821_021010554_edited.png" [ref=e73]
+            - heading "Documents" [level=6] [ref=e74]
+            - list [ref=e75]:
+              - listitem [ref=e76]:
+                - paragraph [ref=e77]:
+                  - link "Membership Policy" [ref=e78] [cursor=pointer]:
+                    - /url: https://docs.google.com/document/d/e/2PACX-1vTLkpl3NPXKBBSoaMlIGRp-j6OnU-jmZ5BG209WEY5SPZrA6GN0ql7LAJF9gCYx92oKBt1oEey-BCn7/pub
+                    - generic [ref=e82]: Membership Policy
+              - listitem [ref=e83]:
+                - paragraph [ref=e84]:
+                  - link "Plotholders Policy" [ref=e90] [cursor=pointer]:
+                    - /url: https://docs.google.com/document/d/1qo1aQFR9cNnfqWeZBeoupWW1nB5y596vn5SLJeGq5v0/edit?usp=sharing
+            - heading "Find A Garden" [level=6] [ref=e91]
+            - paragraph [ref=e92]: Use the map below to find a community garden near you.
+    - contentinfo [ref=e94]:
+      - generic [ref=e98]:
+        - generic:
+          - generic:
+            - list "Social Bar" [ref=e100]:
+              - listitem [ref=e101]:
+                - link "Seaford Community Garden on Facebook" [ref=e102] [cursor=pointer]:
+                  - /url: http://www.facebook.com/seafordcg
+                  - img "Seaford Community Garden on Facebook" [ref=e103]
+              - listitem [ref=e104]:
+                - link "Seaford Community Garden on Instagram" [ref=e105] [cursor=pointer]:
+                  - /url: https://instagram.com/seafordwetlandscg
+                  - img "Seaford Community Garden on Instagram" [ref=e106]
+            - paragraph [ref=e107]: Seeded by
+            - paragraph [ref=e108]: © 2025 Mid Coast Sustainability Inc.
+            - img "GA Graphic Logo Horiztonal Mono Black.png" [ref=e111]
+  - region "bottom of page"

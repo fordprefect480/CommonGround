@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { fetchBlogPosts, type BlogPostSummary } from '../../api/blog'
 import { useAppConfig } from '../../AppConfigContext'
-import { MSFooter, MSHeader, type NavId } from '../home/Chrome'
+import { MSFooter, MSHeader, usePageNav } from '../home/Chrome'
 import BlogCard from './BlogCard'
 
 type State =
@@ -12,7 +11,6 @@ type State =
 
 export default function BlogIndex() {
   const { gardenName } = useAppConfig()
-  const navigate = useNavigate()
   const [state, setState] = useState<State>({ status: 'loading' })
 
   useEffect(() => {
@@ -32,21 +30,7 @@ export default function BlogIndex() {
     return () => { document.title = gardenName }
   }, [gardenName])
 
-  const handleNav = useCallback((id: NavId) => {
-    if (id === 'blog') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
-    }
-    if (id === 'membership') {
-      navigate('/membership')
-      return
-    }
-    if (id === 'lease') {
-      navigate('/lease-a-plot')
-      return
-    }
-    navigate('/')
-  }, [navigate])
+  const handleNav = usePageNav('blog')
 
   return (
     <div>

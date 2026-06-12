@@ -1,0 +1,79 @@
+- generic [ref=e3]:
+  - region "top of page"
+  - generic [ref=e9]:
+    - banner [ref=e10]:
+      - generic [ref=e16]:
+        - generic:
+          - generic:
+            - generic "Home" [ref=e17] [cursor=pointer]:
+              - link "SWCG logo" [ref=e18]:
+                - /url: https://www.seafordwetlandscommunitygarden.com
+                - img "SWCG logo" [ref=e19]
+            - navigation "Site" [ref=e21]:
+              - list [ref=e22]:
+                - listitem [ref=e23] [cursor=pointer]:
+                  - link "Membership" [ref=e24]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/membership
+                    - paragraph [ref=e27]: Membership
+                - listitem [ref=e28] [cursor=pointer]:
+                  - link "Lease A Plot" [ref=e29]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/lease-a-plot
+                    - paragraph [ref=e32]: Lease A Plot
+                - listitem [ref=e33] [cursor=pointer]:
+                  - link "Blog" [ref=e34]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/blog
+                    - paragraph [ref=e37]: Blog
+                - listitem [ref=e38] [cursor=pointer]:
+                  - link "Events" [ref=e39]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/garden-events
+                    - paragraph [ref=e42]: Events
+                - listitem [ref=e43] [cursor=pointer]:
+                  - link "Donate" [ref=e44]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/donate
+                    - paragraph [ref=e47]: Donate
+                - listitem [ref=e48] [cursor=pointer]:
+                  - link "Partners" [ref=e49]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/partners
+                    - paragraph [ref=e52]: Partners
+                - listitem [ref=e53] [cursor=pointer]:
+                  - link "Resources" [ref=e54]:
+                    - /url: https://www.seafordwetlandscommunitygarden.com/resources
+                    - paragraph [ref=e57]: Resources
+    - main [ref=e58]:
+      - generic [ref=e64]:
+        - generic:
+          - generic:
+            - generic [ref=e73]:
+              - generic:
+                - generic:
+                  - heading "Donate" [level=2] [ref=e78]:
+                    - generic [ref=e79]: Donate
+                  - heading "Donations" [level=6] [ref=e80]
+            - generic:
+              - paragraph [ref=e81]: The Seaford Wetlands Community Garden is a grassroots organization funded entirely through memberships, donations, and grants, and powered by hardworking volunteers. Your gift will help us grow into a true asset to the community of Seaford and the surrounding suburbs.
+              - paragraph [ref=e82]
+              - paragraph [ref=e83]: "You can donate to us online by making a payment to:"
+              - paragraph [ref=e84]
+              - paragraph [ref=e85]: "Account name: MID COAST SUSTAINABILITY INC."
+              - paragraph [ref=e86]: "BSB: 633-000"
+              - paragraph [ref=e87]: "Account number: 187908280"
+              - paragraph [ref=e88]
+              - paragraph [ref=e89]: Thank you so much for your support!
+            - img "PXL_20220821_012650606.MP.jpg" [ref=e92]
+    - contentinfo [ref=e93]:
+      - generic [ref=e97]:
+        - generic:
+          - generic:
+            - list "Social Bar" [ref=e99]:
+              - listitem [ref=e100]:
+                - link "Seaford Community Garden on Facebook" [ref=e101] [cursor=pointer]:
+                  - /url: http://www.facebook.com/seafordcg
+                  - img "Seaford Community Garden on Facebook" [ref=e102]
+              - listitem [ref=e103]:
+                - link "Seaford Community Garden on Instagram" [ref=e104] [cursor=pointer]:
+                  - /url: https://instagram.com/seafordwetlandscg
+                  - img "Seaford Community Garden on Instagram" [ref=e105]
+            - paragraph [ref=e106]: Seeded by
+            - paragraph [ref=e107]: © 2025 Mid Coast Sustainability Inc.
+            - img "GA Graphic Logo Horiztonal Mono Black.png" [ref=e110]
+  - region "bottom of page"
