@@ -7,6 +7,7 @@ import { reactPlugin } from './applicationInsights'
 import { AuthProvider, useAuth } from './AuthContext'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import Membership from './pages/Membership'
 import Profile from './pages/Profile'
 import Activity from './pages/admin/Activity'
 import AdminLayout from './pages/admin/AdminLayout'
@@ -43,6 +44,7 @@ export default function App() {
           <AuthProvider>
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/membership" element={<Membership />} />
               <Route path="/blog" element={<BlogIndex />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/login" element={<Login />} />
