@@ -167,7 +167,7 @@ export function HomeHero({ onNav }: NavProps) {
                   fontWeight: 700,
                 }}
               >
-                $20
+                $25
               </strong>{' '}
               a year
             </div>
@@ -596,7 +596,7 @@ export function MembershipBanner({ onNav }: NavProps) {
           >
             Join from
             <br />
-            $20 a year.
+            $25 a year.
           </h2>
           <p
             style={{
