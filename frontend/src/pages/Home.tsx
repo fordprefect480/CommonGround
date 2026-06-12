@@ -32,6 +32,10 @@ export default function Home() {
       navigate('/blog')
       return
     }
+    if (id === 'membership') {
+      navigate('/membership')
+      return
+    }
     setActive(id)
     if (id === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' })

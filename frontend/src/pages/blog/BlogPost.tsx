@@ -43,6 +43,10 @@ export default function BlogPost() {
       navigate('/blog')
       return
     }
+    if (id === 'membership') {
+      navigate('/membership')
+      return
+    }
     navigate('/')
   }, [navigate])
 
