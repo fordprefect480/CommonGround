@@ -10,7 +10,6 @@ export type NavId =
   | 'blog'
   | 'events'
   | 'donate'
-  | 'partners'
   | 'resources'
   | 'contact'
   | 'acknowledgement'
@@ -26,7 +25,6 @@ const NAV_ITEMS: ReadonlyArray<readonly [NavId, string]> = [
   ['blog', 'Blog'],
   ['events', 'Events'],
   ['donate', 'Donate'],
-  ['partners', 'Partners'],
   ['resources', 'Resources'],
 ]
 
@@ -331,7 +329,6 @@ const FOOTER_GROUPS: ReadonlyArray<{
   {
     title: 'About',
     links: [
-      ['partners', 'Partners'],
       ['contact', 'Contact us'],
       ['acknowledgement', 'Acknowledgement'],
     ],

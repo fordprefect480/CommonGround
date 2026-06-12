@@ -53,7 +53,7 @@ export default function Home() {
       <FeatureGrid />
       <HomeEvents onNav={handleNav} />
       <MembershipBanner onNav={handleNav} />
-      <PartnersStrip onNav={handleNav} />
+      <PartnersStrip />
       <InstagramStrip />
       <ContactPage />
       <MSFooter onNav={handleNav} />
