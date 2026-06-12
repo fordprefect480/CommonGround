@@ -44,6 +44,10 @@ export default function Home() {
       navigate('/donate')
       return
     }
+    if (id === 'resources') {
+      navigate('/resources')
+      return
+    }
     setActive(id)
     if (id === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' })

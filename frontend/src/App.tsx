@@ -10,6 +10,7 @@ import LeaseAPlot from './pages/LeaseAPlot'
 import Login from './pages/Login'
 import Membership from './pages/Membership'
 import Profile from './pages/Profile'
+import Resources from './pages/Resources'
 import Activity from './pages/admin/Activity'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminProfile from './pages/admin/AdminProfile'
@@ -49,6 +50,7 @@ export default function App() {
               <Route path="/membership" element={<Membership />} />
               <Route path="/lease-a-plot" element={<LeaseAPlot />} />
               <Route path="/donate" element={<Donate />} />
+              <Route path="/resources" element={<Resources />} />
               <Route path="/blog" element={<BlogIndex />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/login" element={<Login />} />
