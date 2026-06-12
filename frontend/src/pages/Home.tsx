@@ -40,6 +40,10 @@ export default function Home() {
       navigate('/lease-a-plot')
       return
     }
+    if (id === 'donate') {
+      navigate('/donate')
+      return
+    }
     setActive(id)
     if (id === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' })
