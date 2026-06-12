@@ -119,8 +119,17 @@ export default function Membership() {
               <a href={MEMBERSHIP_POLICY_URL} target="_blank" rel="noopener noreferrer">
                 Membership Policy
               </a>{' '}
-              before joining. This is also available on our Resources page
-              along with all of our other policies and guidelines.
+              before joining. This is also available on our{' '}
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleNav('resources')
+                }}
+              >
+                Resources
+              </a>{' '}
+              page along with all of our other policies and guidelines.
             </p>
             <MSButton size="lg" onClick={() => handleNav('contact')}>
               Get in touch to join

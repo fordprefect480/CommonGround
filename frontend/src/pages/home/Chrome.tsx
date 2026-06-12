@@ -25,6 +25,7 @@ const PAGE_ROUTES: Partial<Record<NavId, string>> = {
   lease: '/lease-a-plot',
   blog: '/blog',
   donate: '/donate',
+  resources: '/resources',
 }
 
 /**
