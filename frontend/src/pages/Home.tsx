@@ -36,6 +36,10 @@ export default function Home() {
       navigate('/membership')
       return
     }
+    if (id === 'lease') {
+      navigate('/lease-a-plot')
+      return
+    }
     setActive(id)
     if (id === 'home') {
       window.scrollTo({ top: 0, behavior: 'smooth' })

@@ -41,6 +41,10 @@ export default function BlogIndex() {
       navigate('/membership')
       return
     }
+    if (id === 'lease') {
+      navigate('/lease-a-plot')
+      return
+    }
     navigate('/')
   }, [navigate])
 

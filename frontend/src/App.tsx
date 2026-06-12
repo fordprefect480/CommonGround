@@ -6,6 +6,7 @@ import { AppConfigProvider } from './AppConfigContext'
 import { reactPlugin } from './applicationInsights'
 import { AuthProvider, useAuth } from './AuthContext'
 import Home from './pages/Home'
+import LeaseAPlot from './pages/LeaseAPlot'
 import Login from './pages/Login'
 import Membership from './pages/Membership'
 import Profile from './pages/Profile'
@@ -45,6 +46,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/membership" element={<Membership />} />
+              <Route path="/lease-a-plot" element={<LeaseAPlot />} />
               <Route path="/blog" element={<BlogIndex />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/login" element={<Login />} />
