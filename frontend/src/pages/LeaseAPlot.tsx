@@ -4,36 +4,33 @@ import { useAppConfig } from '../AppConfigContext'
 import { MSFooter, MSHeader, type NavId } from './home/Chrome'
 import { MSButton, MSEyebrow, MSSection } from './home/Primitives'
 
-const BENEFITS: ReadonlyArray<string> = [
-  'use of the community garden, including access codes, equipment and water',
-  'pick from the communal garden spaces',
-  'insurance coverage',
-  'the ability to nominate for a committee position, and take a leadership role in our organisation and local community',
-  'attendance and voting rights at the AGM each year — have your say on what the association should focus on, who should be on the steering committee and what community garden projects should be developed next',
-  'invitations to club social events',
-  'free training and workshop opportunities',
-  'discounted rates on all public workshops and events',
+const BED_FEATURES: ReadonlyArray<string> = [
+  'compost, mulch, fertiliser and water are all included in your rental',
+  'standard beds are 2.4m x 1.2m and 0.6m in height',
+  'produce from your bed is for your own consumption',
+  'beds for wheelchair users and two communal wicking beds are planned',
+  'plants are not to overgrow onto the ground — please use your own trellising within the bed',
 ]
 
-const MEMBERSHIP_POLICY_URL =
-  'https://docs.google.com/document/d/e/2PACX-1vTLkpl3NPXKBBSoaMlIGRp-j6OnU-jmZ5BG209WEY5SPZrA6GN0ql7LAJF9gCYx92oKBt1oEey-BCn7/pub'
+const PLOTHOLDER_POLICY_URL =
+  'https://docs.google.com/document/d/1qo1aQFR9cNnfqWeZBeoupWW1nB5y596vn5SLJeGq5v0/edit?usp=sharing'
 
-export default function Membership() {
+export default function LeaseAPlot() {
   const { gardenName } = useAppConfig()
   const navigate = useNavigate()
 
   useEffect(() => {
-    document.title = `Membership | ${gardenName}`
+    document.title = `Lease a plot | ${gardenName}`
     return () => { document.title = gardenName }
   }, [gardenName])
 
   const handleNav = useCallback((id: NavId) => {
-    if (id === 'membership') {
+    if (id === 'lease') {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
-    if (id === 'lease') {
-      navigate('/lease-a-plot')
+    if (id === 'membership') {
+      navigate('/membership')
       return
     }
     if (id === 'blog') {
@@ -48,8 +45,8 @@ export default function Membership() {
   }, [navigate])
 
   return (
-    <div data-screen-label="SWCG · membership">
-      <MSHeader active="membership" onNav={handleNav} />
+    <div data-screen-label="SWCG · lease a plot">
+      <MSHeader active="lease" onNav={handleNav} />
 
       <MSSection bg="var(--paper)" py={88}>
         <div
@@ -61,7 +58,7 @@ export default function Membership() {
           }}
         >
           <div>
-            <MSEyebrow>Membership</MSEyebrow>
+            <MSEyebrow>Lease a plot</MSEyebrow>
             <h1
               style={{
                 fontFamily: 'var(--font-display)',
@@ -74,28 +71,22 @@ export default function Membership() {
                 fontVariationSettings: '"opsz" 48',
               }}
             >
-              Become a member.
+              Grow your own.
             </h1>
             <p style={bodyPara}>
-              Seaford Wetlands Community Garden is managed by Mid Coast
-              Sustainability Inc. We are a grass-roots, not-for-profit
-              community group primarily focussed on community-led
-              sustainability education and grass roots environmental action.
-              Becoming a member is the best way to support our small
-              organisation, which is entirely run by volunteers.
+              We have a limited number of raised beds in our community garden
+              for private rental each year. Produce from these beds is for
+              individual consumption, and bed rental includes compost, mulch,
+              fertiliser and water.
             </p>
             <p style={{ ...bodyPara, marginBottom: 0 }}>
-              You don&rsquo;t need to be a gardener to be a member; just a
-              person or business that cares about our local community and
-              sustainability. Membership doesn&rsquo;t come with any
-              expectations of time commitment, although we encourage and
-              support everyone to participate as actively as they can in
-              their local community!
+              Rental rates are $80/year and raised bed rental is only
+              available to financial members.
             </p>
           </div>
           <img
-            src="/swcg/working-bee.jpg"
-            alt="Volunteers planting together in the garden"
+            src="/swcg/hero-image.png"
+            alt="Raised garden beds in the community garden"
             style={{
               width: '100%',
               aspectRatio: '4 / 3',
@@ -117,7 +108,7 @@ export default function Membership() {
           }}
         >
           <div>
-            <MSEyebrow>What you get</MSEyebrow>
+            <MSEyebrow>Your raised bed</MSEyebrow>
             <h2
               style={{
                 fontFamily: 'var(--font-display)',
@@ -129,22 +120,21 @@ export default function Membership() {
                 margin: '14px 0 20px',
               }}
             >
-              Just $25 a year.
+              Just $80 a year.
             </h2>
             <p style={bodyPara}>
-              Membership is just $25/year and it comes with some great
-              benefits.
+              A private bed gives you your own space to grow what you like,
+              with everything you need included.
             </p>
             <p style={{ ...bodyPara, marginBottom: 28 }}>
-              Please have a read of our{' '}
-              <a href={MEMBERSHIP_POLICY_URL} target="_blank" rel="noopener noreferrer">
-                Membership Policy
+              Have a read of our{' '}
+              <a href={PLOTHOLDER_POLICY_URL} target="_blank" rel="noopener noreferrer">
+                Plotholder Policy
               </a>{' '}
-              before joining. This is also available on our Resources page
-              along with all of our other policies and guidelines.
+              before applying.
             </p>
             <MSButton size="lg" onClick={() => handleNav('contact')}>
-              Get in touch to join
+              Get in touch to apply
             </MSButton>
           </div>
           <ul
@@ -157,9 +147,9 @@ export default function Membership() {
               gap: 14,
             }}
           >
-            {BENEFITS.map((benefit) => (
+            {BED_FEATURES.map((feature) => (
               <li
-                key={benefit}
+                key={feature}
                 style={{
                   display: 'flex',
                   gap: 12,
@@ -176,7 +166,7 @@ export default function Membership() {
                   alt=""
                   style={{ flexShrink: 0, marginTop: 4 }}
                 />
-                {benefit}
+                {feature}
               </li>
             ))}
           </ul>
@@ -184,7 +174,7 @@ export default function Membership() {
       </MSSection>
 
       <MSSection bg="var(--paper)" py={96}>
-        <MSEyebrow>The details</MSEyebrow>
+        <MSEyebrow>How it works</MSEyebrow>
         <h2
           style={{
             fontFamily: 'var(--font-display)',
@@ -196,7 +186,7 @@ export default function Membership() {
             margin: '14px 0 32px',
           }}
         >
-          Good to know.
+          Getting a plot.
         </h2>
         <div
           style={{
@@ -206,32 +196,30 @@ export default function Membership() {
             alignItems: 'stretch',
           }}
         >
-          <DetailCard title="Renewals">
-            Memberships are renewed at 1st July each year. This means a
-            member&rsquo;s first year of membership may not be a full twelve
-            months. If you sign up as a new member within 8 weeks of the 1st
-            July you do not need to pay a renewal fee &mdash; your membership
-            will be carried over to the new financial year.
-          </DetailCard>
-          <DetailCard title="Household memberships">
-            Household memberships are available for $25/year but we will
-            require details of all members who will attend the garden for
-            insurance purposes. Only the nominated primary member has voting
-            rights at the AGM.
-          </DetailCard>
-          <DetailCard title="Want your own bed?">
-            Private raised beds are also available for lease to members, so
-            you can grow what you like in your own space.{' '}
+          <DetailCard title="Become a member first">
+            Raised bed rental is only available to financial members.
+            Membership is just $25/year and comes with plenty of other
+            benefits.{' '}
             <a
               href="#"
               onClick={(e) => {
                 e.preventDefault()
-                handleNav('lease')
+                handleNav('membership')
               }}
             >
-              Learn about leasing a plot
+              Become a member
             </a>
             .
+          </DetailCard>
+          <DetailCard title="New plotholders">
+            If you don&rsquo;t yet have a plot number, get in touch to join
+            the waitlist. A committee member will be in touch when a plot
+            becomes available.
+          </DetailCard>
+          <DetailCard title="Already have a plot?">
+            Plot leases are renewed each year. If you have a plot number
+            already, or recently applied and have been given one, contact us
+            to renew your lease and arrange payment.
           </DetailCard>
         </div>
       </MSSection>
