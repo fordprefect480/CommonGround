@@ -435,3 +435,6 @@ docs
 
 # Aspire publish output (Bicep + container artifacts)
 aspire-output/
+
+# Playwright MCP browser artifacts
+.playwright-mcp/
