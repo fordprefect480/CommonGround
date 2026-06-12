@@ -650,7 +650,7 @@ const PARTNERS: ReadonlyArray<string> = [
   'Onkaparinga Council',
 ]
 
-export function PartnersStrip({ onNav }: NavProps) {
+export function PartnersStrip() {
   return (
     <MSSection py={88} id="section-partners">
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
@@ -713,11 +713,6 @@ export function PartnersStrip({ onNav }: NavProps) {
             {p}
           </div>
         ))}
-      </div>
-      <div style={{ textAlign: 'center' }}>
-        <MSButton variant="ghost" onClick={() => onNav('partners')}>
-          See all our partners &rarr;
-        </MSButton>
       </div>
     </MSSection>
   )
