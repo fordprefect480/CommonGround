@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { blogImageUrl, fetchBlogPost, type BlogPost as BlogPostT } from '../../api/blog'
 import { useAppConfig } from '../../AppConfigContext'
-import { MSFooter, MSHeader, type NavId } from '../home/Chrome'
+import { MSFooter, MSHeader, usePageNav } from '../home/Chrome'
 import BlogCard from './BlogCard'
 
 type State =
@@ -14,7 +14,6 @@ type State =
 export default function BlogPost() {
   const { slug = '' } = useParams()
   const { gardenName } = useAppConfig()
-  const navigate = useNavigate()
   const [state, setState] = useState<State>({ status: 'loading' })
 
   useEffect(() => {
@@ -38,21 +37,7 @@ export default function BlogPost() {
     return () => { document.title = gardenName }
   }, [state, gardenName])
 
-  const handleNav = useCallback((id: NavId) => {
-    if (id === 'blog') {
-      navigate('/blog')
-      return
-    }
-    if (id === 'membership') {
-      navigate('/membership')
-      return
-    }
-    if (id === 'lease') {
-      navigate('/lease-a-plot')
-      return
-    }
-    navigate('/')
-  }, [navigate])
+  const handleNav = usePageNav()
 
   return (
     <div>

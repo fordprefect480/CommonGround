@@ -1,7 +1,6 @@
-import { useCallback, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAppConfig } from '../AppConfigContext'
-import { MSFooter, MSHeader, type NavId } from './home/Chrome'
+import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSButton, MSEyebrow, MSSection } from './home/Primitives'
 
 const BED_FEATURES: ReadonlyArray<string> = [
@@ -17,32 +16,12 @@ const PLOTHOLDER_POLICY_URL =
 
 export default function LeaseAPlot() {
   const { gardenName } = useAppConfig()
-  const navigate = useNavigate()
+  const handleNav = usePageNav('lease')
 
   useEffect(() => {
     document.title = `Lease a plot | ${gardenName}`
     return () => { document.title = gardenName }
   }, [gardenName])
-
-  const handleNav = useCallback((id: NavId) => {
-    if (id === 'lease') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
-    }
-    if (id === 'membership') {
-      navigate('/membership')
-      return
-    }
-    if (id === 'blog') {
-      navigate('/blog')
-      return
-    }
-    if (id === 'home') {
-      navigate('/')
-      return
-    }
-    navigate(`/#section-${id}`)
-  }, [navigate])
 
   return (
     <div data-screen-label="SWCG · lease a plot">

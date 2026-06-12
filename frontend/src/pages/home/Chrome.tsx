@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
 import { MSButton } from './Primitives'
@@ -17,6 +17,30 @@ export type NavId =
 interface ChromeProps {
   active: NavId
   onNav: (id: NavId) => void
+}
+
+const PAGE_ROUTES: Partial<Record<NavId, string>> = {
+  home: '/',
+  membership: '/membership',
+  lease: '/lease-a-plot',
+  blog: '/blog',
+}
+
+/**
+ * Shared nav handler for standalone pages. Clicking the current page scrolls
+ * to the top; other ids navigate to their route, or to the matching home
+ * section for ids without a page of their own.
+ */
+export function usePageNav(current?: NavId) {
+  const navigate = useNavigate()
+  return useCallback((id: NavId) => {
+    if (id === current) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    const route = PAGE_ROUTES[id]
+    navigate(route ?? `/#section-${id}`)
+  }, [navigate, current])
 }
 
 const NAV_ITEMS: ReadonlyArray<readonly [NavId, string]> = [
