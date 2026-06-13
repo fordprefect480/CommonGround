@@ -596,13 +596,14 @@ export function HomeEvents({ onNav }: NavProps) {
 }
 
 export function MembershipBanner({ onNav }: NavProps) {
+  const isTablet = useMediaQuery(BP_TABLET)
   return (
     <MSSection bg="var(--apple-700)" py={88} id="section-membership">
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1.5fr 1fr',
-          gap: 56,
+          gridTemplateColumns: isTablet ? '1fr' : '1.5fr 1fr',
+          gap: isTablet ? 32 : 56,
           alignItems: 'center',
         }}
       >
@@ -612,7 +613,7 @@ export function MembershipBanner({ onNav }: NavProps) {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 800,
-              fontSize: 56,
+              fontSize: 'clamp(34px, 6vw, 56px)',
               lineHeight: 0.98,
               letterSpacing: '-0.03em',
               textTransform: 'uppercase',
@@ -657,7 +658,7 @@ export function MembershipBanner({ onNav }: NavProps) {
             alt=""
             style={{
               width: '100%',
-              maxWidth: 280,
+              maxWidth: isTablet ? 200 : 280,
               transform: 'rotate(-6deg)',
               filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.25))',
             }}
@@ -801,6 +802,9 @@ function loadInstagramEmbedScript(): Promise<void> {
 
 export function InstagramStrip() {
   const [livePosts, setLivePosts] = useState<InstagramPost[] | null>(null)
+  const isMobile = useMediaQuery(BP_MOBILE)
+  const isTablet = useMediaQuery(BP_TABLET)
+  const cols = isMobile ? 1 : isTablet ? 2 : 3
 
   useEffect(() => {
     let cancelled = false
@@ -840,7 +844,7 @@ export function InstagramStrip() {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
-              fontSize: 36,
+              fontSize: 'clamp(28px, 5vw, 36px)',
               letterSpacing: '-0.025em',
               textTransform: 'uppercase',
               margin: '14px 0 4px',
@@ -866,7 +870,7 @@ export function InstagramStrip() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: `repeat(${cols}, 1fr)`,
           gap: 16,
           alignItems: 'start',
         }}
@@ -915,6 +919,8 @@ export function ContactPage() {
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isTablet = useMediaQuery(BP_TABLET)
+  const isMobile = useMediaQuery(BP_MOBILE)
 
   useEffect(() => {
     if (!captchaSiteKey || sent) return
@@ -987,8 +993,8 @@ export function ContactPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 56,
+          gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr',
+          gap: isTablet ? 32 : 56,
         }}
       >
         <div>
@@ -997,7 +1003,7 @@ export function ContactPage() {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 800,
-              fontSize: 56,
+              fontSize: 'clamp(34px, 6vw, 56px)',
               lineHeight: 0.98,
               letterSpacing: '-0.03em',
               textTransform: 'uppercase',
@@ -1066,7 +1072,7 @@ export function ContactPage() {
             background: 'var(--ivory)',
             border: '1px solid var(--ink-200)',
             borderRadius: 'var(--r-lg)',
-            padding: 32,
+            padding: isMobile ? 20 : 32,
             display: 'flex',
             flexDirection: 'column',
             gap: 14,
