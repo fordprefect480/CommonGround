@@ -13,7 +13,9 @@ public sealed class GetConfigEndpoint(
     public sealed record ConfigResult(
         string GardenName,
         string? ApplicationInsightsConnectionString,
-        string? TurnstileSiteKey);
+        string? TurnstileSiteKey,
+        string? Version,
+        string? CommitSha);
 
     public override void Configure()
     {
@@ -31,8 +33,17 @@ public sealed class GetConfigEndpoint(
             ? null
             : contact.Value.TurnstileSiteKey;
 
+        var version = string.IsNullOrWhiteSpace(configuration["BuildInfo:Version"])
+            ? null
+            : configuration["BuildInfo:Version"];
+
+        var commitSha = string.IsNullOrWhiteSpace(configuration["BuildInfo:CommitSha"])
+            ? null
+            : configuration["BuildInfo:CommitSha"];
+
         return Send.OkAsync(
-            new ConfigResult(garden.Value.Name, appInsightsConnectionString, turnstileSiteKey),
+            new ConfigResult(
+                garden.Value.Name, appInsightsConnectionString, turnstileSiteKey, version, commitSha),
             ct);
     }
 }

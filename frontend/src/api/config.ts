@@ -2,6 +2,8 @@ export interface AppConfig {
   gardenName: string
   applicationInsightsConnectionString?: string | null
   turnstileSiteKey?: string | null
+  version?: string | null
+  commitSha?: string | null
 }
 
 export async function fetchAppConfig(): Promise<AppConfig> {
