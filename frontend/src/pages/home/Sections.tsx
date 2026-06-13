@@ -11,7 +11,7 @@ import {
   Tomato,
 } from './Primitives'
 import type { NavId } from './Chrome'
-import { BP_MOBILE, BP_TABLET, useMediaQuery } from './responsive'
+import { BP_MOBILE, useMediaQuery } from './responsive'
 import { useAppConfig } from '../../AppConfigContext'
 import { sendContactMessage } from '../../api/contact'
 import {
