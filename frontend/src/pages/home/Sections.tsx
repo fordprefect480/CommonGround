@@ -11,7 +11,7 @@ import {
   Tomato,
 } from './Primitives'
 import type { NavId } from './Chrome'
-import { BP_MOBILE, useMediaQuery } from './responsive'
+import { BP_MOBILE, BP_TABLET, useMediaQuery } from './responsive'
 import { useAppConfig } from '../../AppConfigContext'
 import { sendContactMessage } from '../../api/contact'
 import {
@@ -212,13 +212,14 @@ export function HomeHero({ onNav }: NavProps) {
 }
 
 export function HomeAbout({ onNav }: NavProps) {
+  const isTablet = useMediaQuery(BP_TABLET)
   return (
     <MSSection bg="var(--paper-soft)" py={104}>
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1.2fr',
-          gap: 64,
+          gridTemplateColumns: isTablet ? '1fr' : '1fr 1.2fr',
+          gap: isTablet ? 32 : 64,
           alignItems: 'center',
         }}
       >
@@ -239,7 +240,7 @@ export function HomeAbout({ onNav }: NavProps) {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
-              fontSize: 44,
+              fontSize: 'clamp(30px, 5vw, 44px)',
               lineHeight: 1.05,
               letterSpacing: '-0.025em',
               textTransform: 'uppercase',
@@ -308,6 +309,9 @@ const FEATURES: ReadonlyArray<FeatureDef> = [
 ]
 
 export function FeatureGrid() {
+  const isMobile = useMediaQuery(BP_MOBILE)
+  const isTablet = useMediaQuery(BP_TABLET)
+  const cols = isMobile ? 1 : isTablet ? 2 : 4
   return (
     <MSSection py={96}>
       <div style={{ textAlign: 'center', marginBottom: 56 }}>
@@ -316,7 +320,7 @@ export function FeatureGrid() {
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 700,
-            fontSize: 44,
+            fontSize: 'clamp(30px, 5vw, 44px)',
             lineHeight: 1.05,
             letterSpacing: '-0.025em',
             textTransform: 'uppercase',
@@ -329,7 +333,7 @@ export function FeatureGrid() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: `repeat(${cols}, 1fr)`,
           gap: 24,
         }}
       >
@@ -407,6 +411,9 @@ export function formatEventTimeRange(startIso: string, endIso: string | null): s
 export function HomeEvents({ onNav }: NavProps) {
   const [events, setEvents] = useState<UpcomingEvent[] | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
+  const isMobile = useMediaQuery(BP_MOBILE)
+  const isTablet = useMediaQuery(BP_TABLET)
+  const cols = isMobile ? 1 : isTablet ? 2 : 3
 
   useEffect(() => {
     let cancelled = false
@@ -438,7 +445,7 @@ export function HomeEvents({ onNav }: NavProps) {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
-              fontSize: 44,
+              fontSize: 'clamp(30px, 5vw, 44px)',
               lineHeight: 1.05,
               letterSpacing: '-0.025em',
               textTransform: 'uppercase',
@@ -466,7 +473,7 @@ export function HomeEvents({ onNav }: NavProps) {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: `repeat(${cols}, 1fr)`,
             gap: 24,
           }}
         >
