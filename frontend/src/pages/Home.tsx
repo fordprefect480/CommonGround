@@ -40,6 +40,10 @@ export default function Home() {
       navigate('/lease-a-plot')
       return
     }
+    if (id === 'events') {
+      navigate('/events')
+      return
+    }
     if (id === 'donate') {
       navigate('/donate')
       return

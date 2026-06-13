@@ -17,6 +17,7 @@ import AdminProfile from './pages/admin/AdminProfile'
 import AdminTools from './pages/admin/AdminTools'
 import BlogPostEditor from './pages/admin/BlogPostEditor'
 import Donate from './pages/Donate'
+import Events from './pages/Events'
 import BlogPostList from './pages/admin/BlogPostList'
 import CommunityEventEditor from './pages/admin/CommunityEventEditor'
 import CommunityEventList from './pages/admin/CommunityEventList'
@@ -50,6 +51,7 @@ export default function App() {
               <Route path="/membership" element={<Membership />} />
               <Route path="/lease-a-plot" element={<LeaseAPlot />} />
               <Route path="/donate" element={<Donate />} />
+              <Route path="/events" element={<Events />} />
               <Route path="/resources" element={<Resources />} />
               <Route path="/blog" element={<BlogIndex />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
