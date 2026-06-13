@@ -1,7 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAppConfig } from '../AppConfigContext'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSButton, MSEyebrow, MSSection } from './home/Primitives'
+import { MembershipSignupModal } from './home/MembershipSignupModal'
 
 const BENEFITS: ReadonlyArray<string> = [
   'use of the community garden, including access codes, equipment and water',
@@ -20,15 +22,59 @@ const MEMBERSHIP_POLICY_URL =
 export default function Membership() {
   const { gardenName } = useAppConfig()
   const handleNav = usePageNav('membership')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [signupOpen, setSignupOpen] = useState(false)
+  const [canceled, setCanceled] = useState(false)
 
   useEffect(() => {
     document.title = `Membership | ${gardenName}`
     return () => { document.title = gardenName }
   }, [gardenName])
 
+  useEffect(() => {
+    if (searchParams.get('join') === '1') {
+      setSignupOpen(true)
+      const next = new URLSearchParams(searchParams)
+      next.delete('join')
+      setSearchParams(next, { replace: true })
+    }
+    if (searchParams.get('canceled') === '1') {
+      setCanceled(true)
+      const next = new URLSearchParams(searchParams)
+      next.delete('canceled')
+      setSearchParams(next, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
+
   return (
     <div data-screen-label="SWCG · membership">
       <MSHeader active="membership" onNav={handleNav} />
+
+      {canceled && (
+        <div
+          role="status"
+          style={{
+            maxWidth: 1240,
+            margin: '16px auto 0',
+            padding: '12px 16px',
+            background: 'var(--paper-soft)',
+            border: '1px solid var(--ink-200)',
+            borderRadius: 'var(--r-md)',
+            color: 'var(--fg-2)',
+            fontSize: 15,
+          }}
+        >
+          No worries - your payment was canceled and you haven&rsquo;t been charged. You can{' '}
+          <button
+            type="button"
+            onClick={() => { setCanceled(false); setSignupOpen(true) }}
+            style={{ border: 0, background: 'none', padding: 0, color: 'var(--apple-700)', cursor: 'pointer', font: 'inherit', textDecoration: 'underline' }}
+          >
+            pick up where you left off
+          </button>{' '}
+          whenever you&rsquo;re ready.
+        </div>
+      )}
 
       <MSSection bg="var(--paper)" py={88}>
         <div
@@ -131,8 +177,8 @@ export default function Membership() {
               </a>{' '}
               page along with all of our other policies and guidelines.
             </p>
-            <MSButton size="lg" onClick={() => handleNav('contact')}>
-              Get in touch to join
+            <MSButton size="lg" onClick={() => setSignupOpen(true)}>
+              Join now
             </MSButton>
           </div>
           <ul
@@ -225,6 +271,7 @@ export default function Membership() {
       </MSSection>
 
       <MSFooter onNav={handleNav} />
+      <MembershipSignupModal open={signupOpen} onClose={() => setSignupOpen(false)} />
     </div>
   )
 }

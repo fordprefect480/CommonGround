@@ -140,6 +140,18 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:garden-public-u
 	server.WithEnvironment("Garden__PublicUrl", gardenPublicUrl);
 }
 
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:stripe-secret-key"]))
+{
+	var stripeSecretKey = builder.AddParameter("stripe-secret-key", secret: true);
+	server.WithEnvironment("Stripe__SecretKey", stripeSecretKey);
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:stripe-webhook-secret"]))
+{
+	var stripeWebhookSecret = builder.AddParameter("stripe-webhook-secret", secret: true);
+	server.WithEnvironment("Stripe__WebhookSecret", stripeWebhookSecret);
+}
+
 var webfrontend = builder.AddViteApp("webfrontend", "../frontend")
 	.WithReference(server)
 	.WaitFor(server);

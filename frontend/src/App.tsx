@@ -9,6 +9,7 @@ import Home from './pages/Home'
 import LeaseAPlot from './pages/LeaseAPlot'
 import Login from './pages/Login'
 import Membership from './pages/Membership'
+import MembershipWelcome from './pages/MembershipWelcome'
 import Profile from './pages/Profile'
 import Resources from './pages/Resources'
 import Activity from './pages/admin/Activity'
@@ -49,6 +50,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/membership" element={<Membership />} />
+              <Route path="/membership/welcome" element={<MembershipWelcome />} />
               <Route path="/lease-a-plot" element={<LeaseAPlot />} />
               <Route path="/donate" element={<Donate />} />
               <Route path="/events" element={<Events />} />

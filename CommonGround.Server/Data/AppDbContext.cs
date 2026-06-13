@@ -13,6 +13,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<BlogImage> BlogImages => Set<BlogImage>();
     public DbSet<InstagramPost> InstagramPosts => Set<InstagramPost>();
     public DbSet<CommunityEvent> CommunityEvents => Set<CommunityEvent>();
+    public DbSet<SecondaryMember> SecondaryMembers => Set<SecondaryMember>();
+    public DbSet<MembershipPayment> MembershipPayments => Set<MembershipPayment>();
     public DbSet<Activity> Activities => Set<Activity>();
     public DbSet<SentEmail> SentEmails => Set<SentEmail>();
     public DbSet<SentEmailRecipient> SentEmailRecipients => Set<SentEmailRecipient>();
@@ -26,6 +28,34 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         {
             b.Property(u => u.JoinedAt).HasDefaultValueSql("SYSUTCDATETIME()");
             b.Property(u => u.IsSubscribedToMailingList).HasDefaultValue(true);
+
+            b.HasMany(u => u.SecondaryMembers)
+                .WithOne(s => s.User!)
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<SecondaryMember>(b =>
+        {
+            b.Property(s => s.FullName).HasMaxLength(200).IsRequired();
+            b.HasIndex(s => s.UserId).HasDatabaseName("IX_SecondaryMember_UserId");
+        });
+
+        builder.Entity<MembershipPayment>(b =>
+        {
+            b.Property(p => p.StripeCheckoutSessionId).HasMaxLength(255).IsRequired();
+            b.Property(p => p.StripePaymentIntentId).HasMaxLength(255);
+            b.Property(p => p.Currency).HasMaxLength(3).IsRequired();
+            b.Property(p => p.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
+
+            b.HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasIndex(p => p.StripeCheckoutSessionId)
+                .IsUnique()
+                .HasDatabaseName("IX_MembershipPayment_StripeCheckoutSessionId");
         });
 
         builder.Entity<BlogCategory>(b =>

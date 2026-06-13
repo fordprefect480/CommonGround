@@ -56,6 +56,8 @@ const NAV_ITEMS: ReadonlyArray<readonly [NavId, string]> = [
 ]
 
 export function MSHeader({ active, onNav }: ChromeProps) {
+  const { state } = useAuth()
+  const navigate = useNavigate()
   return (
     <header
       style={{
@@ -159,13 +161,15 @@ export function MSHeader({ active, onNav }: ChromeProps) {
               {label}
             </a>
           ))}
-          <MSButton
-            size="sm"
-            onClick={() => onNav('membership')}
-            style={{ marginLeft: 6, whiteSpace: 'nowrap' }}
-          >
-            Join
-          </MSButton>
+          {state.status !== 'authenticated' && (
+            <MSButton
+              size="sm"
+              onClick={() => navigate('/membership?join=1')}
+              style={{ marginLeft: 6, whiteSpace: 'nowrap' }}
+            >
+              Join
+            </MSButton>
+          )}
           <AuthChip />
         </nav>
       </div>
