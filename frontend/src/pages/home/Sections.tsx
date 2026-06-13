@@ -11,6 +11,7 @@ import {
   Tomato,
 } from './Primitives'
 import type { NavId } from './Chrome'
+import { BP_HERO_VIDEO, BP_MOBILE, BP_TABLET, useMediaQuery } from './responsive'
 import { useAppConfig } from '../../AppConfigContext'
 import { sendContactMessage } from '../../api/contact'
 import {
@@ -25,23 +26,19 @@ interface NavProps {
   onNav: (id: NavId) => void
 }
 
-const HERO_VIDEO_QUERY = '(min-width: 768px)'
-
 export function HomeHero({ onNav }: NavProps) {
   const heroMask =
     'linear-gradient(to right, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,1) 70%)'
   const [mediaReady, setMediaReady] = useState(false)
   const [mailingOpen, setMailingOpen] = useState(false)
-  const [useVideo, setUseVideo] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia(HERO_VIDEO_QUERY).matches,
-  )
+  const useVideo = useMediaQuery(BP_HERO_VIDEO)
+  const isMobile = useMediaQuery(BP_MOBILE)
 
-  useEffect(() => {
-    const mq = window.matchMedia(HERO_VIDEO_QUERY)
-    const handler = (e: MediaQueryListEvent) => setUseVideo(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
+  const headlineColor = isMobile ? 'var(--paper)' : 'var(--ink-900)'
+  const accentColor = isMobile ? 'var(--apple-300)' : 'var(--apple-700)'
+  const bodyColor = isMobile ? 'rgba(250,246,238,0.92)' : 'var(--fg-2)'
+  const statLabelColor = isMobile ? 'rgba(250,246,238,0.82)' : 'var(--fg-3)'
+  const statValueColor = isMobile ? 'var(--paper)' : 'var(--ink-900)'
 
   const mediaStyle: React.CSSProperties = {
     position: 'absolute',
@@ -49,8 +46,8 @@ export function HomeHero({ onNav }: NavProps) {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-    maskImage: heroMask,
-    WebkitMaskImage: heroMask,
+    maskImage: isMobile ? 'none' : heroMask,
+    WebkitMaskImage: isMobile ? 'none' : heroMask,
     pointerEvents: 'none',
     opacity: mediaReady ? 1 : 0,
     transition: 'opacity 700ms ease-out',
@@ -82,16 +79,30 @@ export function HomeHero({ onNav }: NavProps) {
           style={mediaStyle}
         />
       )}
+      {isMobile && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            background:
+              'linear-gradient(to bottom, rgba(22,20,15,0.35) 0%, rgba(22,20,15,0.55) 55%, rgba(22,20,15,0.80) 100%)',
+          }}
+        />
+      )}
       <div
         style={{
           position: 'relative',
           maxWidth: 1240,
           margin: '0 auto',
-          padding: '88px 32px 72px',
+          padding: isMobile ? '56px 20px 64px' : '88px 32px 72px',
         }}
       >
         <div style={{ maxWidth: 620 }}>
-          <MSEyebrow>Seaford, South Australia &middot; Kaurna Country</MSEyebrow>
+          <MSEyebrow color={isMobile ? 'var(--apple-200)' : undefined}>
+            Seaford, South Australia &middot; Kaurna Country
+          </MSEyebrow>
           <h1
             style={{
               fontFamily: 'var(--font-display)',
@@ -102,19 +113,20 @@ export function HomeHero({ onNav }: NavProps) {
               textTransform: 'uppercase',
               margin: '20px 0 24px',
               fontVariationSettings: '"opsz" 48',
+              color: headlineColor,
             }}
           >
             Seaford Wetlands
             <br />
             Community
             <br />
-            <span style={{ color: 'var(--apple-700)' }}>Garden.</span>
+            <span style={{ color: accentColor }}>Garden.</span>
           </h1>
           <p
             style={{
               fontSize: 19,
               lineHeight: 1.5,
-              color: 'var(--fg-2)',
+              color: bodyColor,
               maxWidth: 540,
               margin: '0 0 32px',
             }}
@@ -149,13 +161,13 @@ export function HomeHero({ onNav }: NavProps) {
               display: 'flex',
               gap: 32,
               fontSize: 13,
-              color: 'var(--fg-3)',
+              color: statLabelColor,
             }}
           >
             <div>
               <strong
                 style={{
-                  color: 'var(--ink-900)',
+                  color: statValueColor,
                   fontSize: 18,
                   fontFamily: 'var(--font-display)',
                   fontWeight: 700,
@@ -168,7 +180,7 @@ export function HomeHero({ onNav }: NavProps) {
             <div>
               <strong
                 style={{
-                  color: 'var(--ink-900)',
+                  color: statValueColor,
                   fontSize: 18,
                   fontFamily: 'var(--font-display)',
                   fontWeight: 700,
@@ -181,7 +193,7 @@ export function HomeHero({ onNav }: NavProps) {
             <div>
               <strong
                 style={{
-                  color: 'var(--ink-900)',
+                  color: statValueColor,
                   fontSize: 18,
                   fontFamily: 'var(--font-display)',
                   fontWeight: 700,
@@ -200,13 +212,14 @@ export function HomeHero({ onNav }: NavProps) {
 }
 
 export function HomeAbout({ onNav }: NavProps) {
+  const isTablet = useMediaQuery(BP_TABLET)
   return (
     <MSSection bg="var(--paper-soft)" py={104}>
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1.2fr',
-          gap: 64,
+          gridTemplateColumns: isTablet ? '1fr' : '1fr 1.2fr',
+          gap: isTablet ? 32 : 64,
           alignItems: 'center',
         }}
       >
@@ -227,7 +240,7 @@ export function HomeAbout({ onNav }: NavProps) {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
-              fontSize: 44,
+              fontSize: 'clamp(30px, 5vw, 44px)',
               lineHeight: 1.05,
               letterSpacing: '-0.025em',
               textTransform: 'uppercase',
@@ -296,6 +309,9 @@ const FEATURES: ReadonlyArray<FeatureDef> = [
 ]
 
 export function FeatureGrid() {
+  const isMobile = useMediaQuery(BP_MOBILE)
+  const isTablet = useMediaQuery(BP_TABLET)
+  const cols = isMobile ? 1 : isTablet ? 2 : 4
   return (
     <MSSection py={96}>
       <div style={{ textAlign: 'center', marginBottom: 56 }}>
@@ -304,7 +320,7 @@ export function FeatureGrid() {
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 700,
-            fontSize: 44,
+            fontSize: 'clamp(30px, 5vw, 44px)',
             lineHeight: 1.05,
             letterSpacing: '-0.025em',
             textTransform: 'uppercase',
@@ -317,7 +333,7 @@ export function FeatureGrid() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: `repeat(${cols}, 1fr)`,
           gap: 24,
         }}
       >
@@ -395,6 +411,9 @@ export function formatEventTimeRange(startIso: string, endIso: string | null): s
 export function HomeEvents({ onNav }: NavProps) {
   const [events, setEvents] = useState<UpcomingEvent[] | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
+  const isMobile = useMediaQuery(BP_MOBILE)
+  const isTablet = useMediaQuery(BP_TABLET)
+  const cols = isMobile ? 1 : isTablet ? 2 : 3
 
   useEffect(() => {
     let cancelled = false
@@ -426,7 +445,7 @@ export function HomeEvents({ onNav }: NavProps) {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
-              fontSize: 44,
+              fontSize: 'clamp(30px, 5vw, 44px)',
               lineHeight: 1.05,
               letterSpacing: '-0.025em',
               textTransform: 'uppercase',
@@ -454,7 +473,7 @@ export function HomeEvents({ onNav }: NavProps) {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: `repeat(${cols}, 1fr)`,
             gap: 24,
           }}
         >
@@ -577,13 +596,14 @@ export function HomeEvents({ onNav }: NavProps) {
 }
 
 export function MembershipBanner({ onNav }: NavProps) {
+  const isTablet = useMediaQuery(BP_TABLET)
   return (
     <MSSection bg="var(--apple-700)" py={88} id="section-membership">
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1.5fr 1fr',
-          gap: 56,
+          gridTemplateColumns: isTablet ? '1fr' : '1.5fr 1fr',
+          gap: isTablet ? 32 : 56,
           alignItems: 'center',
         }}
       >
@@ -593,7 +613,7 @@ export function MembershipBanner({ onNav }: NavProps) {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 800,
-              fontSize: 56,
+              fontSize: 'clamp(34px, 6vw, 56px)',
               lineHeight: 0.98,
               letterSpacing: '-0.03em',
               textTransform: 'uppercase',
@@ -638,7 +658,7 @@ export function MembershipBanner({ onNav }: NavProps) {
             alt=""
             style={{
               width: '100%',
-              maxWidth: 280,
+              maxWidth: isTablet ? 200 : 280,
               transform: 'rotate(-6deg)',
               filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.25))',
             }}
@@ -722,7 +742,7 @@ export function PartnersStrip() {
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 700,
-            fontSize: 36,
+            fontSize: 'clamp(26px, 5vw, 36px)',
             lineHeight: 1.1,
             letterSpacing: '-0.025em',
             textTransform: 'uppercase',
@@ -782,6 +802,9 @@ function loadInstagramEmbedScript(): Promise<void> {
 
 export function InstagramStrip() {
   const [livePosts, setLivePosts] = useState<InstagramPost[] | null>(null)
+  const isMobile = useMediaQuery(BP_MOBILE)
+  const isTablet = useMediaQuery(BP_TABLET)
+  const cols = isMobile ? 1 : isTablet ? 2 : 3
 
   useEffect(() => {
     let cancelled = false
@@ -821,7 +844,7 @@ export function InstagramStrip() {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
-              fontSize: 36,
+              fontSize: 'clamp(28px, 5vw, 36px)',
               letterSpacing: '-0.025em',
               textTransform: 'uppercase',
               margin: '14px 0 4px',
@@ -847,7 +870,7 @@ export function InstagramStrip() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: `repeat(${cols}, 1fr)`,
           gap: 16,
           alignItems: 'start',
         }}
@@ -896,6 +919,8 @@ export function ContactPage() {
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isTablet = useMediaQuery(BP_TABLET)
+  const isMobile = useMediaQuery(BP_MOBILE)
 
   useEffect(() => {
     if (!captchaSiteKey || sent) return
@@ -968,8 +993,8 @@ export function ContactPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 56,
+          gridTemplateColumns: isTablet ? '1fr' : '1fr 1fr',
+          gap: isTablet ? 32 : 56,
         }}
       >
         <div>
@@ -978,7 +1003,7 @@ export function ContactPage() {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 800,
-              fontSize: 56,
+              fontSize: 'clamp(34px, 6vw, 56px)',
               lineHeight: 0.98,
               letterSpacing: '-0.03em',
               textTransform: 'uppercase',
@@ -1047,7 +1072,7 @@ export function ContactPage() {
             background: 'var(--ivory)',
             border: '1px solid var(--ink-200)',
             borderRadius: 'var(--r-lg)',
-            padding: 32,
+            padding: isMobile ? 20 : 32,
             display: 'flex',
             flexDirection: 'column',
             gap: 14,

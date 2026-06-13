@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
 import { MSButton } from './Primitives'
+import { BP_HEADER, BP_MOBILE, BP_TABLET, useMediaQuery } from './responsive'
 
 export type NavId =
   | 'home'
@@ -55,9 +56,88 @@ const NAV_ITEMS: ReadonlyArray<readonly [NavId, string]> = [
   ['resources', 'Resources'],
 ]
 
+const hamburgerStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 44,
+  height: 44,
+  background: 'transparent',
+  border: 0,
+  cursor: 'pointer',
+  color: 'var(--ink-900)',
+  flexShrink: 0,
+  padding: 0,
+}
+
+const closeBtnStyle: React.CSSProperties = {
+  width: 40,
+  height: 40,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'transparent',
+  border: 0,
+  cursor: 'pointer',
+  fontSize: 28,
+  lineHeight: 1,
+  color: 'var(--ink-700)',
+}
+
+function drawerLink(isActive: boolean): React.CSSProperties {
+  return {
+    fontFamily: 'var(--font-sans)',
+    fontWeight: 600,
+    fontSize: 16,
+    color: isActive ? 'var(--apple-700)' : 'var(--ink-900)',
+    background: isActive ? 'var(--apple-100)' : 'transparent',
+    textDecoration: 'none',
+    padding: '12px 14px',
+    borderRadius: 'var(--r-md)',
+    display: 'block',
+    width: '100%',
+    textAlign: 'left',
+    border: 0,
+    cursor: 'pointer',
+  }
+}
+
 export function MSHeader({ active, onNav }: ChromeProps) {
   const { state } = useAuth()
   const navigate = useNavigate()
+  const isCompact = useMediaQuery(BP_HEADER)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const hamburgerRef = useRef<HTMLButtonElement>(null)
+  const drawerWasOpen = useRef(false)
+
+  useEffect(() => {
+    if (!isCompact) setDrawerOpen(false)
+  }, [isCompact])
+
+  useEffect(() => {
+    if (drawerWasOpen.current && !drawerOpen) hamburgerRef.current?.focus()
+    drawerWasOpen.current = drawerOpen
+  }, [drawerOpen])
+
+  useEffect(() => {
+    if (!drawerOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDrawerOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [drawerOpen])
+
+  const handleDrawerNav = (id: NavId) => {
+    setDrawerOpen(false)
+    onNav(id)
+  }
+
   return (
     <header
       style={{
@@ -73,7 +153,7 @@ export function MSHeader({ active, onNav }: ChromeProps) {
         style={{
           maxWidth: 1240,
           margin: '0 auto',
-          padding: '14px 24px',
+          padding: isCompact ? '12px 20px' : '14px 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -128,15 +208,152 @@ export function MSHeader({ active, onNav }: ChromeProps) {
             </div>
           </div>
         </a>
-        <nav
-          style={{
-            display: 'flex',
-            gap: 2,
-            alignItems: 'center',
-            flexShrink: 1,
-            minWidth: 0,
-          }}
-        >
+        {isCompact ? (
+          <button
+            type="button"
+            ref={hamburgerRef}
+            aria-label="Open menu"
+            aria-expanded={drawerOpen}
+            onClick={() => setDrawerOpen(true)}
+            style={hamburgerStyle}
+          >
+            <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M3 6h18M3 12h18M3 18h18"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        ) : (
+          <nav
+            style={{
+              display: 'flex',
+              gap: 2,
+              alignItems: 'center',
+              flexShrink: 1,
+              minWidth: 0,
+            }}
+          >
+            {NAV_ITEMS.map(([id, label]) => (
+              <a
+                key={id}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onNav(id)
+                }}
+                style={{
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: 500,
+                  fontSize: 13,
+                  color: active === id ? 'var(--apple-700)' : 'var(--ink-700)',
+                  textDecoration: 'none',
+                  padding: '7px 9px',
+                  borderRadius: 'var(--r-md)',
+                  background: active === id ? 'var(--apple-100)' : 'transparent',
+                  transition: 'all 120ms var(--ease-out)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {label}
+              </a>
+            ))}
+            {state.status !== 'authenticated' && (
+              <MSButton
+                size="sm"
+                onClick={() => navigate('/membership?join=1')}
+                style={{ marginLeft: 6, whiteSpace: 'nowrap' }}
+              >
+                Join
+              </MSButton>
+            )}
+            <AuthChip />
+          </nav>
+        )}
+      </div>
+      {isCompact && (
+        <MobileNavDrawer
+          open={drawerOpen}
+          active={active}
+          onClose={() => setDrawerOpen(false)}
+          onNav={handleDrawerNav}
+        />
+      )}
+    </header>
+  )
+}
+
+function MobileNavDrawer({
+  open,
+  active,
+  onClose,
+  onNav,
+}: {
+  open: boolean
+  active: NavId
+  onClose: () => void
+  onNav: (id: NavId) => void
+}) {
+  const { state, signOut } = useAuth()
+  const navigate = useNavigate()
+  const closeBtnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (open) closeBtnRef.current?.focus()
+  }, [open])
+
+  const handleSignOut = async () => {
+    onClose()
+    await signOut()
+    navigate('/')
+  }
+
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 70,
+          background: 'rgba(22,20,15,0.45)',
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? 'auto' : 'none',
+          transition: 'opacity 200ms var(--ease-out)',
+        }}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Site menu"
+        inert={!open || undefined}
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 80,
+          width: 'min(82vw, 320px)',
+          background: 'var(--paper)',
+          borderLeft: '1px solid var(--ink-100)',
+          boxShadow: '-12px 0 32px rgba(0,0,0,0.12)',
+          transform: open ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 240ms var(--ease-out)',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '18px 18px 28px',
+          overflowY: 'auto',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <button type="button" ref={closeBtnRef} aria-label="Close menu" onClick={onClose} style={closeBtnStyle}>
+            &times;
+          </button>
+        </div>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {NAV_ITEMS.map(([id, label]) => (
             <a
               key={id}
@@ -145,35 +362,50 @@ export function MSHeader({ active, onNav }: ChromeProps) {
                 e.preventDefault()
                 onNav(id)
               }}
-              style={{
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 500,
-                fontSize: 13,
-                color: active === id ? 'var(--apple-700)' : 'var(--ink-700)',
-                textDecoration: 'none',
-                padding: '7px 9px',
-                borderRadius: 'var(--r-md)',
-                background: active === id ? 'var(--apple-100)' : 'transparent',
-                transition: 'all 120ms var(--ease-out)',
-                whiteSpace: 'nowrap',
-              }}
+              style={drawerLink(active === id)}
             >
               {label}
             </a>
           ))}
-          {state.status !== 'authenticated' && (
+        </nav>
+        <div style={{ height: 1, background: 'var(--ink-100)', margin: '16px 0' }} />
+        {state.status === 'authenticated' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Link to="/profile" onClick={onClose} style={drawerLink(false)}>
+              Profile
+            </Link>
+            {state.me.isAdmin && (
+              <Link
+                to="/admin"
+                onClick={onClose}
+                style={{ ...drawerLink(false), color: 'var(--apple-700)' }}
+              >
+                Admin
+              </Link>
+            )}
+            <button type="button" onClick={handleSignOut} style={drawerLink(false)}>
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <MSButton
-              size="sm"
-              onClick={() => navigate('/membership?join=1')}
-              style={{ marginLeft: 6, whiteSpace: 'nowrap' }}
+              size="lg"
+              onClick={() => {
+                onClose()
+                navigate('/membership?join=1')
+              }}
+              style={{ justifyContent: 'center' }}
             >
               Join
             </MSButton>
-          )}
-          <AuthChip />
-        </nav>
+            <Link to="/login" onClick={onClose} style={drawerLink(false)}>
+              Sign in
+            </Link>
+          </div>
+        )}
       </div>
-    </header>
+    </>
   )
 }
 
@@ -367,20 +599,23 @@ const FOOTER_GROUPS: ReadonlyArray<{
 ]
 
 export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
+  const isMobile = useMediaQuery(BP_MOBILE)
+  const isTablet = useMediaQuery(BP_TABLET)
+  const footerCols = isMobile ? '1fr' : isTablet ? '1fr 1fr' : '2fr 1fr 1fr 1fr'
   return (
     <footer
       style={{
         background: 'var(--ink-900)',
         color: 'var(--paper)',
-        padding: '72px 0 32px',
+        padding: isMobile ? '48px 0 28px' : '72px 0 32px',
       }}
     >
-      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 32px' }}>
+      <div style={{ maxWidth: 1240, margin: '0 auto', padding: isMobile ? '0 20px' : '0 32px' }}>
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '2fr 1fr 1fr 1fr',
-            gap: 56,
+            gridTemplateColumns: footerCols,
+            gap: isMobile ? 32 : 56,
             alignItems: 'start',
           }}
         >
