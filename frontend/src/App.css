@@ -946,6 +946,42 @@ button.footer-link:disabled {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Partners carousel (auto-scrolling marquee) */
+.partners-marquee {
+  overflow: hidden;
+  position: relative;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
+
+.partners-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: partners-scroll 55s linear infinite;
+}
+
+.partners-marquee:hover .partners-marquee__track,
+.partners-marquee:focus-within .partners-marquee__track {
+  animation-play-state: paused;
+}
+
+@keyframes partners-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.partner-card {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.partner-card:hover,
+.partner-card:focus-visible {
+  border-color: var(--apple-400, var(--ink-700));
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  outline: none;
+}
+
 @media (max-width: 720px) {
   .admin-header-inner { flex-wrap: wrap; padding: 12px 16px; gap: 12px; }
   .admin-nav          { width: 100%; flex-wrap: wrap; }
