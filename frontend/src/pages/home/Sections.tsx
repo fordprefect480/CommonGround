@@ -11,6 +11,7 @@ import {
   Tomato,
 } from './Primitives'
 import type { NavId } from './Chrome'
+import { BP_MOBILE, BP_TABLET, useMediaQuery } from './responsive'
 import { useAppConfig } from '../../AppConfigContext'
 import { sendContactMessage } from '../../api/contact'
 import {
@@ -25,23 +26,19 @@ interface NavProps {
   onNav: (id: NavId) => void
 }
 
-const HERO_VIDEO_QUERY = '(min-width: 768px)'
-
 export function HomeHero({ onNav }: NavProps) {
   const heroMask =
     'linear-gradient(to right, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,1) 70%)'
   const [mediaReady, setMediaReady] = useState(false)
   const [mailingOpen, setMailingOpen] = useState(false)
-  const [useVideo, setUseVideo] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia(HERO_VIDEO_QUERY).matches,
-  )
+  const useVideo = useMediaQuery('(min-width: 768px)')
+  const isMobile = useMediaQuery(BP_MOBILE)
 
-  useEffect(() => {
-    const mq = window.matchMedia(HERO_VIDEO_QUERY)
-    const handler = (e: MediaQueryListEvent) => setUseVideo(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
+  const headlineColor = isMobile ? 'var(--paper)' : 'var(--ink-900)'
+  const accentColor = isMobile ? 'var(--apple-300)' : 'var(--apple-700)'
+  const bodyColor = isMobile ? 'rgba(250,246,238,0.92)' : 'var(--fg-2)'
+  const statLabelColor = isMobile ? 'rgba(250,246,238,0.82)' : 'var(--fg-3)'
+  const statValueColor = isMobile ? 'var(--paper)' : 'var(--ink-900)'
 
   const mediaStyle: React.CSSProperties = {
     position: 'absolute',
@@ -49,8 +46,8 @@ export function HomeHero({ onNav }: NavProps) {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
-    maskImage: heroMask,
-    WebkitMaskImage: heroMask,
+    maskImage: isMobile ? 'none' : heroMask,
+    WebkitMaskImage: isMobile ? 'none' : heroMask,
     pointerEvents: 'none',
     opacity: mediaReady ? 1 : 0,
     transition: 'opacity 700ms ease-out',
@@ -82,16 +79,30 @@ export function HomeHero({ onNav }: NavProps) {
           style={mediaStyle}
         />
       )}
+      {isMobile && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            background:
+              'linear-gradient(to bottom, rgba(22,20,15,0.35) 0%, rgba(22,20,15,0.55) 55%, rgba(22,20,15,0.80) 100%)',
+          }}
+        />
+      )}
       <div
         style={{
           position: 'relative',
           maxWidth: 1240,
           margin: '0 auto',
-          padding: '88px 32px 72px',
+          padding: isMobile ? '56px 20px 64px' : '88px 32px 72px',
         }}
       >
         <div style={{ maxWidth: 620 }}>
-          <MSEyebrow>Seaford, South Australia &middot; Kaurna Country</MSEyebrow>
+          <MSEyebrow color={isMobile ? 'var(--apple-200)' : undefined}>
+            Seaford, South Australia &middot; Kaurna Country
+          </MSEyebrow>
           <h1
             style={{
               fontFamily: 'var(--font-display)',
@@ -102,19 +113,20 @@ export function HomeHero({ onNav }: NavProps) {
               textTransform: 'uppercase',
               margin: '20px 0 24px',
               fontVariationSettings: '"opsz" 48',
+              color: headlineColor,
             }}
           >
             Seaford Wetlands
             <br />
             Community
             <br />
-            <span style={{ color: 'var(--apple-700)' }}>Garden.</span>
+            <span style={{ color: accentColor }}>Garden.</span>
           </h1>
           <p
             style={{
               fontSize: 19,
               lineHeight: 1.5,
-              color: 'var(--fg-2)',
+              color: bodyColor,
               maxWidth: 540,
               margin: '0 0 32px',
             }}
@@ -149,13 +161,13 @@ export function HomeHero({ onNav }: NavProps) {
               display: 'flex',
               gap: 32,
               fontSize: 13,
-              color: 'var(--fg-3)',
+              color: statLabelColor,
             }}
           >
             <div>
               <strong
                 style={{
-                  color: 'var(--ink-900)',
+                  color: statValueColor,
                   fontSize: 18,
                   fontFamily: 'var(--font-display)',
                   fontWeight: 700,
@@ -168,7 +180,7 @@ export function HomeHero({ onNav }: NavProps) {
             <div>
               <strong
                 style={{
-                  color: 'var(--ink-900)',
+                  color: statValueColor,
                   fontSize: 18,
                   fontFamily: 'var(--font-display)',
                   fontWeight: 700,
@@ -181,7 +193,7 @@ export function HomeHero({ onNav }: NavProps) {
             <div>
               <strong
                 style={{
-                  color: 'var(--ink-900)',
+                  color: statValueColor,
                   fontSize: 18,
                   fontFamily: 'var(--font-display)',
                   fontWeight: 700,
