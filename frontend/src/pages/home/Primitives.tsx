@@ -3,6 +3,7 @@ import type {
   CSSProperties,
   ReactNode,
 } from 'react'
+import { BP_MOBILE, useMediaQuery } from './responsive'
 
 export type PhotoTone = 'leaf' | 'apple' | 'flesh' | 'earth' | 'sand'
 
@@ -111,13 +112,16 @@ export function MSSection({
   style,
   id,
 }: MSSectionProps) {
+  const isMobile = useMediaQuery(BP_MOBILE)
+  const padY = isMobile ? Math.round(py * 0.6) : py
+  const padX = isMobile ? 20 : 32
   return (
-    <section id={id} style={{ background: bg, padding: `${py}px 0`, ...style }}>
+    <section id={id} style={{ background: bg, padding: `${padY}px 0`, ...style }}>
       <div
         style={{
           maxWidth: narrow ? 820 : 1240,
           margin: '0 auto',
-          padding: '0 32px',
+          padding: `0 ${padX}px`,
         }}
       >
         {children}
