@@ -40,6 +40,10 @@ export function HomeHero({ onNav }: NavProps) {
   const statLabelColor = isMobile ? 'rgba(250,246,238,0.82)' : 'var(--fg-3)'
   const statValueColor = isMobile ? 'var(--paper)' : 'var(--ink-900)'
 
+  const mailingBtnStyle: React.CSSProperties = isMobile
+    ? { color: 'var(--paper)', border: '1.5px solid rgba(250,246,238,0.7)' }
+    : { color: 'var(--ink-500)', border: '1.5px solid var(--ink-300)' }
+
   const mediaStyle: React.CSSProperties = {
     position: 'absolute',
     inset: 0,
@@ -151,6 +155,7 @@ export function HomeHero({ onNav }: NavProps) {
               size="lg"
               variant="outlined"
               onClick={() => setMailingOpen(true)}
+              style={mailingBtnStyle}
             >
               Join mailing list
             </MSButton>
