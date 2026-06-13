@@ -607,6 +607,10 @@ export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
   const isMobile = useMediaQuery(BP_MOBILE)
   const isTablet = useMediaQuery(BP_TABLET)
   const footerCols = isMobile ? '1fr' : isTablet ? '1fr 1fr' : '2fr 1fr 1fr 1fr'
+  // The credit block sits beside the acknowledgement (right-aligned) only when
+  // both comfortably fit on one line; below ~1160px the row wraps, so we stack
+  // and left-align it to avoid a ragged right-aligned block.
+  const footerStacked = useMediaQuery('(max-width: 1180px)')
   const { version, commitSha } = useAppConfig()
   return (
     <footer
@@ -755,8 +759,9 @@ export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
         <div
           style={{
             display: 'flex',
+            flexDirection: footerStacked ? 'column' : 'row',
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: footerStacked ? 'flex-start' : 'center',
             flexWrap: 'wrap',
             gap: 16,
           }}
@@ -779,10 +784,35 @@ export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
               color: 'rgba(250,246,238,0.5)',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'flex-end',
+              alignItems: footerStacked ? 'flex-start' : 'flex-end',
+              textAlign: footerStacked ? 'left' : 'right',
             }}
           >
-            <span>&copy; 2026 Mid Coast Sustainability Inc.</span>
+            <span>
+              &copy; 2026 Mid Coast Sustainability Inc.
+              {(version || commitSha) && (
+                <>
+                  {' · '}
+                  {version}
+                  {version && commitSha ? ' · ' : ''}
+                  {commitSha && (
+                    <a
+                      href={`${REPO_URL}/commit/${commitSha}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Commit ${commitSha}`}
+                      style={{
+                        color: 'var(--apple-300)',
+                        textDecoration: 'none',
+                        fontFamily: 'var(--font-mono)',
+                      }}
+                    >
+                      {commitSha.slice(0, 7)}
+                    </a>
+                  )}
+                </>
+              )}
+            </span>
             <div style={{ color: 'rgba(250,246,238,0.45)' }}>
               Powered by{' '}
               <a
@@ -806,34 +836,7 @@ export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
             </div>
           </div>
         </div>
-        {(version || commitSha) && (
-          <div
-            style={{
-              marginTop: 24,
-              textAlign: 'center',
-              fontSize: 12,
-              color: 'rgba(250,246,238,0.4)',
-            }}
-          >
-            {version}
-            {version && commitSha ? ' · ' : ''}
-            {commitSha && (
-              <a
-                href={`${REPO_URL}/commit/${commitSha}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={`Commit ${commitSha}`}
-                style={{
-                  color: 'var(--apple-300)',
-                  textDecoration: 'none',
-                  fontFamily: 'var(--font-mono)',
-                }}
-              >
-                {commitSha.slice(0, 7)}
-              </a>
-            )}
-          </div>
-        )}
+        
       </div>
     </footer>
   )
