@@ -107,10 +107,17 @@ export function MSHeader({ active, onNav }: ChromeProps) {
   const navigate = useNavigate()
   const isCompact = useMediaQuery(BP_HEADER)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const hamburgerRef = useRef<HTMLButtonElement>(null)
+  const drawerWasOpen = useRef(false)
 
   useEffect(() => {
     if (!isCompact) setDrawerOpen(false)
   }, [isCompact])
+
+  useEffect(() => {
+    if (drawerWasOpen.current && !drawerOpen) hamburgerRef.current?.focus()
+    drawerWasOpen.current = drawerOpen
+  }, [drawerOpen])
 
   useEffect(() => {
     if (!drawerOpen) return
@@ -204,6 +211,7 @@ export function MSHeader({ active, onNav }: ChromeProps) {
         {isCompact ? (
           <button
             type="button"
+            ref={hamburgerRef}
             aria-label="Open menu"
             aria-expanded={drawerOpen}
             onClick={() => setDrawerOpen(true)}
@@ -290,6 +298,11 @@ function MobileNavDrawer({
 }) {
   const { state, signOut } = useAuth()
   const navigate = useNavigate()
+  const closeBtnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (open) closeBtnRef.current?.focus()
+  }, [open])
 
   const handleSignOut = async () => {
     onClose()
@@ -316,6 +329,7 @@ function MobileNavDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="Site menu"
+        inert={!open || undefined}
         style={{
           position: 'fixed',
           top: 0,
@@ -335,7 +349,7 @@ function MobileNavDrawer({
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-          <button type="button" aria-label="Close menu" onClick={onClose} style={closeBtnStyle}>
+          <button type="button" ref={closeBtnRef} aria-label="Close menu" onClick={onClose} style={closeBtnStyle}>
             &times;
           </button>
         </div>

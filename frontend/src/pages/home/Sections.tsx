@@ -11,7 +11,7 @@ import {
   Tomato,
 } from './Primitives'
 import type { NavId } from './Chrome'
-import { BP_MOBILE, BP_TABLET, useMediaQuery } from './responsive'
+import { BP_HERO_VIDEO, BP_MOBILE, BP_TABLET, useMediaQuery } from './responsive'
 import { useAppConfig } from '../../AppConfigContext'
 import { sendContactMessage } from '../../api/contact'
 import {
@@ -31,7 +31,7 @@ export function HomeHero({ onNav }: NavProps) {
     'linear-gradient(to right, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,1) 70%)'
   const [mediaReady, setMediaReady] = useState(false)
   const [mailingOpen, setMailingOpen] = useState(false)
-  const useVideo = useMediaQuery('(min-width: 768px)')
+  const useVideo = useMediaQuery(BP_HERO_VIDEO)
   const isMobile = useMediaQuery(BP_MOBILE)
 
   const headlineColor = isMobile ? 'var(--paper)' : 'var(--ink-900)'
@@ -742,7 +742,7 @@ export function PartnersStrip() {
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 700,
-            fontSize: 36,
+            fontSize: 'clamp(26px, 5vw, 36px)',
             lineHeight: 1.1,
             letterSpacing: '-0.025em',
             textTransform: 'uppercase',
