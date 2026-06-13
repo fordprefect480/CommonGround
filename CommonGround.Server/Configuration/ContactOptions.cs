@@ -2,7 +2,7 @@ namespace CommonGround.Server.Configuration;
 
 public sealed class ContactOptions
 {
-    public const string SectionName = "Contact";
+    public const string SectionName = "ContactForm";
 
     /// <summary>
     /// Email address that contact form submissions are delivered to.
