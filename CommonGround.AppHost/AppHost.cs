@@ -80,10 +80,64 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-api-key"
 	server.WithEnvironment("Email__ApiToken", resendApiKey);
 }
 
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-from-address"]))
+{
+	var resendTemplateId = builder.AddParameter("resend-from-address", secret: false);
+	server.WithEnvironment("Email__FromAddress", resendTemplateId);
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-from-name"]))
+{
+	var resendTemplateId = builder.AddParameter("resend-from-name", secret: false);
+	server.WithEnvironment("Email__FromName", resendTemplateId);
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-template-id"]))
+{
+	var resendTemplateId = builder.AddParameter("resend-template-id", secret: true);
+	server.WithEnvironment("Email__TemplateId", resendTemplateId);
+}
+
 if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:eventbrite-private-token"]))
 {
 	var eventbriteToken = builder.AddParameter("eventbrite-private-token", secret: true);
 	server.WithEnvironment("Eventbrite__PrivateToken", eventbriteToken);
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:eventbrite-organization-id"]))
+{
+	var eventbriteOrganizationId = builder.AddParameter("eventbrite-organization-id");
+	server.WithEnvironment("Eventbrite__OrganizationId", eventbriteOrganizationId);
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:contactform-recipient-address"]))
+{
+	var contactRecipientAddress = builder.AddParameter("contactform-recipient-address", secret: true);
+	server.WithEnvironment("ContactForm__RecipientAddress", contactRecipientAddress);
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:turnstile-site-key"]))
+{
+	var turnstileSiteKey = builder.AddParameter("turnstile-site-key");
+	server.WithEnvironment("ContactForm__TurnstileSiteKey", turnstileSiteKey);
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:turnstile-secret-key"]))
+{
+	var turnstileSecretKey = builder.AddParameter("turnstile-secret-key", secret: true);
+	server.WithEnvironment("ContactForm__TurnstileSecretKey", turnstileSecretKey);
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:garden-name"]))
+{
+	var gardenName = builder.AddParameter("garden-name");
+	server.WithEnvironment("Garden__Name", gardenName);
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:garden-public-url"]))
+{
+	var gardenPublicUrl = builder.AddParameter("garden-public-url");
+	server.WithEnvironment("Garden__PublicUrl", gardenPublicUrl);
 }
 
 var webfrontend = builder.AddViteApp("webfrontend", "../frontend")
