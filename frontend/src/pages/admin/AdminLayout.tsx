@@ -61,7 +61,7 @@ export default function AdminLayout() {
             <NavLink to="/admin/events" className="admin-nav-link">Events</NavLink>
             <NavLink to="/admin/instagram" className="admin-nav-link">Instagram</NavLink>
             <NavLink to="/admin/email" className="admin-nav-link">Email</NavLink>
-            <NavLink to="/admin/tools" className="admin-nav-link">Tools</NavLink>
+            <NavLink to="/admin/tools" className="admin-nav-link">Settings</NavLink>
             <NavLink to="/admin/activity" className="admin-nav-link">Activity</NavLink>
             <div ref={menuRef} className="admin-user-menu">
               <button
