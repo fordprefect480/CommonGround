@@ -6,6 +6,8 @@ export const BP_MOBILE = '(max-width: 640px)'
 export const BP_TABLET = '(max-width: 960px)'
 /** Width below which the header switches to the hamburger drawer. */
 export const BP_HEADER = '(max-width: 860px)'
+/** Minimum width at which the hero loads the background video instead of a static image. */
+export const BP_HERO_VIDEO = '(min-width: 768px)'
 
 /**
  * Subscribes to a CSS media query and returns whether it currently matches.
