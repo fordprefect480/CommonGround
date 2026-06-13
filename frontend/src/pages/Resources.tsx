@@ -162,8 +162,8 @@ export default function Resources() {
           across the southern suburbs &mdash; find one near you.
         </p>
         <MapContainer
-          center={[OUR_GARDEN.lat, OUR_GARDEN.lng]}
-          zoom={11}
+          bounds={NEARBY_GARDENS.map((g) => [g.lat, g.lng] as [number, number])}
+          boundsOptions={{ padding: [30, 30] }}
           scrollWheelZoom={false}
           style={{
             height: 460,
