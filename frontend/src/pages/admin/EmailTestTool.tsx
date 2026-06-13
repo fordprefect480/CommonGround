@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import BlogEditor from './BlogEditor'
 import { sendTestEmail, type SendTestEmailResult } from '../../api/email'
+
+const BlogEditor = lazy(() => import('./BlogEditor'))
 
 type SendState =
   | { status: 'idle' }
@@ -96,7 +97,9 @@ export default function EmailTestTool() {
 
         <div className="field">
           <label className="field-label">Body</label>
-          <BlogEditor value={body} onChange={setBody} />
+          <Suspense fallback={<p className="admin-loading">Loading editor&hellip;</p>}>
+            <BlogEditor value={body} onChange={setBody} />
+          </Suspense>
         </div>
 
         {(send.status === 'idle' || send.status === 'error') && (
