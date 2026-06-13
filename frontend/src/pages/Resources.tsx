@@ -1,4 +1,6 @@
 import { useEffect } from 'react'
+import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
 import { useAppConfig } from '../AppConfigContext'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSEyebrow, MSSection } from './home/Primitives'
@@ -19,30 +21,32 @@ const DOCUMENTS: ReadonlyArray<{ title: string; description: string; url: string
 interface NearbyGarden {
   name: string
   address: string
+  lat: number
+  lng: number
   contact?: string
 }
 
 const NEARBY_GARDENS: ReadonlyArray<NearbyGarden> = [
-  { name: 'Seaford Wetlands Community Garden', address: 'Grange Ct, Seaford SA 5169', contact: 'mailto:seafordcg@gmail.com?subject=Seaford Community Garden' },
-  { name: 'Aberfoyle Community Garden', address: 'Budapest Rd, Aberfoyle Park SA 5159', contact: 'https://www.facebook.com/AberfoyleCommunityGarden/' },
-  { name: 'Aldinga Community Garden', address: '7 Stewart Ave, Aldinga Beach SA 5173', contact: 'mailto:ACC@aldingacc.org?subject=Aldinga Community Garden' },
-  { name: 'Christie Downs Community House Community Garden', address: 'Morton Rd & Flaxmill Rd, Christie Downs SA 5164', contact: 'tel:+61883846894' },
-  { name: 'Elizabeth House Community Garden', address: '112 Elizabeth Rd, Christie Downs SA 5164', contact: 'tel:+61883845170' },
-  { name: 'Giving Garden – Aldinga Beach', address: 'Evans St, Aldinga Beach SA 5173', contact: 'https://www.facebook.com/Evansstreetgivinggarden/' },
-  { name: 'Hackham Connected Community Garden', address: '88 Penneys Hill Rd, Hackham SA 5163', contact: 'https://www.facebook.com/Hackham-Connected-Community-Gardens-1016396365166278/' },
-  { name: 'Big Back Yard Community Garden', address: '268 Beach Rd, Hackham West SA 5163', contact: 'https://www.cho.org.au/' },
-  { name: 'Hackham West Community Centre Garden', address: 'Majorca Rd & Warsaw Cres, Hackham West SA 5163', contact: 'tel:+61883841065' },
-  { name: 'Happy Patch Community Garden', address: '179 Hub Dr, Aberfoyle Park SA 5159', contact: 'tel:+61883706006' },
-  { name: 'People Pantry Community Garden', address: "1798 Main S Rd, O'Halloran Hill SA 5158", contact: 'tel:+61451742014' },
-  { name: 'Seaford Community Centre Community Garden', address: 'Beechwood Grove, Seaford SA 5169', contact: 'mailto:info@seafordcc.com.au?subject=Seaford Community Centre Community Garden' },
-  { name: 'Seaford Ecumenical Community Garden', address: 'Grand Blvd & Main St, Seaford SA 5169', contact: 'mailto:sem1@adam.com.au?subject=Seaford Ecumenical Community Garden' },
-  { name: 'Seaford Scouts Community Garden', address: '7 Railway Rd, Seaford Meadows SA 5169', contact: 'mailto:seafordmeadows@sa.scouts.com.au?subject=Seaford Scouts Community Garden' },
-  { name: 'Sellicks Community Garden', address: '18 Riviera Rd, Sellicks Beach SA 5174', contact: 'tel:+61883840666' },
-  { name: 'Wakefield House Community Garden', address: '65 Acre Ave, Morphett Vale SA 5162', contact: 'tel:+61883846158' },
-  { name: 'Wardli Youth Centre', address: '13 McKinna Rd, Christie Downs SA 5164', contact: 'tel:+61881865133' },
-  { name: 'Willunga Community Garden', address: '17 St Lukes St, Willunga SA 5172', contact: 'mailto:willungacommunitygarden@gmail.com?subject=Willunga Community Garden' },
-  { name: 'Woodcroft Community Centre', address: '175 Bains Rd, Morphett Vale SA 5162', contact: 'tel:+61883840070' },
-  { name: 'Vine Street Centre/Neporendi', address: '7 Vine St, Old Reynella SA 5161', contact: 'tel:+61883221120' },
+  { name: 'Seaford Wetlands Community Garden', address: 'Grange Ct, Seaford SA 5169', lat: -35.1822546, lng: 138.4807322, contact: 'mailto:seafordcg@gmail.com?subject=Seaford Community Garden' },
+  { name: 'Aberfoyle Community Garden', address: 'Budapest Rd, Aberfoyle Park SA 5159', lat: -35.0667892, lng: 138.5941861, contact: 'https://www.facebook.com/AberfoyleCommunityGarden/' },
+  { name: 'Aldinga Community Garden', address: '7 Stewart Ave, Aldinga Beach SA 5173', lat: -35.272947, lng: 138.4540366, contact: 'mailto:ACC@aldingacc.org?subject=Aldinga Community Garden' },
+  { name: 'Christie Downs Community House Community Garden', address: 'Morton Rd & Flaxmill Rd, Christie Downs SA 5164', lat: -35.1275883, lng: 138.4980979, contact: 'tel:+61883846894' },
+  { name: 'Elizabeth House Community Garden', address: '112 Elizabeth Rd, Christie Downs SA 5164', lat: -35.1343299, lng: 138.5029324, contact: 'tel:+61883845170' },
+  { name: 'Giving Garden – Aldinga Beach', address: 'Evans St, Aldinga Beach SA 5173', lat: -35.2694497, lng: 138.4604201, contact: 'https://www.facebook.com/Evansstreetgivinggarden/' },
+  { name: 'Hackham Connected Community Garden', address: '88 Penneys Hill Rd, Hackham SA 5163', lat: -35.1471009, lng: 138.5349409, contact: 'https://www.facebook.com/Hackham-Connected-Community-Gardens-1016396365166278/' },
+  { name: 'Big Back Yard Community Garden', address: '268 Beach Rd, Hackham West SA 5163', lat: -35.1375537, lng: 138.5122957, contact: 'https://www.cho.org.au/' },
+  { name: 'Hackham West Community Centre Garden', address: 'Majorca Rd & Warsaw Cres, Hackham West SA 5163', lat: -35.1426203, lng: 138.5146561, contact: 'tel:+61883841065' },
+  { name: 'Happy Patch Community Garden', address: '179 Hub Dr, Aberfoyle Park SA 5159', lat: -35.0798758, lng: 138.5912202, contact: 'tel:+61883706006' },
+  { name: 'People Pantry Community Garden', address: "1798 Main S Rd, O'Halloran Hill SA 5158", lat: -35.078246, lng: 138.5478498, contact: 'tel:+61451742014' },
+  { name: 'Seaford Community Centre Community Garden', address: 'Beechwood Grove, Seaford SA 5169', lat: -35.1902445, lng: 138.4762474, contact: 'mailto:info@seafordcc.com.au?subject=Seaford Community Centre Community Garden' },
+  { name: 'Seaford Ecumenical Community Garden', address: 'Grand Blvd & Main St, Seaford SA 5169', lat: -35.1869709, lng: 138.4801523, contact: 'mailto:sem1@adam.com.au?subject=Seaford Ecumenical Community Garden' },
+  { name: 'Seaford Scouts Community Garden', address: '7 Railway Rd, Seaford Meadows SA 5169', lat: -35.1775623, lng: 138.4946001, contact: 'mailto:seafordmeadows@sa.scouts.com.au?subject=Seaford Scouts Community Garden' },
+  { name: 'Sellicks Community Garden', address: '18 Riviera Rd, Sellicks Beach SA 5174', lat: -35.3253225, lng: 138.4561639, contact: 'tel:+61883840666' },
+  { name: 'Wakefield House Community Garden', address: '65 Acre Ave, Morphett Vale SA 5162', lat: -35.1107054, lng: 138.5169396, contact: 'tel:+61883846158' },
+  { name: 'Wardli Youth Centre', address: '13 McKinna Rd, Christie Downs SA 5164', lat: -35.1361037, lng: 138.4884731, contact: 'tel:+61881865133' },
+  { name: 'Willunga Community Garden', address: '17 St Lukes St, Willunga SA 5172', lat: -35.2732916, lng: 138.5590813, contact: 'mailto:willungacommunitygarden@gmail.com?subject=Willunga Community Garden' },
+  { name: 'Woodcroft Community Centre', address: '175 Bains Rd, Morphett Vale SA 5162', lat: -35.1137737, lng: 138.5461595, contact: 'tel:+61883840070' },
+  { name: 'Vine Street Centre/Neporendi', address: '7 Vine St, Old Reynella SA 5161', lat: -35.0931377, lng: 138.5400809, contact: 'tel:+61883221120' },
 ]
 
 function contactLabel(href: string): string {
@@ -154,6 +158,54 @@ export default function Resources() {
           Not local to Seaford? There are wonderful community gardens right
           across the southern suburbs &mdash; find one near you.
         </p>
+        <MapContainer
+          center={[-35.17, 138.51]}
+          zoom={11}
+          scrollWheelZoom={false}
+          style={{
+            height: 460,
+            borderRadius: 'var(--r-lg)',
+            border: '1px solid var(--ink-200)',
+            marginBottom: 32,
+            zIndex: 0,
+          }}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {NEARBY_GARDENS.map((garden) => (
+            <CircleMarker
+              key={garden.name}
+              center={[garden.lat, garden.lng]}
+              radius={9}
+              pathOptions={{ color: '#A13927', fillColor: '#C84A30', fillOpacity: 0.85, weight: 2 }}
+            >
+              <Popup>
+                <strong>{garden.name}</strong>
+                <br />
+                {garden.address}
+                <br />
+                <a href={directionsUrl(garden)} target="_blank" rel="noopener noreferrer">
+                  Directions
+                </a>
+                {garden.contact && (
+                  <>
+                    {' · '}
+                    <a
+                      href={garden.contact}
+                      {...(garden.contact.startsWith('http')
+                        ? { target: '_blank', rel: 'noopener noreferrer' }
+                        : {})}
+                    >
+                      {contactLabel(garden.contact)}
+                    </a>
+                  </>
+                )}
+              </Popup>
+            </CircleMarker>
+          ))}
+        </MapContainer>
         <div
           style={{
             display: 'grid',
