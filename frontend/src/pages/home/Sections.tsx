@@ -18,6 +18,8 @@ import {
   type InstagramPost,
 } from '../../api/instagram'
 import { fetchUpcomingEvents, type UpcomingEvent } from '../../api/events'
+import { loadTurnstileScript } from '../../turnstile'
+import { MailingListModal } from './MailingListModal'
 
 interface NavProps {
   onNav: (id: NavId) => void
@@ -29,6 +31,7 @@ export function HomeHero({ onNav }: NavProps) {
   const heroMask =
     'linear-gradient(to right, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,1) 70%)'
   const [mediaReady, setMediaReady] = useState(false)
+  const [mailingOpen, setMailingOpen] = useState(false)
   const [useVideo, setUseVideo] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia(HERO_VIDEO_QUERY).matches,
   )
@@ -118,7 +121,7 @@ export function HomeHero({ onNav }: NavProps) {
           >
             Welcome to South Australia&rsquo;s largest community garden in
             Seaford, SA. A community garden, public orchard, regenerating
-            bushland park and community hub &mdash; right next to the
+            bushland park and community hub - right next to the
             Seaford Wetlands.
           </p>
           <div
@@ -132,7 +135,11 @@ export function HomeHero({ onNav }: NavProps) {
             <MSButton size="lg" onClick={() => onNav('membership')}>
               Become a member
             </MSButton>
-            <MSButton size="lg" variant="outlined">
+            <MSButton
+              size="lg"
+              variant="outlined"
+              onClick={() => setMailingOpen(true)}
+            >
               Join mailing list
             </MSButton>
           </div>
@@ -187,6 +194,7 @@ export function HomeHero({ onNav }: NavProps) {
           </div>
         </div>
       </div>
+      <MailingListModal open={mailingOpen} onClose={() => setMailingOpen(false)} />
     </section>
   )
 }
@@ -273,7 +281,7 @@ const FEATURES: ReadonlyArray<FeatureDef> = [
   {
     icon: <Leaf size={48} />,
     title: 'Indigenous food garden',
-    body: 'A growing collection of native edibles — yam daisy, warrigal greens, finger lime and more.',
+    body: 'A growing collection of native edibles - yam daisy, warrigal greens, finger lime and more.',
   },
   {
     icon: <Carrot size={48} />,
@@ -868,63 +876,14 @@ const CONTACT_FIELDS: ReadonlyArray<{
   { key: 'subject', label: 'Subject', type: 'text', placeholder: 'I’d like to lease a plot' },
 ]
 
-const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
-
-interface TurnstileApi {
-  render: (
-    container: HTMLElement,
-    options: {
-      sitekey: string
-      callback?: (token: string) => void
-      'error-callback'?: () => void
-      'expired-callback'?: () => void
-      theme?: 'light' | 'dark' | 'auto'
-    },
-  ) => string
-  remove: (widgetId: string) => void
-  reset: (widgetId: string) => void
-}
-
 interface InstagramEmbedsApi {
   process: () => void
 }
 
 declare global {
   interface Window {
-    turnstile?: TurnstileApi
     instgrm?: { Embeds: InstagramEmbedsApi }
   }
-}
-
-function loadTurnstileScript(): Promise<TurnstileApi> {
-  if (window.turnstile) return Promise.resolve(window.turnstile)
-  const existing = document.querySelector<HTMLScriptElement>(`script[src="${TURNSTILE_SCRIPT_SRC}"]`)
-  return new Promise((resolve, reject) => {
-    const check = () => {
-      if (window.turnstile) {
-        resolve(window.turnstile)
-        return true
-      }
-      return false
-    }
-    if (existing) {
-      existing.addEventListener('load', () => {
-        if (!check()) reject(new Error('Turnstile failed to initialize'))
-      })
-      existing.addEventListener('error', () => reject(new Error('Turnstile script failed to load')))
-      if (check()) return
-      return
-    }
-    const script = document.createElement('script')
-    script.src = TURNSTILE_SCRIPT_SRC
-    script.async = true
-    script.defer = true
-    script.onload = () => {
-      if (!check()) reject(new Error('Turnstile failed to initialize'))
-    }
-    script.onerror = () => reject(new Error('Turnstile script failed to load'))
-    document.head.appendChild(script)
-  })
 }
 
 export function ContactPage() {
@@ -995,7 +954,7 @@ export function ContactPage() {
         try {
           window.turnstile.reset(id)
         } catch {
-          // widget gone — no-op
+          // widget gone - no-op
         }
       }
       setCaptchaToken(null)
@@ -1040,7 +999,7 @@ export function ContactPage() {
             }}
           >
             If you&rsquo;re keen to give us feedback on our plan, add your
-            ideas, show your support &mdash; or anything else &mdash; get in
+            ideas, show your support - or anything else - get in
             touch.
           </p>
           <div
