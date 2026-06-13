@@ -641,14 +641,69 @@ export function MembershipBanner({ onNav }: NavProps) {
   )
 }
 
-const PARTNERS: ReadonlyArray<string> = [
-  'Seaford Rotary',
-  'City of Onkaparinga',
-  'Green Adelaide',
-  'Bunnings Seaford',
-  'Mid Coast Sustainability',
-  'Onkaparinga Council',
+interface Partner {
+  name: string
+  logo: string
+  url: string
+}
+
+const PARTNERS: ReadonlyArray<Partner> = [
+  { name: 'Green Adelaide', logo: '/swcg/partners/green-adelaide.png', url: 'https://www.greenadelaide.sa.gov.au/' },
+  { name: 'Adelaide Edible Garden Trail', logo: '/swcg/partners/adelaide-edible-garden-trail.png', url: 'https://www.youtube.com/channel/UCPyvtMQYuBkA8hpc6P2V14g' },
+  { name: 'Junction Australia', logo: '/swcg/partners/junction-australia.png', url: 'https://junctionaustralia.org.au/' },
+  { name: 'Seaford Secondary College', logo: '/swcg/partners/seaford-secondary-college.png', url: 'https://www.seafordhs.sa.edu.au/' },
+  { name: 'Chris Picton MP', logo: '/swcg/partners/chris-picton-mp.png', url: 'https://chrispicton.com.au/' },
+  { name: 'Rotary Club of Seaford', logo: '/swcg/partners/rotary-club-of-seaford.png', url: 'https://www.seafordrotary.org.au/' },
+  { name: 'Resilient South', logo: '/swcg/partners/resilient-south.png', url: 'https://www.resilientsouth.com/' },
+  { name: 'Onkaparinga Food Security Collaborative', logo: '/swcg/partners/onkaparinga-food-security-collaborative.png', url: 'https://onkaparingafoodsecurity.org.au' },
+  { name: 'City of Onkaparinga', logo: '/swcg/partners/city-of-onkaparinga.png', url: 'https://www.onkaparingacity.com/Home' },
+  { name: 'Eco Logical Australia', logo: '/swcg/partners/eco-logical-australia.png', url: 'https://www.ecoaus.com.au/' },
+  { name: 'Wollemi Natives', logo: '/swcg/partners/wollemi-natives.png', url: 'https://willunganatives.com/' },
+  { name: 'Seaford C.F.S.', logo: '/swcg/partners/seaford-cfs.png', url: 'https://www.fire-brigade.asn.au/Station_Display.asp?Service_Code=SACFS&Station_Code=SEAF' },
+  { name: 'Australian Association for Environmental Education', logo: '/swcg/partners/aaee.jpg', url: 'https://www.aaee.org.au/' },
+  { name: 'Magain Real Estate Seaford', logo: '/swcg/partners/magain-real-estate-seaford.png', url: 'https://www.magain.com.au/agency/seaford/' },
+  { name: 'Seaford and Districts Lions Club', logo: '/swcg/partners/seaford-districts-lions-club.jpg', url: 'https://www.facebook.com/seafordanddistrictslionsclub' },
 ]
+
+function PartnerCard({ partner, ariaHidden }: { partner: Partner; ariaHidden?: boolean }) {
+  return (
+    <a
+      href={partner.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-hidden={ariaHidden}
+      tabIndex={ariaHidden ? -1 : undefined}
+      title={partner.name}
+      className="partner-card"
+      style={{
+        flex: '0 0 auto',
+        width: 168,
+        marginRight: 16,
+        background: '#fff',
+        border: '1px solid var(--ink-100)',
+        borderRadius: 'var(--r-md)',
+        overflow: 'hidden',
+        height: 80,
+        padding: '12px 16px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <img
+        src={partner.logo}
+        alt={partner.name}
+        loading="lazy"
+        style={{
+          maxWidth: '100%',
+          maxHeight: '100%',
+          objectFit: 'contain',
+        }}
+      />
+    </a>
+  )
+}
 
 export function PartnersStrip() {
   return (
@@ -682,37 +737,15 @@ export function PartnersStrip() {
           collaborative work makes a world of difference.
         </p>
       </div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(6, 1fr)',
-          gap: 16,
-          marginBottom: 28,
-        }}
-      >
-        {PARTNERS.map((p) => (
-          <div
-            key={p}
-            style={{
-              background: 'var(--paper-soft)',
-              border: '1px solid var(--ink-100)',
-              borderRadius: 'var(--r-md)',
-              padding: '24px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              minHeight: 80,
-              fontFamily: 'var(--font-display)',
-              fontWeight: 700,
-              fontSize: 13,
-              color: 'var(--ink-700)',
-              letterSpacing: '-0.005em',
-            }}
-          >
-            {p}
-          </div>
-        ))}
+      <div className="partners-marquee" style={{ marginBottom: 28 }}>
+        <div className="partners-marquee__track">
+          {PARTNERS.map((p) => (
+            <PartnerCard key={p.name} partner={p} />
+          ))}
+          {PARTNERS.map((p) => (
+            <PartnerCard key={`${p.name}-dup`} partner={p} ariaHidden />
+          ))}
+        </div>
       </div>
     </MSSection>
   )
