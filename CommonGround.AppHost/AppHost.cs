@@ -152,6 +152,18 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:stripe-webhook-
 	server.WithEnvironment("Stripe__WebhookSecret", stripeWebhookSecret);
 }
 
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:app-version"]))
+{
+	var appVersion = builder.AddParameter("app-version");
+	server.WithEnvironment("BuildInfo__Version", appVersion);
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:commit-sha"]))
+{
+	var commitSha = builder.AddParameter("commit-sha");
+	server.WithEnvironment("BuildInfo__CommitSha", commitSha);
+}
+
 var webfrontend = builder.AddViteApp("webfrontend", "../frontend")
 	.WithReference(server)
 	.WaitFor(server);

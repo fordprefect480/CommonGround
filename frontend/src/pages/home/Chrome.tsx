@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
+import { useAppConfig } from '../../AppConfigContext'
 import { MSButton } from './Primitives'
 import { BP_HEADER, BP_MOBILE, BP_TABLET, useMediaQuery } from './responsive'
 
@@ -310,7 +312,7 @@ function MobileNavDrawer({
     navigate('/')
   }
 
-  return (
+  return createPortal(
     <>
       <div
         aria-hidden="true"
@@ -405,7 +407,8 @@ function MobileNavDrawer({
           </div>
         )}
       </div>
-    </>
+    </>,
+    document.body,
   )
 }
 
@@ -602,6 +605,7 @@ export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
   const isMobile = useMediaQuery(BP_MOBILE)
   const isTablet = useMediaQuery(BP_TABLET)
   const footerCols = isMobile ? '1fr' : isTablet ? '1fr 1fr' : '2fr 1fr 1fr 1fr'
+  const { version, commitSha } = useAppConfig()
   return (
     <footer
       style={{
@@ -786,6 +790,27 @@ export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
             >
               Admin
             </Link>
+            {(version || commitSha) && (
+              <span style={{ color: 'rgba(250,246,238,0.4)' }}>
+                {version}
+                {version && commitSha ? ' · ' : ''}
+                {commitSha && (
+                  <a
+                    href={`https://github.com/fordprefect480/CommonGround/commit/${commitSha}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Commit ${commitSha}`}
+                    style={{
+                      color: 'var(--apple-300)',
+                      textDecoration: 'none',
+                      fontFamily: 'var(--font-mono)',
+                    }}
+                  >
+                    {commitSha.slice(0, 7)}
+                  </a>
+                )}
+              </span>
+            )}
           </div>
         </div>
       </div>
