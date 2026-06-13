@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react'
+import { lazy, Suspense, type ReactElement } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppInsightsContext, AppInsightsErrorBoundary } from '@microsoft/applicationinsights-react-js'
 import './App.css'
@@ -6,33 +6,38 @@ import { AppConfigProvider } from './AppConfigContext'
 import { reactPlugin } from './applicationInsights'
 import { AuthProvider, useAuth } from './AuthContext'
 import Home from './pages/Home'
-import LeaseAPlot from './pages/LeaseAPlot'
-import Login from './pages/Login'
-import Membership from './pages/Membership'
-import MembershipWelcome from './pages/MembershipWelcome'
-import Profile from './pages/Profile'
-import Resources from './pages/Resources'
-import Activity from './pages/admin/Activity'
-import AdminLayout from './pages/admin/AdminLayout'
-import AdminProfile from './pages/admin/AdminProfile'
-import AdminTools from './pages/admin/AdminTools'
-import BlogPostEditor from './pages/admin/BlogPostEditor'
-import Donate from './pages/Donate'
-import Events from './pages/Events'
-import BlogPostList from './pages/admin/BlogPostList'
-import CommunityEventEditor from './pages/admin/CommunityEventEditor'
-import CommunityEventList from './pages/admin/CommunityEventList'
-import Dashboard from './pages/admin/Dashboard'
-import EmailCompose from './pages/admin/EmailCompose'
-import EmailDetail from './pages/admin/EmailDetail'
-import EmailList from './pages/admin/EmailList'
-import EmailTestTool from './pages/admin/EmailTestTool'
-import InstagramTileEditor from './pages/admin/InstagramTileEditor'
-import InstagramTileList from './pages/admin/InstagramTileList'
-import MemberDetail from './pages/admin/MemberDetail'
-import Members from './pages/admin/Members'
-import BlogIndex from './pages/blog/BlogIndex'
-import BlogPost from './pages/blog/BlogPost'
+
+// Route components are lazy-loaded so the initial bundle stays small. The
+// public landing page (Home) ships eagerly for fast first paint; every other
+// route - including the heavy TipTap editor and the Leaflet map - loads on
+// demand when the user navigates to it.
+const LeaseAPlot = lazy(() => import('./pages/LeaseAPlot'))
+const Login = lazy(() => import('./pages/Login'))
+const Membership = lazy(() => import('./pages/Membership'))
+const MembershipWelcome = lazy(() => import('./pages/MembershipWelcome'))
+const Profile = lazy(() => import('./pages/Profile'))
+const Resources = lazy(() => import('./pages/Resources'))
+const Donate = lazy(() => import('./pages/Donate'))
+const Events = lazy(() => import('./pages/Events'))
+const BlogIndex = lazy(() => import('./pages/blog/BlogIndex'))
+const BlogPost = lazy(() => import('./pages/blog/BlogPost'))
+const Activity = lazy(() => import('./pages/admin/Activity'))
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'))
+const AdminProfile = lazy(() => import('./pages/admin/AdminProfile'))
+const AdminTools = lazy(() => import('./pages/admin/AdminTools'))
+const BlogPostEditor = lazy(() => import('./pages/admin/BlogPostEditor'))
+const BlogPostList = lazy(() => import('./pages/admin/BlogPostList'))
+const CommunityEventEditor = lazy(() => import('./pages/admin/CommunityEventEditor'))
+const CommunityEventList = lazy(() => import('./pages/admin/CommunityEventList'))
+const Dashboard = lazy(() => import('./pages/admin/Dashboard'))
+const EmailCompose = lazy(() => import('./pages/admin/EmailCompose'))
+const EmailDetail = lazy(() => import('./pages/admin/EmailDetail'))
+const EmailList = lazy(() => import('./pages/admin/EmailList'))
+const EmailTestTool = lazy(() => import('./pages/admin/EmailTestTool'))
+const InstagramTileEditor = lazy(() => import('./pages/admin/InstagramTileEditor'))
+const InstagramTileList = lazy(() => import('./pages/admin/InstagramTileList'))
+const MemberDetail = lazy(() => import('./pages/admin/MemberDetail'))
+const Members = lazy(() => import('./pages/admin/Members'))
 
 export default function App() {
   return (
@@ -47,6 +52,7 @@ export default function App() {
       >
         <AppConfigProvider>
           <AuthProvider>
+            <Suspense fallback={<div style={{ minHeight: '60vh' }} aria-busy="true" />}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/membership" element={<Membership />} />
@@ -85,6 +91,7 @@ export default function App() {
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </Suspense>
           </AuthProvider>
         </AppConfigProvider>
       </AppInsightsErrorBoundary>
