@@ -17,9 +17,7 @@ public sealed class EventbriteClient(
         var opts = options.CurrentValue;
         if (!opts.IsConfigured) return [];
 
-        // TEMPORARY (testing): fetch the 3 most recent PAST events instead of upcoming.
-        // Revert to status=live&order_by=start_asc&time_filter=current_future&page_size={Math.Clamp(take, 1, 50)}.
-        var url = $"{BaseUrl}organizations/{Uri.EscapeDataString(opts.OrganizationId!)}/events/?order_by=start_desc&time_filter=past&expand=logo,venue&page_size=3";
+        var url = $"{BaseUrl}organizations/{Uri.EscapeDataString(opts.OrganizationId!)}/events/?status=live&order_by=start_asc&time_filter=current_future&expand=logo,venue&page_size={Math.Clamp(take, 1, 50)}";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", opts.PrivateToken);
