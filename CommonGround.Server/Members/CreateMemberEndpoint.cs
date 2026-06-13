@@ -65,7 +65,7 @@ public sealed class CreateMemberEndpoint(
 
         await activityLogger.LogAsync(
             "member.created",
-            $"Created member {user.Email}{(req.IsAdmin ? " (admin)" : "")}",
+            $"added a new member, {user.Email}{(req.IsAdmin ? " (admin)" : "")}",
             targetType: "Member",
             targetId: user.Id,
             ct: ct);

@@ -106,7 +106,7 @@ public sealed class SendTestEmailEndpoint(
 
         await activityLogger.LogAsync(
             "email.test_sent",
-            $"Sent test email \"{subject}\" to {sent} of {recipients.Count} recipient(s)",
+            $"sent a test email \"{subject}\" to {sent} of {recipients.Count} recipient(s)",
             details: new { Subject = subject, Sent = sent, Failed = failures.Count, Recipients = recipients },
             ct: ct);
 

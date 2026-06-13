@@ -70,7 +70,7 @@ public sealed class UpdateCommunityEventEndpoint(
 
         await activityLogger.LogAsync(
             "event.updated",
-            $"Updated event \"{ev.Title}\"",
+            $"updated the event \"{ev.Title}\"",
             targetType: "CommunityEvent",
             targetId: ev.Id.ToString(),
             ct: ct);

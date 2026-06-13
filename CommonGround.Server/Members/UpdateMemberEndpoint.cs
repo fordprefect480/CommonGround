@@ -70,7 +70,7 @@ public sealed class UpdateMemberEndpoint(
 
         await activityLogger.LogAsync(
             "member.updated",
-            $"Updated member {user.Email}",
+            $"updated the member {user.Email}",
             targetType: "Member",
             targetId: user.Id,
             ct: ct);

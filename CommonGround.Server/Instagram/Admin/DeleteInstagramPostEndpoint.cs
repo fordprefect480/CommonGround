@@ -35,7 +35,7 @@ public sealed class DeleteInstagramPostEndpoint(AppDbContext db, IActivityLogger
 
         await activityLogger.LogAsync(
             "instagram.post_deleted",
-            $"Removed Instagram tile (#{deletedId})",
+            $"removed an Instagram tile (#{deletedId})",
             targetType: "InstagramPost",
             targetId: deletedId.ToString(),
             ct: ct);

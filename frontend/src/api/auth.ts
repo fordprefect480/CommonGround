@@ -117,6 +117,18 @@ export async function fetchMembers(): Promise<Member[]> {
   return res.json()
 }
 
+export interface MemberStats {
+  activeMembers: number
+  lapsedMembers: number
+  newMembersLast30Days: number
+}
+
+export async function fetchMemberStats(): Promise<MemberStats> {
+  const res = await fetch('/api/admin/members/stats', { credentials: 'include' })
+  if (!res.ok) throw new Error(`Failed to load member stats (${res.status})`)
+  return res.json()
+}
+
 export interface CreateMemberInput {
   email: string
   firstName: string | null

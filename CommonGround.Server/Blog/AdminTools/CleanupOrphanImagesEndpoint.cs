@@ -43,7 +43,7 @@ public sealed class CleanupOrphanImagesEndpoint(AppDbContext db, IActivityLogger
 
         await activityLogger.LogAsync(
             "tool.orphan_cleanup_run",
-            $"Cleaned up {orphans.Count} orphan image(s)",
+            $"cleaned up {orphans.Count} orphan image(s)",
             details: new { Deleted = orphans.Count },
             ct: ct);
 

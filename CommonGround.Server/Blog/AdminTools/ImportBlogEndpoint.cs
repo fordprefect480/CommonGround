@@ -25,7 +25,7 @@ public sealed class ImportBlogEndpoint(BlogImporter importer, IActivityLogger ac
 
         await activityLogger.LogAsync(
             "tool.blog_import_run",
-            $"Ran blog import - imported {result.Imported}, skipped {result.Skipped}, failed {result.Failed}",
+            $"ran a blog import - {result.Imported} posts imported, {result.Skipped} skipped, {result.Failed} failed",
             details: new { result.Imported, result.Skipped, result.Failed, Limit = req.Limit },
             ct: ct);
 
