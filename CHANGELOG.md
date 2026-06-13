@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/fordprefect480/CommonGround/compare/v0.3.0...v0.3.1) (2026-06-13)
+
+
+### Bug Fixes
+
+* restore Azure AD SQL auth provider broken by SqlClient 7 bump ([e548964](https://github.com/fordprefect480/CommonGround/commit/e5489648d385baee1e9b4c143382b1d73a06ecc7))
+
 ## [0.3.0](https://github.com/fordprefect480/CommonGround/compare/v0.2.0...v0.3.0) (2026-06-13)
 
 
