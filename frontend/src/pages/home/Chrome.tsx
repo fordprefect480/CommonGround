@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
 import { MSButton } from './Primitives'
-import { BP_HEADER, useMediaQuery } from './responsive'
+import { BP_HEADER, BP_MOBILE, BP_TABLET, useMediaQuery } from './responsive'
 
 export type NavId =
   | 'home'
@@ -585,20 +585,23 @@ const FOOTER_GROUPS: ReadonlyArray<{
 ]
 
 export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
+  const isMobile = useMediaQuery(BP_MOBILE)
+  const isTablet = useMediaQuery(BP_TABLET)
+  const footerCols = isMobile ? '1fr' : isTablet ? '1fr 1fr' : '2fr 1fr 1fr 1fr'
   return (
     <footer
       style={{
         background: 'var(--ink-900)',
         color: 'var(--paper)',
-        padding: '72px 0 32px',
+        padding: isMobile ? '48px 0 28px' : '72px 0 32px',
       }}
     >
-      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 32px' }}>
+      <div style={{ maxWidth: 1240, margin: '0 auto', padding: isMobile ? '0 20px' : '0 32px' }}>
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '2fr 1fr 1fr 1fr',
-            gap: 56,
+            gridTemplateColumns: footerCols,
+            gap: isMobile ? 32 : 56,
             alignItems: 'start',
           }}
         >
