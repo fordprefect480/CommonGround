@@ -8,16 +8,17 @@ The codebase is a single .NET Aspire solution that orchestrates an ASP.NET Core 
 
 | Layer        | Technology                                                                 |
 |--------------|----------------------------------------------------------------------------|
-| Orchestration | [.NET Aspire 13.2](https://learn.microsoft.com/dotnet/aspire/) AppHost     |
+| Orchestration | [.NET Aspire 13.4](https://learn.microsoft.com/dotnet/aspire/) AppHost     |
 | API           | ASP.NET Core 10 with [FastEndpoints 8](https://fast-endpoints.com)         |
 | Auth          | ASP.NET Core Identity (Identity API endpoints, cookie auth)                |
 | Database      | SQL Server (containerised via Aspire) + EF Core 10                         |
-| Frontend      | React 19, React Router 7, Vite 7, TypeScript 5.9                           |
+| Frontend      | React 19, React Router 7, Vite 8, TypeScript 5.9                           |
 | Rich text     | [tiptap 3](https://tiptap.dev)                                             |
 | Telemetry     | OpenTelemetry (traces, metrics, logs) via Aspire ServiceDefaults           |
 
 ## Key features
 
+- Mobile-responsive public site - the homepage and public pages reflow from desktop to phone, with a slide-in nav drawer on small screens
 - Public blog with categories (Newsletters, Events, How-to, Announcements), slugs, featured images
 - Admin console (`/admin`) for member CRUD, blog post editing with rich-text + image upload, and tools
 - Wix blog importer that pulls existing posts from a `feed.xml` source
@@ -46,7 +47,11 @@ The codebase is a single .NET Aspire solution that orchestrates an ASP.NET Core 
 ├── frontend/                  React + Vite SPA (esproj - built by Aspire)
 │   └── src/
 │       ├── api/               Typed clients (auth, blog, adminTools, config)
-│       ├── pages/             Route components
+│       ├── pages/             Route components (lazy-loaded via React.lazy)
+│       │   ├── home/          Public home page sections + responsive.ts (useMediaQuery)
+│       │   ├── blog/          Public blog index + post
+│       │   └── admin/         Admin console pages
+│       ├── App.tsx            Routes + code-split lazy imports
 │       ├── AppConfigContext.tsx
 │       └── AuthContext.tsx
 ├── CommonGround.slnx          Solution file (.slnx XML format)
@@ -60,7 +65,7 @@ The codebase is a single .NET Aspire solution that orchestrates an ASP.NET Core 
 | Tool                  | Version | Notes                                                     |
 |-----------------------|---------|-----------------------------------------------------------|
 | .NET SDK              | 10.0+   | Required by Aspire AppHost and the API                    |
-| Node.js               | 20+     | Vite 7 requires Node 20 or 22                             |
+| Node.js               | 20.19+  | Vite 8 requires Node 20.19+ or 22.12+                     |
 | A container runtime   | any     | Docker Desktop, Podman, or Rancher Desktop - Aspire spins up SQL Server in a container |
 | ASP.NET dev cert      | -       | Run `dotnet dev-certs https --trust` once if you've never done so |
 
@@ -217,7 +222,7 @@ npm run lint     # ESLint over src/
 npm run preview  # Serve the production build locally
 ```
 
-After any TypeScript change, run `npx tsc --noEmit` to type-check without producing output.
+After any TypeScript change, run `npx tsc -p tsconfig.app.json --noEmit` to type-check without producing output. The root `tsconfig.json` only holds project references, so a bare `tsc --noEmit` checks nothing - point at `tsconfig.app.json` (or run `tsc -b`, which is what `npm run build` does).
 
 ### Database migrations
 
@@ -287,6 +292,8 @@ Aspire generates a deployment manifest you can target at any container host.
 - **Aspire ServiceDefaults.** [`Extensions.cs`](CommonGround.Server/Extensions.cs) wires OpenTelemetry (ASP.NET Core, HttpClient, Runtime), health checks, and service discovery into every project that calls `AddServiceDefaults()`.
 - **OTLP exporter.** Telemetry is exported via OTLP whenever `OTEL_EXPORTER_OTLP_ENDPOINT` is set - Aspire sets this automatically in the dashboard. To send to Azure Monitor or another backend, layer an additional exporter onto the OpenTelemetry builder.
 - **HTML sanitisation.** Blog post HTML (whether typed in the editor or imported from Wix) is run through [HtmlSanitizer](https://github.com/mganss/HtmlSanitizer) - see [`BlogHtmlSanitizer.cs`](CommonGround.Server/Blog/BlogHtmlSanitizer.cs).
+- **Code-split frontend.** Route components are lazy-loaded via `React.lazy` + `Suspense` (the `Home` landing page stays eager for fast first paint), so heavy dependencies - the tiptap editor and the Leaflet map - download only when their routes are visited. See [`frontend/src/App.tsx`](frontend/src/App.tsx).
+- **Responsive home page.** The public home page composes inline-styled sections that adapt via a small `useMediaQuery` hook ([`frontend/src/pages/home/responsive.ts`](frontend/src/pages/home/responsive.ts)) rather than CSS media queries, keeping each section's styling co-located in its component.
 
 ## Troubleshooting
 
@@ -294,7 +301,7 @@ Aspire generates a deployment manifest you can target at any container host.
 |------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
 | `dotnet run --project CommonGround.AppHost` hangs at "Starting `sql`"  | Container runtime isn't running. Start Docker / Podman.                                     |
 | Browser shows certificate warning at the dashboard URL                 | Run `dotnet dev-certs https --trust` once.                                                  |
-| `npm install` fails with peer-dep errors                               | Use Node 20+. Older Node versions don't satisfy Vite 7's `engines` constraint.              |
+| `npm install` fails with peer-dep errors                               | Use Node 20.19+ (or 22.12+). Older Node versions don't satisfy Vite 8's `engines` constraint. |
 | API responds but the SPA shows "Failed to load configuration"          | The Vite dev server can't reach the API. Confirm the AppHost is running and check the dashboard for the `webfrontend` resource's wired env vars. |
 | EF migration command fails with `No project was found`                 | Run from the repo root with `--project CommonGround.Server`.                                |
 | Want to wipe the dev database                                          | Stop AppHost, then `docker volume rm` the `sql-data` volume that Aspire created. The next run will re-seed. |
