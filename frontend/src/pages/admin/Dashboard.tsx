@@ -165,7 +165,7 @@ export default function Dashboard() {
         </div>
         <div className="admin-stat-card">
           <span className="admin-stat-value">{statValue(stats.status === 'ready' ? stats.stats.newMembersLast30Days : null)}</span>
-          <span className="admin-stat-label">New in last 30 days</span>
+          <span className="admin-stat-label">Sign-ups in past 30 days</span>
         </div>
         <div className="admin-stat-card">
           <span className="admin-stat-value">0 <span className="admin-stat-value-total">/ {TOTAL_BEDS}</span></span>
