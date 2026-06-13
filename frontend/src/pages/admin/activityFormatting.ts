@@ -21,7 +21,7 @@ const relativeFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: 'aut
 
 export function formatRelative(iso: string): string {
   const then = new Date(iso).getTime()
-  if (Number.isNaN(then)) return '—'
+  if (Number.isNaN(then)) return '-'
   const diffSeconds = Math.round((then - Date.now()) / 1000)
   const abs = Math.abs(diffSeconds)
   if (abs < 60) return relativeFormatter.format(diffSeconds, 'second')
@@ -33,7 +33,7 @@ export function formatRelative(iso: string): string {
 
 export function formatAbsolute(iso: string): string {
   const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? '—' : absoluteFormatter.format(d)
+  return Number.isNaN(d.getTime()) ? '-' : absoluteFormatter.format(d)
 }
 
 export function labelFor(activityType: string): string {

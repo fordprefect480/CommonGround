@@ -197,7 +197,7 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
             }
             catch (JsonException)
             {
-                // malformed — try next script
+                // malformed - try next script
             }
         }
 

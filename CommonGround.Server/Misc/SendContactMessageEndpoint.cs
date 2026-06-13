@@ -101,14 +101,14 @@ public sealed class SendContactMessageEndpoint(
             logger.LogError(ex, "Failed to deliver contact form submission to {Recipient}", contact.RecipientAddress);
             await Send.ResultAsync(Results.Problem(
                 title: "Could not send message",
-                detail: "Sorry — something went wrong sending your message. Please try again later.",
+                detail: "Sorry - something went wrong sending your message. Please try again later.",
                 statusCode: 502));
             return;
         }
 
         await activityLogger.LogAsync(
             "contact.submitted",
-            $"Contact form submission from {email} — \"{subject}\"",
+            $"Contact form submission from {email} - \"{subject}\"",
             details: new { Name = name, Email = email, Subject = subject },
             ct: ct);
 

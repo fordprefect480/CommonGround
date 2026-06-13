@@ -8,7 +8,7 @@ const BED_FEATURES: ReadonlyArray<string> = [
   'standard beds are 2.4m x 1.2m and 0.6m in height',
   'produce from your bed is for your own consumption',
   'beds for wheelchair users and two communal wicking beds are planned',
-  'plants are not to overgrow onto the ground — please use your own trellising within the bed',
+  'plants are not to overgrow onto the ground - please use your own trellising within the bed',
 ]
 
 const PLOTHOLDER_POLICY_URL =

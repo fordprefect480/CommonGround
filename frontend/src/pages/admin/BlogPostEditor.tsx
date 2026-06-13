@@ -125,7 +125,7 @@ export default function BlogPostEditor() {
             value={form.categoryId ?? ''}
             onChange={(e) => update({ categoryId: e.target.value ? Number(e.target.value) : null })}
           >
-            <option value="">— None —</option>
+            <option value="">- None -</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </label>

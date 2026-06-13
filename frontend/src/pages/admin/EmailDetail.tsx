@@ -42,7 +42,7 @@ export default function EmailDetailPage() {
         </div>
         <div className="field">
           <span className="field-label">From</span>
-          <span className="field-readonly">{email.senderEmail ?? '—'}</span>
+          <span className="field-readonly">{email.senderEmail ?? '-'}</span>
         </div>
         <div className="field">
           <span className="field-label">Delivery</span>

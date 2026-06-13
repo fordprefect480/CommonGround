@@ -1,5 +1,5 @@
 /* =====================================================================
-   Design system foundations — warm cream paper + apple-red brand
+   Design system foundations - warm cream paper + apple-red brand
    Adapted from the Seaford Wetlands Community Garden design system.
 
    Public-site components (header, hero, sections, footer) use inline
@@ -8,7 +8,7 @@
    ===================================================================== */
 
 :root {
-  /* Backgrounds — warm cream */
+  /* Backgrounds - warm cream */
   --paper:        #FAF6EE;
   --paper-soft:   #F3EDDF;
   --paper-deep:   #EBE3CF;
@@ -75,7 +75,7 @@
   --link:         var(--apple-700);
   --link-hover:   var(--apple-800);
 
-  /* Status — desaturated, earthy */
+  /* Status - desaturated, earthy */
   --status-success: #527E40;
   --status-warning: #C58B2E;
   --status-error:   #A13927;
@@ -1011,7 +1011,7 @@ button.footer-link:disabled {
 }
 
 /* ---------------------------------------------------------------------
-   Blog — public pages
+   Blog - public pages
    --------------------------------------------------------------------- */
 
 /* BlogIndex */

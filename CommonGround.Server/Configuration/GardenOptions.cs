@@ -8,7 +8,7 @@ public class GardenOptions
 
     /// <summary>
     /// Public-facing base URL (scheme + host, no trailing slash) used when constructing
-    /// links embedded in outgoing emails — e.g. unsubscribe URLs. When unset, the URL is
+    /// links embedded in outgoing emails - e.g. unsubscribe URLs. When unset, the URL is
     /// derived from the current request, which is incorrect behind a reverse proxy that
     /// terminates TLS or rewrites the host.
     /// </summary>

@@ -122,7 +122,7 @@ function ActivityTable({ items }: { items: ActivityItem[] }) {
                   const tooltip = item.actorName && item.actorEmail ? item.actorEmail : undefined
                   return item.actorUserId
                     ? <Link to={`/admin/members/${item.actorUserId}`} className="admin-table-link" title={tooltip}>{display}</Link>
-                    : <span title={tooltip}>{item.actorName ?? item.actorEmail ?? '—'}</span>
+                    : <span title={tooltip}>{item.actorName ?? item.actorEmail ?? '-'}</span>
                 })()}
               </td>
               <td><span className="pill">{labelFor(item.activityType)}</span></td>
