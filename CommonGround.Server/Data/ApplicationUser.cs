@@ -12,6 +12,13 @@ public class ApplicationUser : IdentityUser
     [MaxLength(100)]
     public string? LastName { get; set; }
 
+    [MaxLength(300)]
+    public string? Address { get; set; }
+
+    public DateTime? MembershipPaidThroughUtc { get; set; }
+
+    public ICollection<SecondaryMember> SecondaryMembers { get; set; } = new List<SecondaryMember>();
+
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
     public bool IsSubscribedToMailingList { get; set; } = true;

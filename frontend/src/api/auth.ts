@@ -3,6 +3,10 @@ export interface Me {
   firstName: string | null
   lastName: string | null
   displayName: string | null
+  phoneNumber: string | null
+  address: string | null
+  secondaryMembers: string[]
+  membershipPaidThroughUtc: string | null
   isAdmin: boolean
   isSubscribedToMailingList: boolean
 }
@@ -59,6 +63,9 @@ export async function fetchMe(): Promise<Me | null> {
 export interface UpdateMeInput {
   firstName: string | null
   lastName: string | null
+  phoneNumber: string | null
+  address: string | null
+  secondaryMembers: string[]
   isSubscribedToMailingList: boolean
 }
 

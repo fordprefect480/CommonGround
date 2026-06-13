@@ -15,6 +15,7 @@ using Microsoft.Extensions.Http.Resilience;
 using Polly;
 using Polly.Retry;
 using Resend;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,7 @@ builder.Services.AddFastEndpoints();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
+builder.Services.AddScoped<CommonGround.Server.Members.MembershipActivationService>();
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<AppDbContext>()
     .SetApplicationName("CommonGround");
@@ -37,6 +39,7 @@ builder.AddSqlServerDbContext<AppDbContext>("commongroundDb");
 builder.Services.Configure<GardenOptions>(builder.Configuration.GetSection(GardenOptions.SectionName));
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
 builder.Services.Configure<ContactOptions>(builder.Configuration.GetSection(ContactOptions.SectionName));
+builder.Services.Configure<StripeOptions>(builder.Configuration.GetSection(StripeOptions.SectionName));
 builder.Services.Configure<EventbriteOptions>(builder.Configuration.GetSection(EventbriteOptions.SectionName));
 builder.Services.AddHttpClient<TurnstileVerifier>();
 builder.Services.AddHttpClient<EventbriteClient>(c => c.Timeout = TimeSpan.FromSeconds(10));
@@ -83,6 +86,12 @@ builder.Services.AddHttpClient<WixBlogClient>(c =>
 builder.Services.AddScoped<BlogImporter>();
 
 var app = builder.Build();
+
+var stripeSecretKey = app.Configuration[$"{StripeOptions.SectionName}:SecretKey"];
+if (!string.IsNullOrWhiteSpace(stripeSecretKey))
+{
+    StripeConfiguration.ApiKey = stripeSecretKey;
+}
 
 using (var scope = app.Services.CreateScope())
 {

@@ -1,11 +1,17 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path=".worktreeinclude" />
+    <File Path="AGENTS.md" />
+    <File Path="aspire.config.json" />
+    <File Path="CHANGELOG.md" />
     <File Path="LICENSE" />
     <File Path="README.md" />
   </Folder>
-  <Project Path="./CommonGround.AppHost/CommonGround.AppHost.csproj" />
-  <Project Path="./CommonGround.Server/CommonGround.Server.csproj" />
-  <Project Path="./frontend/frontend.esproj">
+  <Project Path="CommonGround.AppHost/CommonGround.AppHost.csproj" />
+  <Project Path="CommonGround.Server.Tests/CommonGround.Server.Tests.csproj" />
+  <Project Path="CommonGround.Server/CommonGround.Server.csproj" />
+  <Project Path="frontend/frontend.esproj">
     <Build />
     <Deploy />
   </Project>
