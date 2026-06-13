@@ -24,10 +24,11 @@ interface NearbyGarden {
   lat: number
   lng: number
   contact?: string
+  isOurs?: boolean
 }
 
 const NEARBY_GARDENS: ReadonlyArray<NearbyGarden> = [
-  { name: 'Seaford Wetlands Community Garden', address: 'Grange Ct, Seaford SA 5169', lat: -35.1822546, lng: 138.4807322, contact: 'mailto:seafordcg@gmail.com?subject=Seaford Community Garden' },
+  { name: 'Seaford Wetlands Community Garden', address: '100 Seaford Rd, Seaford SA 5169', lat: -35.1822546, lng: 138.4807322, contact: 'mailto:seafordcg@gmail.com?subject=Seaford Community Garden', isOurs: true },
   { name: 'Aberfoyle Community Garden', address: 'Budapest Rd, Aberfoyle Park SA 5159', lat: -35.0667892, lng: 138.5941861, contact: 'https://www.facebook.com/AberfoyleCommunityGarden/' },
   { name: 'Aldinga Community Garden', address: '7 Stewart Ave, Aldinga Beach SA 5173', lat: -35.272947, lng: 138.4540366, contact: 'mailto:ACC@aldingacc.org?subject=Aldinga Community Garden' },
   { name: 'Christie Downs Community House Community Garden', address: 'Morton Rd & Flaxmill Rd, Christie Downs SA 5164', lat: -35.1275883, lng: 138.4980979, contact: 'tel:+61883846894' },
@@ -174,12 +175,15 @@ export default function Resources() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {NEARBY_GARDENS.map((garden) => (
+          {/* Render our garden last so its marker paints above the nearby Seaford pins */}
+          {[...NEARBY_GARDENS].sort((a, b) => Number(a.isOurs ?? false) - Number(b.isOurs ?? false)).map((garden) => (
             <CircleMarker
               key={garden.name}
               center={[garden.lat, garden.lng]}
-              radius={9}
-              pathOptions={{ color: '#A13927', fillColor: '#C84A30', fillOpacity: 0.85, weight: 2 }}
+              radius={garden.isOurs ? 13 : 9}
+              pathOptions={garden.isOurs
+                ? { color: '#2E4F25', fillColor: '#527E40', fillOpacity: 0.95, weight: 3 }
+                : { color: '#A13927', fillColor: '#C84A30', fillOpacity: 0.85, weight: 2 }}
             >
               <Popup>
                 <strong>{garden.name}</strong>
