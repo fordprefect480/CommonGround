@@ -1,10 +1,57 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
+
+type Crumb = { label: string; to?: string }
+
+interface SectionConfig {
+  label: string
+  detail?: string
+  new?: string
+  edit?: string
+  children?: Record<string, string>
+}
+
+const SECTIONS: Record<string, SectionConfig> = {
+  members: { label: 'Membership', detail: 'Member' },
+  blog: { label: 'Blog', new: 'New post', edit: 'Edit post' },
+  instagram: { label: 'Instagram', new: 'New tile', edit: 'Edit tile' },
+  events: { label: 'Events', new: 'New event', edit: 'Edit event' },
+  email: { label: 'Email', new: 'New email', detail: 'Message' },
+  tools: { label: 'Settings', children: { 'email-test': 'Send test email' } },
+  activity: { label: 'Activity' },
+  profile: { label: 'Profile' },
+}
+
+function buildCrumbs(pathname: string): Crumb[] {
+  const segments = pathname.replace(/^\/admin\/?/, '').split('/').filter(Boolean)
+  if (segments.length === 0) return []
+
+  const crumbs: Crumb[] = [{ label: 'Dashboard', to: '/admin' }]
+  const [key, ...rest] = segments
+  const section = SECTIONS[key]
+  if (!section) return crumbs
+
+  crumbs.push({ label: section.label, to: `/admin/${key}` })
+  if (rest.length === 0) return crumbs
+
+  if (rest[0] === 'new') {
+    crumbs.push({ label: section.new ?? 'New' })
+  } else if (section.children?.[rest[0]]) {
+    crumbs.push({ label: section.children[rest[0]] })
+  } else if (rest[1] === 'edit') {
+    crumbs.push({ label: section.edit ?? 'Edit' })
+  } else {
+    crumbs.push({ label: section.detail ?? section.label })
+  }
+  return crumbs
+}
 
 export default function AdminLayout() {
   const { state, signOut } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const crumbs = buildCrumbs(pathname)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -100,6 +147,24 @@ export default function AdminLayout() {
         </div>
       </header>
       <main className="admin-main">
+        {crumbs.length > 0 && (
+          <nav className="admin-breadcrumbs" aria-label="Breadcrumb">
+            <ol className="admin-breadcrumb-list">
+              {crumbs.map((crumb, i) => {
+                const isCurrent = i === crumbs.length - 1 || !crumb.to
+                return (
+                  <li key={crumb.to ?? crumb.label} className="admin-breadcrumb-item">
+                    {isCurrent ? (
+                      <span aria-current="page" className="admin-breadcrumb-current">{crumb.label}</span>
+                    ) : (
+                      <Link to={crumb.to!} className="admin-breadcrumb-link">{crumb.label}</Link>
+                    )}
+                  </li>
+                )
+              })}
+            </ol>
+          </nav>
+        )}
         <Outlet />
       </main>
     </div>

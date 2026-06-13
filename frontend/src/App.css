@@ -564,6 +564,51 @@ button.footer-link:disabled {
   padding: 2.5rem 2rem;
 }
 
+.admin-breadcrumbs {
+  margin-bottom: 1.5rem;
+}
+
+.admin-breadcrumb-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.admin-breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.admin-breadcrumb-item + .admin-breadcrumb-item::before {
+  content: "/";
+  color: var(--ink-300);
+}
+
+.admin-breadcrumb-link {
+  color: var(--apple-700);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--dur-1) var(--ease-out);
+}
+
+.admin-breadcrumb-link:hover {
+  color: var(--apple-800);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.admin-breadcrumb-current {
+  color: var(--ink-500);
+  font-weight: 500;
+}
+
 .admin-page {
   display: flex;
   flex-direction: column;
