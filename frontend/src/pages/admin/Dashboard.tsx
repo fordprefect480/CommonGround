@@ -59,7 +59,7 @@ const SECTIONS: { to: string; title: string; description: string; icon: ReactNod
   { to: '/admin/members', title: 'Membership', description: 'View, add, and edit members. Export to XLSX.', icon: <MembershipIcon /> },
   { to: '/admin/blog', title: 'Blog', description: 'Write, edit, and publish blog posts.', icon: <BlogIcon /> },
   { to: '/admin/email', title: 'Email', description: 'View sent emails and compose a new one to all subscribed members.', icon: <EmailIcon /> },
-  { to: '/admin/tools', title: 'Tools', description: 'Import historical posts and clean up orphan images.', icon: <ToolsIcon /> },
+  { to: '/admin/tools', title: 'Settings', description: 'Advanced tools - import historical posts and clean up orphan images.', icon: <ToolsIcon /> },
   { to: '/admin/activity', title: 'Activity', description: 'Full log of recent admin and member actions.', icon: <ActivityIcon /> },
 ]
 

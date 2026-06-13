@@ -52,47 +52,50 @@ export default function AdminTools() {
   }
 
   return (
-    <section className="admin-page" aria-labelledby="tools-heading">
+    <section className="admin-page" aria-labelledby="settings-heading">
       <header className="admin-page-header">
-        <h1 id="tools-heading" className="admin-page-title">Tools</h1>
+        <h1 id="settings-heading" className="admin-page-title">Settings</h1>
       </header>
 
-      <div className="admin-tools-grid">
-      <div className="card">
-        <h2 className="section-title">Send test email</h2>
-        <p className="card-note">Compose a one-off email and send it to specific addresses without touching the mailing list. Useful for previewing templates.</p>
-        <button type="button" className="primary-button" onClick={() => navigate('/admin/tools/email-test')}>
-          Open
-        </button>
-      </div>
-
-      <div className="card">
-        <h2 className="section-title">Import historical blog posts</h2>
-        <p className="card-note">Pulls newsletters from the existing reference site. Idempotent - already-imported posts are skipped.</p>
-        <button type="button" className="primary-button" onClick={runImport} disabled={importState.status === 'running'}>
-          {importState.status === 'running' ? 'Importing… (can take up to a minute)' : 'Run import'}
-        </button>
-        {importState.status === 'done' && (
-          <div className="card-note" role="status">
-            Imported {importState.result.imported}, skipped {importState.result.skipped}, failed {importState.result.failed}.
-            {importState.result.errors.length > 0 && (
-              <ul>{importState.result.errors.map((e, i) => <li key={i}>{e.slug ?? '(enumeration)'}: {e.message}</li>)}</ul>
-            )}
+      <details className="admin-advanced-panel">
+        <summary className="admin-advanced-summary">Advanced</summary>
+        <div className="admin-tools-grid">
+          <div className="card">
+            <h2 className="section-title">Send test email</h2>
+            <p className="card-note">Compose a one-off email and send it to specific addresses without touching the mailing list. Useful for previewing templates.</p>
+            <button type="button" className="primary-button" onClick={() => navigate('/admin/tools/email-test')}>
+              Open
+            </button>
           </div>
-        )}
-        {importState.status === 'error' && <div className="form-error" role="alert">{importState.message}</div>}
-      </div>
 
-      <div className="card">
-        <h2 className="section-title">Clean up orphan images</h2>
-        <p className="card-note">Removes uploaded images older than 24h that aren't referenced by any post.</p>
-        <button type="button" className="primary-button" onClick={runCleanup} disabled={cleanupState.status === 'running'}>
-          {cleanupState.status === 'running' ? 'Working…' : 'Run cleanup'}
-        </button>
-        {cleanupState.status === 'done' && <div className="card-note" role="status">Deleted {cleanupState.deleted} orphan image(s).</div>}
-        {cleanupState.status === 'error' && <div className="form-error" role="alert">{cleanupState.message}</div>}
-      </div>
-      </div>
+          <div className="card">
+            <h2 className="section-title">Import historical blog posts</h2>
+            <p className="card-note">Pulls newsletters from the existing reference site. Idempotent - already-imported posts are skipped.</p>
+            <button type="button" className="primary-button" onClick={runImport} disabled={importState.status === 'running'}>
+              {importState.status === 'running' ? 'Importing… (can take up to a minute)' : 'Run import'}
+            </button>
+            {importState.status === 'done' && (
+              <div className="card-note" role="status">
+                Imported {importState.result.imported}, skipped {importState.result.skipped}, failed {importState.result.failed}.
+                {importState.result.errors.length > 0 && (
+                  <ul>{importState.result.errors.map((e, i) => <li key={i}>{e.slug ?? '(enumeration)'}: {e.message}</li>)}</ul>
+                )}
+              </div>
+            )}
+            {importState.status === 'error' && <div className="form-error" role="alert">{importState.message}</div>}
+          </div>
+
+          <div className="card">
+            <h2 className="section-title">Clean up orphan images</h2>
+            <p className="card-note">Removes uploaded images older than 24h that aren't referenced by any post.</p>
+            <button type="button" className="primary-button" onClick={runCleanup} disabled={cleanupState.status === 'running'}>
+              {cleanupState.status === 'running' ? 'Working…' : 'Run cleanup'}
+            </button>
+            {cleanupState.status === 'done' && <div className="card-note" role="status">Deleted {cleanupState.deleted} orphan image(s).</div>}
+            {cleanupState.status === 'error' && <div className="form-error" role="alert">{cleanupState.message}</div>}
+          </div>
+        </div>
+      </details>
     </section>
   )
 }
