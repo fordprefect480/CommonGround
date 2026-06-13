@@ -25,7 +25,7 @@ const dateFormatter = new Intl.DateTimeFormat('en-AU', {
 
 function formatJoinedAt(iso: string): string {
   const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? '—' : dateFormatter.format(d)
+  return Number.isNaN(d.getTime()) ? '-' : dateFormatter.format(d)
 }
 
 function memberToForm(member: Member): FormState {

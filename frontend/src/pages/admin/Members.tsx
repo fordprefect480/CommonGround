@@ -33,7 +33,7 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }
 
 function formatJoinedAt(iso: string): string {
   const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? '—' : dateFormatter.format(d)
+  return Number.isNaN(d.getTime()) ? '-' : dateFormatter.format(d)
 }
 
 export default function Members() {
@@ -236,8 +236,8 @@ function MembersTable({ members }: { members: Member[] }) {
                     {member.displayName ?? member.email ?? '(no name)'}
                   </Link>
                 </td>
-                <td>{member.email ?? '—'}</td>
-                <td>{member.phoneNumber ?? '—'}</td>
+                <td>{member.email ?? '-'}</td>
+                <td>{member.phoneNumber ?? '-'}</td>
                 <td>{formatJoinedAt(member.joinedAt)}</td>
                 <td>
                   <span className={isAdmin ? 'pill pill-ok' : 'pill'}>

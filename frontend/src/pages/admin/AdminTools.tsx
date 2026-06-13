@@ -68,7 +68,7 @@ export default function AdminTools() {
 
       <div className="card">
         <h2 className="section-title">Import historical blog posts</h2>
-        <p className="card-note">Pulls newsletters from the existing reference site. Idempotent — already-imported posts are skipped.</p>
+        <p className="card-note">Pulls newsletters from the existing reference site. Idempotent - already-imported posts are skipped.</p>
         <button type="button" className="primary-button" onClick={runImport} disabled={importState.status === 'running'}>
           {importState.status === 'running' ? 'Importing… (can take up to a minute)' : 'Run import'}
         </button>

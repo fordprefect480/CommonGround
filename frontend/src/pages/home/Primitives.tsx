@@ -126,7 +126,7 @@ export function MSSection({
   )
 }
 
-/* Decorative produce SVGs — watercolour-style silhouettes */
+/* Decorative produce SVGs - watercolour-style silhouettes */
 
 interface IconProps {
   size?: number

@@ -8,7 +8,7 @@ const BENEFITS: ReadonlyArray<string> = [
   'pick from the communal garden spaces',
   'insurance coverage',
   'the ability to nominate for a committee position, and take a leadership role in our organisation and local community',
-  'attendance and voting rights at the AGM each year — have your say on what the association should focus on, who should be on the steering committee and what community garden projects should be developed next',
+  'attendance and voting rights at the AGM each year - have your say on what the association should focus on, who should be on the steering committee and what community garden projects should be developed next',
   'invitations to club social events',
   'free training and workshop opportunities',
   'discounted rates on all public workshops and events',
@@ -198,7 +198,7 @@ export default function Membership() {
             Memberships are renewed at 1st July each year. This means a
             member&rsquo;s first year of membership may not be a full twelve
             months. If you sign up as a new member within 8 weeks of the 1st
-            July you do not need to pay a renewal fee &mdash; your membership
+            July you do not need to pay a renewal fee - your membership
             will be carried over to the new financial year.
           </DetailCard>
           <DetailCard title="Household memberships">

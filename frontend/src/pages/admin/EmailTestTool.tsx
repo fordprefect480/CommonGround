@@ -58,7 +58,7 @@ export default function EmailTestTool() {
 
       <div className="card">
         <p className="card-note">
-          Sends to the recipients below only — does not touch the mailing list and is not saved to the sent-email history.
+          Sends to the recipients below only - does not touch the mailing list and is not saved to the sent-email history.
         </p>
 
         <div className="field">

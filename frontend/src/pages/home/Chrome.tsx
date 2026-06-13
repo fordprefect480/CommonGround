@@ -431,7 +431,7 @@ export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
                 margin: '0 0 16px',
               }}
             >
-              South Australia&rsquo;s largest community garden &mdash; a
+              South Australia&rsquo;s largest community garden - a
               community garden, public orchard, regenerating bushland park
               and community hub.
             </p>

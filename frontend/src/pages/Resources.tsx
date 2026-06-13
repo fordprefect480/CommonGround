@@ -159,7 +159,7 @@ export default function Resources() {
         </h2>
         <p style={{ ...bodyPara, maxWidth: 640, marginBottom: 32 }}>
           Not local to Seaford? There are wonderful community gardens right
-          across the southern suburbs &mdash; find one near you.
+          across the southern suburbs - find one near you.
         </p>
         <MapContainer
           bounds={NEARBY_GARDENS.map((g) => [g.lat, g.lng] as [number, number])}

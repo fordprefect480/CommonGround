@@ -52,7 +52,7 @@ export default function EmailList() {
                 <tr key={item.id}>
                   <td title={formatAbsolute(item.sentAt)}>{formatRelative(item.sentAt)}</td>
                   <td><Link to={`/admin/email/${item.id}`}>{item.subject}</Link></td>
-                  <td>{item.senderEmail ?? '—'}</td>
+                  <td>{item.senderEmail ?? '-'}</td>
                   <td>
                     {item.failedCount > 0 ? (
                       <span className="pill pill-warn">

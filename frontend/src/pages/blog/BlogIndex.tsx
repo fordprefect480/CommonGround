@@ -44,7 +44,7 @@ export default function BlogIndex() {
           {state.status === 'loading' && <p className="admin-loading">Loading posts&hellip;</p>}
           {state.status === 'error' && <div className="form-error" role="alert">{state.message}</div>}
           {state.status === 'ready' && state.posts.length === 0 && (
-            <p className="admin-empty">No posts yet — check back soon.</p>
+            <p className="admin-empty">No posts yet - check back soon.</p>
           )}
           {state.status === 'ready' && state.posts.map((post) => (
             <BlogCard key={post.id} post={post} />
