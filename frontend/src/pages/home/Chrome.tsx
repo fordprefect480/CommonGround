@@ -778,72 +778,62 @@ export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
               fontSize: 12,
               color: 'rgba(250,246,238,0.5)',
               display: 'flex',
-              gap: 18,
-              alignItems: 'center',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
             }}
           >
-            <span>Seeded by &copy; 2026 Mid Coast Sustainability Inc.</span>
-            <Link
-              to="/admin"
-              style={{
-                color: 'var(--apple-300)',
-                textDecoration: 'none',
-              }}
-            >
-              Admin
-            </Link>
-            {(version || commitSha) && (
-              <span style={{ color: 'rgba(250,246,238,0.4)' }}>
-                {version}
-                {version && commitSha ? ' · ' : ''}
-                {commitSha && (
-                  <a
-                    href={`${REPO_URL}/commit/${commitSha}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`Commit ${commitSha}`}
-                    style={{
-                      color: 'var(--apple-300)',
-                      textDecoration: 'none',
-                      fontFamily: 'var(--font-mono)',
-                    }}
-                  >
-                    {commitSha.slice(0, 7)}
-                  </a>
-                )}
-              </span>
-            )}
+            <span>&copy; 2026 Mid Coast Sustainability Inc.</span>
+            <div style={{ color: 'rgba(250,246,238,0.45)' }}>
+              Powered by{' '}
+              <a
+                href={REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: 'var(--apple-300)', textDecoration: 'none', fontWeight: 600 }}
+              >
+                CommonGround
+              </a>
+              {'. '}
+              <a
+                href={`${REPO_URL}/fork`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: 'var(--apple-300)', textDecoration: 'none' }}
+              >
+                Fork it
+              </a>
+              {' to run your own garden.'}
+            </div>
           </div>
         </div>
-        <div
-          style={{
-            marginTop: 20,
-            fontSize: 12,
-            lineHeight: 1.6,
-            color: 'rgba(250,246,238,0.45)',
-            textAlign: 'center',
-          }}
-        >
-          Powered by{' '}
-          <a
-            href={REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'var(--apple-300)', textDecoration: 'none', fontWeight: 600 }}
+        {(version || commitSha) && (
+          <div
+            style={{
+              marginTop: 24,
+              textAlign: 'center',
+              fontSize: 12,
+              color: 'rgba(250,246,238,0.4)',
+            }}
           >
-            CommonGround
-          </a>
-          {' - a free, open-source website for community gardens. '}
-          <a
-            href={`${REPO_URL}/fork`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'var(--apple-300)', textDecoration: 'none' }}
-          >
-            Fork it
-          </a>
-          {' to run your own.'}
-        </div>
+            {version}
+            {version && commitSha ? ' · ' : ''}
+            {commitSha && (
+              <a
+                href={`${REPO_URL}/commit/${commitSha}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`Commit ${commitSha}`}
+                style={{
+                  color: 'var(--apple-300)',
+                  textDecoration: 'none',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                {commitSha.slice(0, 7)}
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </footer>
   )
