@@ -353,13 +353,13 @@ export function FeatureGrid() {
   )
 }
 
-function eventIcon(tone: PhotoTone) {
+export function eventIcon(tone: PhotoTone) {
   if (tone === 'leaf') return <Leaf size={64} style={{ opacity: 0.5 }} />
   if (tone === 'apple') return <Tomato size={64} style={{ opacity: 0.5 }} />
   return <Beet size={64} style={{ opacity: 0.5 }} />
 }
 
-const eventDayFmt = new Intl.DateTimeFormat('en-AU', {
+export const eventDayFmt = new Intl.DateTimeFormat('en-AU', {
   weekday: 'short',
   day: 'numeric',
   month: 'short',
@@ -374,7 +374,7 @@ function formatEventTime(d: Date): string {
   return eventTimeFmt.format(d).toLowerCase().replace(/\s/g, '')
 }
 
-function formatEventTimeRange(startIso: string, endIso: string | null): string {
+export function formatEventTimeRange(startIso: string, endIso: string | null): string {
   const start = new Date(startIso)
   const startTime = formatEventTime(start)
   if (!endIso) return startTime
