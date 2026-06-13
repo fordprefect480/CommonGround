@@ -601,6 +601,8 @@ const FOOTER_GROUPS: ReadonlyArray<{
   },
 ]
 
+const REPO_URL = 'https://github.com/fordprefect480/CommonGround'
+
 export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
   const isMobile = useMediaQuery(BP_MOBILE)
   const isTablet = useMediaQuery(BP_TABLET)
@@ -796,7 +798,7 @@ export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
                 {version && commitSha ? ' · ' : ''}
                 {commitSha && (
                   <a
-                    href={`https://github.com/fordprefect480/CommonGround/commit/${commitSha}`}
+                    href={`${REPO_URL}/commit/${commitSha}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     title={`Commit ${commitSha}`}
@@ -812,6 +814,35 @@ export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
               </span>
             )}
           </div>
+        </div>
+        <div
+          style={{
+            marginTop: 20,
+            fontSize: 12,
+            lineHeight: 1.6,
+            color: 'rgba(250,246,238,0.45)',
+            textAlign: 'center',
+          }}
+        >
+          Powered by{' '}
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--apple-300)', textDecoration: 'none', fontWeight: 600 }}
+          >
+            CommonGround
+          </a>
+          {' - a free, open-source website for community gardens. '}
+          <a
+            href={`${REPO_URL}/fork`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--apple-300)', textDecoration: 'none' }}
+          >
+            Fork it
+          </a>
+          {' to run your own.'}
         </div>
       </div>
     </footer>
