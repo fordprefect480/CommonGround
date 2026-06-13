@@ -27,8 +27,10 @@ interface NearbyGarden {
   isOurs?: boolean
 }
 
+const OUR_GARDEN: NearbyGarden = { name: 'Seaford Wetlands Community Garden', address: '100 Seaford Rd, Seaford SA 5169', lat: -35.18102816855585, lng: 138.47946099165011, contact: 'mailto:seafordcg@gmail.com?subject=Seaford Community Garden', isOurs: true }
+
 const NEARBY_GARDENS: ReadonlyArray<NearbyGarden> = [
-  { name: 'Seaford Wetlands Community Garden', address: '100 Seaford Rd, Seaford SA 5169', lat: -35.1822546, lng: 138.4807322, contact: 'mailto:seafordcg@gmail.com?subject=Seaford Community Garden', isOurs: true },
+  OUR_GARDEN,
   { name: 'Aberfoyle Community Garden', address: 'Budapest Rd, Aberfoyle Park SA 5159', lat: -35.0667892, lng: 138.5941861, contact: 'https://www.facebook.com/AberfoyleCommunityGarden/' },
   { name: 'Aldinga Community Garden', address: '7 Stewart Ave, Aldinga Beach SA 5173', lat: -35.272947, lng: 138.4540366, contact: 'mailto:ACC@aldingacc.org?subject=Aldinga Community Garden' },
   { name: 'Christie Downs Community House Community Garden', address: 'Morton Rd & Flaxmill Rd, Christie Downs SA 5164', lat: -35.1275883, lng: 138.4980979, contact: 'tel:+61883846894' },
@@ -160,14 +162,13 @@ export default function Resources() {
           across the southern suburbs &mdash; find one near you.
         </p>
         <MapContainer
-          center={[-35.17, 138.51]}
+          center={[OUR_GARDEN.lat, OUR_GARDEN.lng]}
           zoom={11}
           scrollWheelZoom={false}
           style={{
             height: 460,
             borderRadius: 'var(--r-lg)',
             border: '1px solid var(--ink-200)',
-            marginBottom: 32,
             zIndex: 0,
           }}
         >
@@ -210,59 +211,6 @@ export default function Resources() {
             </CircleMarker>
           ))}
         </MapContainer>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr',
-            gap: 16,
-            alignItems: 'stretch',
-          }}
-        >
-          {NEARBY_GARDENS.map((garden) => (
-            <div
-              key={garden.name}
-              style={{
-                background: 'var(--paper)',
-                border: '1px solid var(--ink-100)',
-                borderRadius: 'var(--r-md)',
-                padding: '18px 20px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 700,
-                  fontSize: 16,
-                  color: 'var(--ink-900)',
-                  lineHeight: 1.2,
-                }}
-              >
-                {garden.name}
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--fg-3)', lineHeight: 1.4 }}>
-                {garden.address}
-              </div>
-              <div style={{ display: 'flex', gap: 14, marginTop: 4, fontSize: 13, fontWeight: 600 }}>
-                <a href={directionsUrl(garden)} target="_blank" rel="noopener noreferrer">
-                  Directions
-                </a>
-                {garden.contact && (
-                  <a
-                    href={garden.contact}
-                    {...(garden.contact.startsWith('http')
-                      ? { target: '_blank', rel: 'noopener noreferrer' }
-                      : {})}
-                  >
-                    {contactLabel(garden.contact)}
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
       </MSSection>
 
       <MSFooter onNav={handleNav} />
