@@ -1305,8 +1305,8 @@ button.footer-link:disabled {
 .admin-stat-card {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  padding: 1.25rem 1.4rem 1.35rem;
+  gap: 0.25rem;
+  padding: 0.9rem 1.25rem 1rem;
   background: var(--paper-soft);
   border: 1px solid var(--border-soft);
   border-left: 3px solid var(--leaf-500);
@@ -1317,7 +1317,7 @@ button.footer-link:disabled {
   font-family: var(--font-display);
   font-weight: 700;
   font-variation-settings: "opsz" 40;
-  font-size: 2.5rem;
+  font-size: 2.1rem;
   line-height: 1;
   letter-spacing: -0.02em;
   color: var(--ink-900);
@@ -1336,14 +1336,6 @@ button.footer-link:disabled {
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--ink-500);
-}
-
-.admin-stat-note {
-  font-family: var(--font-sans);
-  font-size: 0.78rem;
-  font-style: italic;
-  color: var(--ink-400);
-  margin-top: 0.1rem;
 }
 
 .admin-tools-grid {
