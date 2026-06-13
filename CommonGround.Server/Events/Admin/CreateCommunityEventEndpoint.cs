@@ -60,7 +60,7 @@ public sealed class CreateCommunityEventEndpoint(
 
         await activityLogger.LogAsync(
             "event.created",
-            $"Added event \"{ev.Title}\"",
+            $"added a new event \"{ev.Title}\"",
             targetType: "CommunityEvent",
             targetId: ev.Id.ToString(),
             ct: ct);

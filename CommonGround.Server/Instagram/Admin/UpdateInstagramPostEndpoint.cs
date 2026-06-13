@@ -45,7 +45,7 @@ public sealed class UpdateInstagramPostEndpoint(AppDbContext db, IActivityLogger
 
         await activityLogger.LogAsync(
             "instagram.post_updated",
-            $"Updated Instagram tile (#{post.Id})",
+            $"updated an Instagram tile (#{post.Id})",
             targetType: "InstagramPost",
             targetId: post.Id.ToString(),
             ct: ct);

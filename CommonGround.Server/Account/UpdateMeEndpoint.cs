@@ -68,7 +68,7 @@ public sealed class UpdateMeEndpoint(
 
         await activityLogger.LogAsync(
             "member.profile_updated",
-            "Updated own profile",
+            "updated their profile",
             targetType: "Member",
             targetId: current.Id,
             ct: ct);

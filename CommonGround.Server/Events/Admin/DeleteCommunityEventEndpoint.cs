@@ -42,7 +42,7 @@ public sealed class DeleteCommunityEventEndpoint(
 
         await activityLogger.LogAsync(
             "event.deleted",
-            $"Removed event \"{deletedTitle}\"",
+            $"removed the event \"{deletedTitle}\"",
             targetType: "CommunityEvent",
             targetId: deletedId.ToString(),
             ct: ct);

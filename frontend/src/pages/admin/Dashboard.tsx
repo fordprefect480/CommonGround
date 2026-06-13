@@ -1,12 +1,20 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchActivity, type ActivityItem } from '../../api/activity'
+import { fetchMemberStats, type MemberStats } from '../../api/auth'
 import { formatAbsolute, formatRelative, labelFor } from './activityFormatting'
 
 type ActivityState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'ready'; items: ActivityItem[] }
+
+type StatsState =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'ready'; stats: MemberStats }
+
+const TOTAL_BEDS = 32
 
 const ICON_PROPS = {
   width: 28,
@@ -65,12 +73,13 @@ const SECTIONS: { to: string; title: string; description: string; icon: ReactNod
 
 export default function Dashboard() {
   const [activity, setActivity] = useState<ActivityState>({ status: 'loading' })
+  const [stats, setStats] = useState<StatsState>({ status: 'loading' })
 
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       try {
-        const result = await fetchActivity(null, 10)
+        const result = await fetchActivity(null, 5)
         if (cancelled) return
         setActivity({ status: 'ready', items: result.items })
       } catch (err) {
@@ -81,6 +90,25 @@ export default function Dashboard() {
     load()
     return () => { cancelled = true }
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const result = await fetchMemberStats()
+        if (cancelled) return
+        setStats({ status: 'ready', stats: result })
+      } catch {
+        if (cancelled) return
+        setStats({ status: 'error' })
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [])
+
+  const statValue = (value: number | null) =>
+    stats.status === 'loading' ? '…' : stats.status === 'error' ? '—' : String(value)
 
   return (
     <section className="admin-page" aria-labelledby="dashboard-heading">
@@ -124,6 +152,25 @@ export default function Dashboard() {
             </div>
           </>
         )}
+      </div>
+
+      <div className="admin-stats-grid">
+        <div className="admin-stat-card">
+          <span className="admin-stat-value">{statValue(stats.status === 'ready' ? stats.stats.activeMembers : null)}</span>
+          <span className="admin-stat-label">Active members</span>
+        </div>
+        <div className="admin-stat-card">
+          <span className="admin-stat-value">{statValue(stats.status === 'ready' ? stats.stats.lapsedMembers : null)}</span>
+          <span className="admin-stat-label">Lapsed members</span>
+        </div>
+        <div className="admin-stat-card">
+          <span className="admin-stat-value">{statValue(stats.status === 'ready' ? stats.stats.newMembersLast30Days : null)}</span>
+          <span className="admin-stat-label">New in last 30 days</span>
+        </div>
+        <div className="admin-stat-card">
+          <span className="admin-stat-value">0 <span className="admin-stat-value-total">/ {TOTAL_BEDS}</span></span>
+          <span className="admin-stat-label">Leased beds</span>
+        </div>
       </div>
 
       <div className="admin-tools-grid">

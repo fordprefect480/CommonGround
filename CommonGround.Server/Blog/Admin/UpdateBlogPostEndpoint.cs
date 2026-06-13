@@ -90,7 +90,7 @@ public sealed class UpdateBlogPostEndpoint(
 
         await activityLogger.LogAsync(
             "blog.post_updated",
-            $"Updated blog post '{post.Title}' ({post.Status})",
+            $"updated the blog post '{post.Title}' ({post.Status})",
             targetType: "BlogPost",
             targetId: post.Id.ToString(),
             ct: ct);

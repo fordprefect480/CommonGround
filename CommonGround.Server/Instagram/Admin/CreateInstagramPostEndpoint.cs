@@ -42,7 +42,7 @@ public sealed class CreateInstagramPostEndpoint(AppDbContext db, IActivityLogger
 
         await activityLogger.LogAsync(
             "instagram.post_created",
-            $"Added Instagram tile (#{post.Id})",
+            $"added a new Instagram tile (#{post.Id})",
             targetType: "InstagramPost",
             targetId: post.Id.ToString(),
             ct: ct);

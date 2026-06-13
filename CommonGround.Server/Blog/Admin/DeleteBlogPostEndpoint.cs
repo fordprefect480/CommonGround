@@ -37,7 +37,7 @@ public sealed class DeleteBlogPostEndpoint(AppDbContext db, IActivityLogger acti
 
         await activityLogger.LogAsync(
             "blog.post_deleted",
-            $"Deleted blog post '{deletedTitle}'",
+            $"deleted the blog post '{deletedTitle}'",
             targetType: "BlogPost",
             targetId: deletedId.ToString(),
             ct: ct);

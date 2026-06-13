@@ -64,7 +64,7 @@ public sealed class ExportMembersEndpoint(
 
         await activityLogger.LogAsync(
             "tool.members_exported",
-            $"Exported {users.Count} member(s) to {fileName}",
+            $"exported {users.Count} member(s) to {fileName}",
             details: new { Count = users.Count, FileName = fileName },
             ct: ct);
 

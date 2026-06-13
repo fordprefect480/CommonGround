@@ -25,6 +25,7 @@ public sealed class ActivityLogger(
         {
             string? actorUserId = null;
             string? actorEmail = null;
+            string? actorName = null;
 
             var http = httpContextAccessor.HttpContext;
             if (http?.User is { Identity.IsAuthenticated: true })
@@ -34,6 +35,7 @@ public sealed class ActivityLogger(
                 {
                     actorUserId = user.Id;
                     actorEmail = user.Email;
+                    actorName = user.DisplayName ?? user.Email;
                 }
             }
 
@@ -43,7 +45,7 @@ public sealed class ActivityLogger(
                 ActivityType = activityType,
                 ActorUserId = actorUserId,
                 ActorEmailSnapshot = actorEmail,
-                Summary = summary,
+                Summary = actorName is null ? summary : $"{actorName} {summary}",
                 TargetType = targetType,
                 TargetId = targetId,
                 DetailsJson = details is null ? null : JsonSerializer.Serialize(details, JsonOptions),

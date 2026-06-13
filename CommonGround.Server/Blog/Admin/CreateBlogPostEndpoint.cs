@@ -86,7 +86,7 @@ public sealed class CreateBlogPostEndpoint(
 
         await activityLogger.LogAsync(
             "blog.post_created",
-            $"Created blog post '{post.Title}' ({post.Status})",
+            $"created a new blog post '{post.Title}' ({post.Status})",
             targetType: "BlogPost",
             targetId: post.Id.ToString(),
             ct: ct);

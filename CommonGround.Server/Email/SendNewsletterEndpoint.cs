@@ -228,7 +228,7 @@ public sealed class SendNewsletterEndpoint(
 
         await activityLogger.LogAsync(
             "email.newsletter_sent",
-            $"Sent newsletter \"{subject}\" to {sent} of {recipients.Count} recipient(s)",
+            $"sent the newsletter \"{subject}\" to {sent} of {recipients.Count} recipient(s)",
             targetType: "sentEmail",
             targetId: sentEmail.Id.ToString(),
             details: new { Subject = subject, Sent = sent, Failed = failed, Recipients = recipients.Count, Mode = mode },
