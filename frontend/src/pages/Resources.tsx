@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css'
 import { useAppConfig } from '../AppConfigContext'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSEyebrow, MSSection } from './home/Primitives'
+import { BP_MOBILE, useMediaQuery } from './home/responsive'
 
 const DOCUMENTS: ReadonlyArray<{ title: string; description: string; url: string }> = [
   {
@@ -66,6 +67,7 @@ function directionsUrl(garden: NearbyGarden): string {
 export default function Resources() {
   const { gardenName } = useAppConfig()
   const handleNav = usePageNav('resources')
+  const isMobile = useMediaQuery(BP_MOBILE)
 
   useEffect(() => {
     document.title = `Resources | ${gardenName}`
@@ -98,7 +100,7 @@ export default function Resources() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
+            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
             gap: 24,
             alignItems: 'stretch',
           }}
@@ -148,7 +150,7 @@ export default function Resources() {
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 700,
-            fontSize: 44,
+            fontSize: 'clamp(30px, 5vw, 44px)',
             lineHeight: 1.05,
             letterSpacing: '-0.025em',
             textTransform: 'uppercase',
@@ -166,7 +168,7 @@ export default function Resources() {
           boundsOptions={{ padding: [30, 30] }}
           scrollWheelZoom={false}
           style={{
-            height: 460,
+            height: isMobile ? 360 : 460,
             borderRadius: 'var(--r-lg)',
             border: '1px solid var(--ink-200)',
             zIndex: 0,

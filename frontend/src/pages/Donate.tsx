@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useAppConfig } from '../AppConfigContext'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSEyebrow, MSSection } from './home/Primitives'
+import { BP_TABLET, useMediaQuery } from './home/responsive'
 
 const BANK_DETAILS: ReadonlyArray<readonly [string, string]> = [
   ['Account name', 'Mid Coast Sustainability Inc.'],
@@ -12,6 +13,7 @@ const BANK_DETAILS: ReadonlyArray<readonly [string, string]> = [
 export default function Donate() {
   const { gardenName } = useAppConfig()
   const handleNav = usePageNav('donate')
+  const isTablet = useMediaQuery(BP_TABLET)
 
   useEffect(() => {
     document.title = `Donate | ${gardenName}`
@@ -26,8 +28,8 @@ export default function Donate() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1.2fr 1fr',
-            gap: 64,
+            gridTemplateColumns: isTablet ? '1fr' : '1.2fr 1fr',
+            gap: isTablet ? 32 : 64,
             alignItems: 'center',
           }}
         >

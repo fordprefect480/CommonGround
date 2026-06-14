@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useAppConfig } from '../AppConfigContext'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSButton, MSEyebrow, MSSection } from './home/Primitives'
+import { BP_MOBILE, BP_TABLET, useMediaQuery } from './home/responsive'
 import { MembershipSignupModal } from './home/MembershipSignupModal'
 
 const BENEFITS: ReadonlyArray<string> = [
@@ -25,6 +26,9 @@ export default function Membership() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [signupOpen, setSignupOpen] = useState(false)
   const [canceled, setCanceled] = useState(false)
+  const isTablet = useMediaQuery(BP_TABLET)
+  const isMobile = useMediaQuery(BP_MOBILE)
+  const detailCols = isMobile ? 1 : isTablet ? 2 : 3
 
   useEffect(() => {
     document.title = `Membership | ${gardenName}`
@@ -55,7 +59,7 @@ export default function Membership() {
           role="status"
           style={{
             maxWidth: 1240,
-            margin: '16px auto 0',
+            margin: isMobile ? '16px 20px 0' : '16px auto 0',
             padding: '12px 16px',
             background: 'var(--paper-soft)',
             border: '1px solid var(--ink-200)',
@@ -80,8 +84,8 @@ export default function Membership() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1.2fr 1fr',
-            gap: 64,
+            gridTemplateColumns: isTablet ? '1fr' : '1.2fr 1fr',
+            gap: isTablet ? 32 : 64,
             alignItems: 'center',
           }}
         >
@@ -136,8 +140,8 @@ export default function Membership() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1.3fr',
-            gap: 64,
+            gridTemplateColumns: isTablet ? '1fr' : '1fr 1.3fr',
+            gap: isTablet ? 32 : 64,
             alignItems: 'start',
           }}
         >
@@ -147,7 +151,7 @@ export default function Membership() {
               style={{
                 fontFamily: 'var(--font-display)',
                 fontWeight: 700,
-                fontSize: 44,
+                fontSize: 'clamp(30px, 5vw, 44px)',
                 lineHeight: 1.05,
                 letterSpacing: '-0.025em',
                 textTransform: 'uppercase',
@@ -223,7 +227,7 @@ export default function Membership() {
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 700,
-            fontSize: 44,
+            fontSize: 'clamp(30px, 5vw, 44px)',
             lineHeight: 1.05,
             letterSpacing: '-0.025em',
             textTransform: 'uppercase',
@@ -235,7 +239,7 @@ export default function Membership() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr',
+            gridTemplateColumns: `repeat(${detailCols}, 1fr)`,
             gap: 24,
             alignItems: 'stretch',
           }}
