@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useAppConfig } from '../AppConfigContext'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSButton, MSEyebrow, MSSection } from './home/Primitives'
+import { BP_MOBILE, BP_TABLET, useMediaQuery } from './home/responsive'
 
 const BED_FEATURES: ReadonlyArray<string> = [
   'compost, mulch, fertiliser and water are all included in your rental',
@@ -17,6 +18,9 @@ const PLOTHOLDER_POLICY_URL =
 export default function LeaseAPlot() {
   const { gardenName } = useAppConfig()
   const handleNav = usePageNav('lease')
+  const isTablet = useMediaQuery(BP_TABLET)
+  const isMobile = useMediaQuery(BP_MOBILE)
+  const detailCols = isMobile ? 1 : isTablet ? 2 : 3
 
   useEffect(() => {
     document.title = `Lease a plot | ${gardenName}`
@@ -31,8 +35,8 @@ export default function LeaseAPlot() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1.2fr 1fr',
-            gap: 64,
+            gridTemplateColumns: isTablet ? '1fr' : '1.2fr 1fr',
+            gap: isTablet ? 32 : 64,
             alignItems: 'center',
           }}
         >
@@ -81,8 +85,8 @@ export default function LeaseAPlot() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1.3fr',
-            gap: 64,
+            gridTemplateColumns: isTablet ? '1fr' : '1fr 1.3fr',
+            gap: isTablet ? 32 : 64,
             alignItems: 'start',
           }}
         >
@@ -92,7 +96,7 @@ export default function LeaseAPlot() {
               style={{
                 fontFamily: 'var(--font-display)',
                 fontWeight: 700,
-                fontSize: 44,
+                fontSize: 'clamp(30px, 5vw, 44px)',
                 lineHeight: 1.05,
                 letterSpacing: '-0.025em',
                 textTransform: 'uppercase',
@@ -158,7 +162,7 @@ export default function LeaseAPlot() {
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 700,
-            fontSize: 44,
+            fontSize: 'clamp(30px, 5vw, 44px)',
             lineHeight: 1.05,
             letterSpacing: '-0.025em',
             textTransform: 'uppercase',
@@ -170,7 +174,7 @@ export default function LeaseAPlot() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr',
+            gridTemplateColumns: `repeat(${detailCols}, 1fr)`,
             gap: 24,
             alignItems: 'stretch',
           }}

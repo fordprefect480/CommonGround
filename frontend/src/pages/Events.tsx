@@ -3,6 +3,7 @@ import { useAppConfig } from '../AppConfigContext'
 import { fetchUpcomingEvents, type UpcomingEvent } from '../api/events'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSEyebrow, MSSection, Photo } from './home/Primitives'
+import { BP_TABLET, useMediaQuery } from './home/responsive'
 import { eventDayFmt, eventIcon, formatEventTimeRange } from './home/Sections'
 
 export default function Events() {
@@ -11,6 +12,7 @@ export default function Events() {
   const [events, setEvents] = useState<UpcomingEvent[] | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const isStacked = useMediaQuery(BP_TABLET)
 
   useEffect(() => {
     document.title = `Events | ${gardenName}`
@@ -72,12 +74,12 @@ export default function Events() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'minmax(300px, 380px) 1fr',
+              gridTemplateColumns: isStacked ? '1fr' : 'minmax(300px, 380px) 1fr',
               gap: 28,
               alignItems: 'start',
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, order: isStacked ? 1 : 0 }}>
               {events.map((e) => {
                 const isSelected = e.id === selected.id
                 const start = new Date(e.startUtc)
@@ -126,8 +128,9 @@ export default function Events() {
                 border: '1px solid var(--ink-200)',
                 borderRadius: 'var(--r-lg)',
                 overflow: 'hidden',
-                position: 'sticky',
+                position: isStacked ? 'static' : 'sticky',
                 top: 96,
+                order: isStacked ? 0 : 1,
               }}
             >
               {selected.imageUrl ? (
@@ -149,7 +152,7 @@ export default function Events() {
                   style={{ borderRadius: 0 }}
                 />
               )}
-              <div style={{ padding: '28px 32px 32px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ padding: isStacked ? '22px 22px 26px' : '28px 32px 32px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                   <span
                     style={{
