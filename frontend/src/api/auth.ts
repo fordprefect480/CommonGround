@@ -20,6 +20,7 @@ export interface Member {
   displayName: string | null
   phoneNumber: string | null
   joinedAt: string
+  membershipPaidThroughUtc: string | null
   emailConfirmed: boolean
   isSubscribedToMailingList: boolean
   roles: string[]
@@ -118,8 +119,8 @@ export async function fetchMembers(): Promise<Member[]> {
 }
 
 export interface MemberStats {
-  activeMembers: number
-  lapsedMembers: number
+  paidMembers: number
+  notYetPaidMembers: number
   newMembersLast30Days: number
 }
 
@@ -153,6 +154,29 @@ export async function createMember(input: CreateMemberInput): Promise<Member> {
 export async function fetchMember(id: string): Promise<Member> {
   const res = await fetch(`/api/admin/members/${encodeURIComponent(id)}`, { credentials: 'include' })
   if (!res.ok) throw new Error(`Failed to load member (${res.status})`)
+  return res.json()
+}
+
+export interface MembershipPaymentRecord {
+  id: number
+  amountCents: number
+  currency: string
+  status: string
+  paidAtUtc: string | null
+  periodStartUtc: string | null
+  periodEndUtc: string | null
+  createdAtUtc: string
+}
+
+export async function fetchMemberPayments(id: string): Promise<MembershipPaymentRecord[]> {
+  const res = await fetch(`/api/admin/members/${encodeURIComponent(id)}/payments`, { credentials: 'include' })
+  if (!res.ok) throw new Error(`Failed to load payments (${res.status})`)
+  return res.json()
+}
+
+export async function fetchMyPayments(): Promise<MembershipPaymentRecord[]> {
+  const res = await fetch('/api/account/me/payments', { credentials: 'include' })
+  if (!res.ok) throw new Error(`Failed to load payments (${res.status})`)
   return res.json()
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { fetchMember, updateMember, type Member } from '../../api/auth'
+import PaymentHistoryTable from './PaymentHistoryTable'
 
 const ADMIN_ROLE = 'Admin'
 
@@ -179,6 +180,11 @@ export default function MemberDetail() {
           {saved && <span className="admin-whoami">Saved.</span>}
         </div>
       </form>
+
+      <div className="admin-subsection">
+        <h2 className="section-title">Payment history</h2>
+        <PaymentHistoryTable memberId={member.id} />
+      </div>
     </section>
   )
 }

@@ -156,12 +156,12 @@ export default function Dashboard() {
 
       <div className="admin-stats-grid">
         <div className="admin-stat-card">
-          <span className="admin-stat-value">{statValue(stats.status === 'ready' ? stats.stats.activeMembers : null)}</span>
-          <span className="admin-stat-label">Active members</span>
+          <span className="admin-stat-value">{statValue(stats.status === 'ready' ? stats.stats.paidMembers : null)}</span>
+          <span className="admin-stat-label">Paid members</span>
         </div>
         <div className="admin-stat-card">
-          <span className="admin-stat-value">{statValue(stats.status === 'ready' ? stats.stats.lapsedMembers : null)}</span>
-          <span className="admin-stat-label">Lapsed members</span>
+          <span className="admin-stat-value">{statValue(stats.status === 'ready' ? stats.stats.notYetPaidMembers : null)}</span>
+          <span className="admin-stat-label">Not yet paid</span>
         </div>
         <div className="admin-stat-card">
           <span className="admin-stat-value">{statValue(stats.status === 'ready' ? stats.stats.newMembersLast30Days : null)}</span>

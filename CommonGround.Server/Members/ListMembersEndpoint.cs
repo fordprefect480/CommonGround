@@ -31,8 +31,8 @@ public sealed class ListMembersEndpoint(AppDbContext db)
         var members = users
             .Select(u => new MemberDto(
                 u.Id, u.Email, u.UserName, u.FirstName, u.LastName, u.DisplayName,
-                u.PhoneNumber, u.JoinedAt, u.EmailConfirmed, u.IsSubscribedToMailingList,
-                rolesByUser.GetValueOrDefault(u.Id, [])))
+                u.PhoneNumber, u.JoinedAt, u.MembershipPaidThroughUtc, u.EmailConfirmed,
+                u.IsSubscribedToMailingList, rolesByUser.GetValueOrDefault(u.Id, [])))
             .ToList();
 
         await Send.OkAsync(members, ct);

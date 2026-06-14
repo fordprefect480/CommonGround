@@ -36,8 +36,25 @@ function formatJoinedAt(iso: string): string {
   return Number.isNaN(d.getTime()) ? '-' : dateFormatter.format(d)
 }
 
+type MembershipStatus = 'paid' | 'notPaid'
+
+// "Paid" means the member has paid their membership fee for the current
+// financial year. Membership always runs to a 1 July boundary (see the
+// server's MembershipPeriod), so a paid-through date in the future
+// necessarily covers the current financial year. Everything else — never
+// paid, or paid only through a past financial year — is "not yet paid".
+function membershipStatus(member: Member, now: number): MembershipStatus {
+  if (!member.membershipPaidThroughUtc) return 'notPaid'
+  const paidThrough = new Date(member.membershipPaidThroughUtc).getTime()
+  if (Number.isNaN(paidThrough)) return 'notPaid'
+  return paidThrough >= now ? 'paid' : 'notPaid'
+}
+
+type MemberFilter = 'all' | 'paid' | 'notPaid'
+
 export default function Members() {
   const [state, setState] = useState<State>({ status: 'loading' })
+  const [filter, setFilter] = useState<MemberFilter>('all')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
@@ -201,15 +218,69 @@ export default function Members() {
       )}
 
       {state.status === 'ready' && (
-        <MembersTable members={state.members} />
+        <MembersList members={state.members} filter={filter} onFilterChange={setFilter} />
       )}
     </section>
   )
 }
 
-function MembersTable({ members }: { members: Member[] }) {
+function MembersList({
+  members,
+  filter,
+  onFilterChange,
+}: {
+  members: Member[]
+  filter: MemberFilter
+  onFilterChange: (filter: MemberFilter) => void
+}) {
   if (members.length === 0) {
     return <p className="admin-empty">No users registered yet.</p>
+  }
+
+  const now = Date.now()
+  const statuses = members.map((m) => membershipStatus(m, now))
+  const paidCount = statuses.filter((s) => s === 'paid').length
+  const notPaidCount = statuses.filter((s) => s === 'notPaid').length
+
+  const visible = members.filter((_, i) => filter === 'all' || statuses[i] === filter)
+
+  const toggle = (value: Exclude<MemberFilter, 'all'>) =>
+    onFilterChange(filter === value ? 'all' : value)
+
+  const chips: { value: Exclude<MemberFilter, 'all'>; label: string; count: number }[] = [
+    { value: 'paid', label: 'Paid', count: paidCount },
+    { value: 'notPaid', label: 'Not Yet Paid', count: notPaidCount },
+  ]
+
+  return (
+    <>
+      <div className="filter-chips" role="group" aria-label="Filter members by membership status">
+        {chips.map((chip) => (
+          <button
+            key={chip.value}
+            type="button"
+            className={`filter-chip${filter === chip.value ? ' filter-chip-selected' : ''}`}
+            aria-pressed={filter === chip.value}
+            onClick={() => toggle(chip.value)}
+          >
+            {chip.label} <span className="filter-chip-count">{chip.count}</span>
+          </button>
+        ))}
+      </div>
+
+      <MembersTable members={visible} now={now} />
+    </>
+  )
+}
+
+const MEMBERSHIP_PILL: Record<MembershipStatus, { className: string; label: string }> = {
+  paid: { className: 'pill pill-ok', label: 'Paid' },
+  notPaid: { className: 'pill pill-warn', label: 'Not Yet Paid' },
+}
+
+function MembersTable({ members, now }: { members: Member[]; now: number }) {
+  if (members.length === 0) {
+    return <p className="admin-empty">No members match this filter.</p>
   }
 
   return (
@@ -221,6 +292,7 @@ function MembersTable({ members }: { members: Member[] }) {
             <th scope="col">Email</th>
             <th scope="col">Phone</th>
             <th scope="col">Member since</th>
+            <th scope="col">Membership</th>
             <th scope="col">Is admin</th>
             <th scope="col">Email confirmed</th>
             <th scope="col">Mailing list</th>
@@ -229,6 +301,7 @@ function MembersTable({ members }: { members: Member[] }) {
         <tbody>
           {members.map((member) => {
             const isAdmin = member.roles.includes(ADMIN_ROLE)
+            const pill = MEMBERSHIP_PILL[membershipStatus(member, now)]
             return (
               <tr key={member.id}>
                 <td>
@@ -239,6 +312,9 @@ function MembersTable({ members }: { members: Member[] }) {
                 <td>{member.email ?? '-'}</td>
                 <td>{member.phoneNumber ?? '-'}</td>
                 <td>{formatJoinedAt(member.joinedAt)}</td>
+                <td>
+                  <span className={pill.className}>{pill.label}</span>
+                </td>
                 <td>
                   <span className={isAdmin ? 'pill pill-ok' : 'pill'}>
                     {isAdmin ? 'Yes' : 'No'}

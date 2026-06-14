@@ -79,8 +79,8 @@ public sealed class UpdateMemberEndpoint(
 
         await Send.OkAsync(new MemberDto(
             user.Id, user.Email, user.UserName, user.FirstName, user.LastName, user.DisplayName,
-            user.PhoneNumber, user.JoinedAt, user.EmailConfirmed, user.IsSubscribedToMailingList,
-            roles.ToArray()), ct);
+            user.PhoneNumber, user.JoinedAt, user.MembershipPaidThroughUtc, user.EmailConfirmed,
+            user.IsSubscribedToMailingList, roles.ToArray()), ct);
     }
 
     private Task SendBadRequest(IEnumerable<string> errors) =>
