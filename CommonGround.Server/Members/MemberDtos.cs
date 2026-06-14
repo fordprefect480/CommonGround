@@ -9,6 +9,7 @@ public record MemberDto(
     string? DisplayName,
     string? PhoneNumber,
     DateTime JoinedAt,
+    DateTime? MembershipPaidThroughUtc,
     bool EmailConfirmed,
     bool IsSubscribedToMailingList,
     string[] Roles);

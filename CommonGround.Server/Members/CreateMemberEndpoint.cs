@@ -72,8 +72,8 @@ public sealed class CreateMemberEndpoint(
 
         var dto = new MemberDto(
             user.Id, user.Email, user.UserName, user.FirstName, user.LastName, user.DisplayName,
-            user.PhoneNumber, user.JoinedAt, user.EmailConfirmed, user.IsSubscribedToMailingList,
-            roles.ToArray());
+            user.PhoneNumber, user.JoinedAt, user.MembershipPaidThroughUtc, user.EmailConfirmed,
+            user.IsSubscribedToMailingList, roles.ToArray());
 
         await Send.ResultAsync(Results.Created($"/api/admin/members/{user.Id}", dto));
     }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { changePassword, fetchMe, updateMe } from '../../api/auth'
+import PaymentHistoryTable from './PaymentHistoryTable'
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error'
 type PwStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -184,6 +185,11 @@ export default function AdminProfile() {
         </form>
 
         <ChangePasswordForm />
+      </div>
+
+      <div className="admin-subsection">
+        <h2 className="section-title">Payment history</h2>
+        <PaymentHistoryTable />
       </div>
     </section>
   )
