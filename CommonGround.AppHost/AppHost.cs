@@ -168,6 +168,14 @@ var webfrontend = builder.AddViteApp("webfrontend", "../frontend")
 	.WithReference(server)
 	.WaitFor(server);
 
+if (builder.ExecutionContext.IsRunMode)
+{
+	// Pin the Vite dev server to a stable port. Aspire otherwise assigns a
+	// random port each run, which (combined with host: true in vite.config.ts)
+	// makes the LAN preview URL change every time and breaks any firewall rule.
+	webfrontend.WithEndpoint("http", endpoint => endpoint.TargetPort = 5173, createIfNotExists: false);
+}
+
 server.PublishWithContainerFiles(webfrontend, "wwwroot");
 
 builder.Build().Run();
