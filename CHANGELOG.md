@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.0](https://github.com/fordprefect480/CommonGround/compare/v0.3.1...v0.4.0) (2026-06-14)
+
+
+### Features
+
+* add 'Powered by CommonGround' open-source credit to footer ([be10080](https://github.com/fordprefect480/CommonGround/commit/be100807d70a7dcfdcc74c2655d35b1d815df5bb))
+* add membership payment status filters and payment history ([eaffb69](https://github.com/fordprefect480/CommonGround/commit/eaffb69b10afc306ada115fecb436d34817ac24a))
+* reflow membership, lease, donate, events and resources pages for mobile ([d3af92e](https://github.com/fordprefect480/CommonGround/commit/d3af92e7a3524151499851b6aab6adeaeecd6e19))
+* show deployed version and commit SHA in the site footer ([2c8a644](https://github.com/fordprefect480/CommonGround/commit/2c8a6444295ba5f26f69e9d83e94e0b972becd2e))
+
 ## [0.3.1](https://github.com/fordprefect480/CommonGround/compare/v0.3.0...v0.3.1) (2026-06-13)
 
 
