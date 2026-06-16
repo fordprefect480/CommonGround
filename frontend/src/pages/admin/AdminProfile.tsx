@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { changePassword, fetchMe, updateMe } from '../../api/auth'
+import { payMembership } from '../../api/membership'
+import { useAppConfig } from '../../AppConfigContext'
 import PaymentHistoryTable from './PaymentHistoryTable'
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error'
@@ -89,10 +91,10 @@ export default function AdminProfile() {
 
       <div className="profile-forms">
         <form className="card admin-form" onSubmit={save}>
-        <label className="field">
+        <div className="field">
           <span className="field-label">Email</span>
-          <input value={email} readOnly disabled />
-        </label>
+          <span className="field-readonly">{email}</span>
+        </div>
 
         <label className="field">
           <span className="field-label">First name</span>
@@ -157,12 +159,6 @@ export default function AdminProfile() {
           )}
         </fieldset>
 
-        <p className="card-note">
-          {paidThrough
-            ? `Member through ${new Date(paidThrough).toLocaleDateString()}.`
-            : 'Not an active member.'}
-        </p>
-
         <label className="checkbox-field">
           <input
             type="checkbox"
@@ -187,10 +183,88 @@ export default function AdminProfile() {
         <ChangePasswordForm />
       </div>
 
-      <div className="admin-subsection">
-        <h2 className="section-title">Payment history</h2>
-        <PaymentHistoryTable />
+      <div className="profile-forms">
+        <MembershipStatus paidThrough={paidThrough} />
+
+        <section className="card admin-form">
+          <h2 className="section-title">Payment history</h2>
+          <PaymentHistoryTable />
+        </section>
       </div>
+    </section>
+  )
+}
+
+// Membership always runs to a 1 July boundary, which is also the Australian
+// financial-year boundary. A paid-through date at or beyond today therefore
+// covers the current financial year (same rule as the admin members list).
+function currentFinancialYearLabel(now: Date): string {
+  const startYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1
+  return `${startYear}/${String(startYear + 1).slice(-2)}`
+}
+
+function MembershipStatus({ paidThrough }: { paidThrough: string | null }) {
+  const { paymentsEnabled } = useAppConfig()
+  const [status, setStatus] = useState<'idle' | 'starting' | 'error'>('idle')
+  const [error, setError] = useState<string | null>(null)
+
+  const now = new Date()
+  const fyLabel = currentFinancialYearLabel(now)
+  const isPaid = paidThrough != null && new Date(paidThrough).getTime() >= now.getTime()
+
+  const startPayment = async () => {
+    setStatus('starting')
+    setError(null)
+    try {
+      const { checkoutUrl } = await payMembership()
+      window.location.assign(checkoutUrl)
+    } catch (err) {
+      setStatus('error')
+      setError(err instanceof Error ? err.message : 'Could not start payment. Please try again.')
+    }
+  }
+
+  return (
+    <section className="card admin-form">
+      <h2 className="section-title">Membership</h2>
+
+      <p className="card-note" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span className={isPaid ? 'pill pill-ok' : 'pill pill-warn'} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+          {isPaid ? 'Paid' : 'Not yet paid'}
+        </span>
+        <span>for the {fyLabel} financial year</span>
+      </p>
+
+      {isPaid ? (
+        <p className="card-note" style={{ margin: 0 }}>
+          Your membership is valid until {new Date(paidThrough!).toLocaleDateString()}.
+        </p>
+      ) : (
+        <>
+          {paidThrough && (
+            <p className="card-note" style={{ margin: 0 }}>
+              Your last membership ran until {new Date(paidThrough).toLocaleDateString()}.
+            </p>
+          )}
+          {error && <div className="form-error" role="alert">{error}</div>}
+          {paymentsEnabled ? (
+            <div className="admin-actions">
+              <button
+                type="button"
+                className="primary-button"
+                onClick={startPayment}
+                disabled={status === 'starting'}
+              >
+                {status === 'starting' ? 'Starting payment…' : 'Pay membership'}
+              </button>
+            </div>
+          ) : (
+            <p className="card-note" style={{ margin: 0 }}>
+              Online payments are currently unavailable. Please check back soon to pay your membership.
+            </p>
+          )}
+        </>
+      )}
     </section>
   )
 }

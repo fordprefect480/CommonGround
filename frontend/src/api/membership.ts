@@ -10,14 +10,24 @@ export interface SignupInput {
   captchaToken?: string
 }
 
-export async function signup(input: SignupInput): Promise<{ checkoutUrl: string }> {
+export async function signup(input: SignupInput): Promise<{ checkoutUrl: string | null }> {
   const res = await fetch('/api/membership/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(input),
   })
   if (res.ok) return res.json()
   throw await readError(res, 'Signup failed')
+}
+
+export async function payMembership(): Promise<{ checkoutUrl: string }> {
+  const res = await fetch('/api/membership/pay', {
+    method: 'POST',
+    credentials: 'include',
+  })
+  if (res.ok) return res.json()
+  throw await readError(res, 'Could not start payment')
 }
 
 export async function completeCheckout(sessionId: string): Promise<void> {

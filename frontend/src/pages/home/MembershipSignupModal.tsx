@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import { MSButton } from './Primitives'
 import { useAppConfig } from '../../AppConfigContext'
 import { signup } from '../../api/membership'
@@ -13,6 +14,7 @@ interface MembershipSignupModalProps {
 const MAX_SECONDARY = 4
 
 export function MembershipSignupModal({ open, onClose }: MembershipSignupModalProps) {
+  const navigate = useNavigate()
   const config = useAppConfig()
   const captchaSiteKey = config.turnstileSiteKey ?? null
   const captchaContainerRef = useRef<HTMLDivElement | null>(null)
@@ -115,7 +117,14 @@ export function MembershipSignupModal({ open, onClose }: MembershipSignupModalPr
         subscribeNewsletter: subscribe,
         captchaToken: captchaToken ?? undefined,
       })
-      window.location.assign(checkoutUrl)
+      if (checkoutUrl) {
+        // Payments are on: hand off to the Stripe-hosted checkout page.
+        window.location.assign(checkoutUrl)
+      } else {
+        // Payments are off: the account was created and we're signed in - send them to
+        // their profile, where they can pay once payments are turned back on.
+        navigate('/profile')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not sign up. Please try again.')
       const id = captchaWidgetIdRef.current

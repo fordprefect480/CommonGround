@@ -13,7 +13,7 @@ public sealed record SignupRequest(
     bool SubscribeNewsletter,
     string? CaptchaToken);
 
-public sealed record SignupResult(string CheckoutUrl);
+public sealed record SignupResult(string? CheckoutUrl);
 
 public sealed record CompleteRequest(string SessionId);
 
