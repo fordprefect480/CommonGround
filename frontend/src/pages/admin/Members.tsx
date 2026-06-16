@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { createMember, fetchMembers, type Member } from '../../api/auth'
 
 const ADMIN_ROLE = 'Admin'
@@ -279,6 +279,8 @@ const MEMBERSHIP_PILL: Record<MembershipStatus, { className: string; label: stri
 }
 
 function MembersTable({ members, now }: { members: Member[]; now: number }) {
+  const navigate = useNavigate()
+
   if (members.length === 0) {
     return <p className="admin-empty">No members match this filter.</p>
   }
@@ -293,8 +295,6 @@ function MembersTable({ members, now }: { members: Member[]; now: number }) {
             <th scope="col">Phone</th>
             <th scope="col">Member since</th>
             <th scope="col">Membership</th>
-            <th scope="col">Is admin</th>
-            <th scope="col">Email confirmed</th>
             <th scope="col">Mailing list</th>
           </tr>
         </thead>
@@ -302,28 +302,33 @@ function MembersTable({ members, now }: { members: Member[]; now: number }) {
           {members.map((member) => {
             const isAdmin = member.roles.includes(ADMIN_ROLE)
             const pill = MEMBERSHIP_PILL[membershipStatus(member, now)]
+            const open = () => navigate(`/admin/members/${member.id}`)
             return (
-              <tr key={member.id}>
+              <tr
+                key={member.id}
+                className="admin-table-row-clickable"
+                onClick={open}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    open()
+                  }
+                }}
+                tabIndex={0}
+                role="link"
+                aria-label={`View membership details for ${member.displayName ?? member.email ?? 'member'}`}
+              >
                 <td>
-                  <Link to={`/admin/members/${member.id}`} className="admin-table-link">
+                  <span className="admin-table-link">
                     {member.displayName ?? member.email ?? '(no name)'}
-                  </Link>
+                  </span>
+                  {isAdmin && <span className="pill pill-ok admin-name-badge">Admin</span>}
                 </td>
                 <td>{member.email ?? '-'}</td>
                 <td>{member.phoneNumber ?? '-'}</td>
                 <td>{formatJoinedAt(member.joinedAt)}</td>
                 <td>
                   <span className={pill.className}>{pill.label}</span>
-                </td>
-                <td>
-                  <span className={isAdmin ? 'pill pill-ok' : 'pill'}>
-                    {isAdmin ? 'Yes' : 'No'}
-                  </span>
-                </td>
-                <td>
-                  <span className={member.emailConfirmed ? 'pill pill-ok' : 'pill pill-warn'}>
-                    {member.emailConfirmed ? 'Yes' : 'No'}
-                  </span>
                 </td>
                 <td>
                   <span className={member.isSubscribedToMailingList ? 'pill pill-ok' : 'pill'}>
