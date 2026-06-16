@@ -858,8 +858,17 @@ button.footer-link:disabled {
   border-bottom: 1px solid transparent;
 }
 
-.admin-table-link:hover {
+.admin-table-row-clickable { cursor: pointer; }
+
+.admin-table-row-clickable:hover .admin-table-link {
   border-bottom-color: var(--ink-500);
+}
+
+.admin-name-badge {
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.65rem;
 }
 
 /* Tabs */
@@ -936,6 +945,7 @@ button.footer-link:disabled {
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .pill-ok {
