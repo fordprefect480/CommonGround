@@ -1,20 +1,17 @@
 using CommonGround.Server.Activity;
 using CommonGround.Server.Configuration;
 using CommonGround.Server.Data;
-using CommonGround.Server.Email;
 using CommonGround.Server.Misc;
 using FastEndpoints;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using Stripe.Checkout;
 
 namespace CommonGround.Server.Members;
 
 public sealed class SignupMemberEndpoint(
     UserManager<ApplicationUser> userManager,
-    IOptions<StripeOptions> stripeOptions,
-    IOptions<EmailOptions> emailOptions,
-    IOptions<GardenOptions> gardenOptions,
+    SignInManager<ApplicationUser> signInManager,
+    MembershipCheckoutService checkout,
     IOptions<ContactOptions> contactOptions,
     TurnstileVerifier turnstile,
     IHttpContextAccessor httpContextAccessor,
@@ -33,16 +30,6 @@ public sealed class SignupMemberEndpoint(
 
     public override async Task HandleAsync(SignupRequest req, CancellationToken ct)
     {
-        var stripe = stripeOptions.Value;
-        if (!stripe.IsConfigured || !emailOptions.Value.IsConfigured)
-        {
-            await Send.ResultAsync(Results.Problem(
-                title: "Membership signup unavailable",
-                detail: "Online membership signup is temporarily unavailable.",
-                statusCode: 503));
-            return;
-        }
-
         var firstName = NullIfBlank(req.FirstName);
         var lastName = NullIfBlank(req.LastName);
         var email = (req.Email ?? "").Trim();
@@ -132,11 +119,26 @@ public sealed class SignupMemberEndpoint(
             db.SecondaryMembers.Add(new SecondaryMember { UserId = user.Id, FullName = name });
         }
 
-        var sessionService = new SessionService();
-        Session session;
+        // Payments unavailable (Stripe not configured): still accept the signup so the member
+        // has an account. They sign in and pay from their profile once payments are turned on.
+        if (!checkout.IsAvailable)
+        {
+            await db.SaveChangesAsync(ct);
+            await signInManager.SignInAsync(user, isPersistent: true);
+            await activityLogger.LogAsync(
+                "member.signup_unpaid",
+                $"{email} signed up while payments were unavailable",
+                targetType: "Member",
+                targetId: user.Id,
+                ct: ct);
+            await Send.OkAsync(new SignupResult(null), ct);
+            return;
+        }
+
+        string checkoutUrl;
         try
         {
-            session = await sessionService.CreateAsync(BuildSessionOptions(user, email, stripe), cancellationToken: ct);
+            checkoutUrl = await checkout.CreateCheckoutAsync(user, ct);
         }
         catch (Exception ex)
         {
@@ -148,15 +150,6 @@ public sealed class SignupMemberEndpoint(
             return;
         }
 
-        db.MembershipPayments.Add(new MembershipPayment
-        {
-            UserId = user.Id,
-            StripeCheckoutSessionId = session.Id,
-            AmountCents = stripe.PriceAmountCents,
-            Currency = stripe.Currency,
-            Status = MembershipPaymentStatus.Pending,
-            CreatedAtUtc = DateTime.UtcNow,
-        });
         await db.SaveChangesAsync(ct);
 
         await activityLogger.LogAsync(
@@ -166,36 +159,7 @@ public sealed class SignupMemberEndpoint(
             targetId: user.Id,
             ct: ct);
 
-        await Send.OkAsync(new SignupResult(session.Url), ct);
-    }
-
-    private SessionCreateOptions BuildSessionOptions(ApplicationUser user, string email, StripeOptions stripe)
-    {
-        var baseUrl = (gardenOptions.Value.PublicUrl ?? "").TrimEnd('/');
-        return new SessionCreateOptions
-        {
-            Mode = "payment",
-            CustomerEmail = email,
-            ClientReferenceId = user.Id,
-            LineItems =
-            [
-                new SessionLineItemOptions
-                {
-                    Quantity = 1,
-                    PriceData = new SessionLineItemPriceDataOptions
-                    {
-                        Currency = stripe.Currency,
-                        UnitAmount = stripe.PriceAmountCents,
-                        ProductData = new SessionLineItemPriceDataProductDataOptions
-                        {
-                            Name = "Annual garden membership",
-                        },
-                    },
-                },
-            ],
-            SuccessUrl = $"{baseUrl}/membership/welcome?session_id={{CHECKOUT_SESSION_ID}}",
-            CancelUrl = $"{baseUrl}/membership?canceled=1",
-        };
+        await Send.OkAsync(new SignupResult(checkoutUrl), ct);
     }
 
     private static void ApplyDetails(ApplicationUser user, string firstName, string lastName, SignupRequest req)

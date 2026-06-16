@@ -7,6 +7,7 @@ namespace CommonGround.Server.Misc;
 public sealed class GetConfigEndpoint(
     IOptions<GardenOptions> garden,
     IOptions<ContactOptions> contact,
+    IOptions<StripeOptions> stripe,
     IConfiguration configuration)
     : EndpointWithoutRequest<GetConfigEndpoint.ConfigResult>
 {
@@ -15,7 +16,8 @@ public sealed class GetConfigEndpoint(
         string? ApplicationInsightsConnectionString,
         string? TurnstileSiteKey,
         string? Version,
-        string? CommitSha);
+        string? CommitSha,
+        bool PaymentsEnabled);
 
     public override void Configure()
     {
@@ -43,7 +45,8 @@ public sealed class GetConfigEndpoint(
 
         return Send.OkAsync(
             new ConfigResult(
-                garden.Value.Name, appInsightsConnectionString, turnstileSiteKey, version, commitSha),
+                garden.Value.Name, appInsightsConnectionString, turnstileSiteKey, version, commitSha,
+                stripe.Value.IsConfigured),
             ct);
     }
 }

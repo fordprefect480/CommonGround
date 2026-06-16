@@ -4,6 +4,7 @@ export interface AppConfig {
   turnstileSiteKey?: string | null
   version?: string | null
   commitSha?: string | null
+  paymentsEnabled: boolean
 }
 
 export async function fetchAppConfig(): Promise<AppConfig> {

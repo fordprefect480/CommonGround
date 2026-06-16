@@ -272,6 +272,31 @@ fieldset.field:disabled {
   cursor: not-allowed;
 }
 
+.secondary-button {
+  background: var(--ivory);
+  color: var(--ink-900);
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-md);
+  padding: 0.8rem 1.4rem;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out), opacity var(--dur-1) var(--ease-out);
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: var(--paper-soft);
+  border-color: var(--ink-300);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-1);
+}
+
+.secondary-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .admin-actions {
   display: flex;
   align-items: center;
