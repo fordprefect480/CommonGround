@@ -30,6 +30,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
 builder.Services.AddScoped<CommonGround.Server.Members.MembershipActivationService>();
 builder.Services.AddScoped<CommonGround.Server.Members.MembershipCheckoutService>();
+builder.Services.AddScoped<SiteSettingsService>();
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<AppDbContext>()
     .SetApplicationName("CommonGround");

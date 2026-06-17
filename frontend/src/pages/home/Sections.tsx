@@ -13,6 +13,7 @@ import {
 import type { NavId } from './Chrome'
 import { BP_HERO_VIDEO, BP_MOBILE, BP_TABLET, useMediaQuery } from './responsive'
 import { useAppConfig } from '../../AppConfigContext'
+import { formatMembershipPrice } from '../../format'
 import { sendContactMessage } from '../../api/contact'
 import {
   fetchPublicInstagramPosts,
@@ -27,6 +28,8 @@ interface NavProps {
 }
 
 export function HomeHero({ onNav }: NavProps) {
+  const { membershipPriceCents } = useAppConfig()
+  const priceLabel = formatMembershipPrice(membershipPriceCents)
   const heroMask =
     'linear-gradient(to right, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,1) 70%)'
   const [mediaReady, setMediaReady] = useState(false)
@@ -191,7 +194,7 @@ export function HomeHero({ onNav }: NavProps) {
                   fontWeight: 700,
                 }}
               >
-                $25
+                {priceLabel}
               </strong>{' '}
               a year
             </div>
@@ -601,6 +604,8 @@ export function HomeEvents({ onNav }: NavProps) {
 }
 
 export function MembershipBanner({ onNav }: NavProps) {
+  const { membershipPriceCents } = useAppConfig()
+  const priceLabel = formatMembershipPrice(membershipPriceCents)
   const isTablet = useMediaQuery(BP_TABLET)
   return (
     <MSSection bg="var(--apple-700)" py={88} id="section-membership">
@@ -629,7 +634,7 @@ export function MembershipBanner({ onNav }: NavProps) {
           >
             Join from
             <br />
-            $25 a year.
+            {priceLabel} a year.
           </h2>
           <p
             style={{

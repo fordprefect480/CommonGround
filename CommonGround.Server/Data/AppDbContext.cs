@@ -18,6 +18,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Activity> Activities => Set<Activity>();
     public DbSet<SentEmail> SentEmails => Set<SentEmail>();
     public DbSet<SentEmailRecipient> SentEmailRecipients => Set<SentEmailRecipient>();
+    public DbSet<SiteSettings> SiteSettings => Set<SiteSettings>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -209,6 +210,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .OnDelete(DeleteBehavior.SetNull);
 
             b.HasIndex(r => r.SentEmailId).HasDatabaseName("IX_SentEmailRecipient_SentEmailId");
+        });
+
+        builder.Entity<SiteSettings>(b =>
+        {
+            b.HasData(new SiteSettings { Id = 1, MembershipPriceCents = 2500 });
         });
     }
 }

@@ -1,5 +1,6 @@
 using CommonGround.Server.Configuration;
 using CommonGround.Server.Data;
+using CommonGround.Server.Misc;
 using Microsoft.Extensions.Options;
 using Stripe.Checkout;
 
@@ -12,6 +13,7 @@ namespace CommonGround.Server.Members;
 public sealed class MembershipCheckoutService(
     IOptions<StripeOptions> stripeOptions,
     IOptions<GardenOptions> gardenOptions,
+    SiteSettingsService siteSettings,
     AppDbContext db)
 {
     /// <summary>Whether online payments are currently configured and available.</summary>
@@ -26,13 +28,14 @@ public sealed class MembershipCheckoutService(
     public async Task<string> CreateCheckoutAsync(ApplicationUser user, CancellationToken ct)
     {
         var stripe = stripeOptions.Value;
-        var session = await new SessionService().CreateAsync(BuildSessionOptions(user, stripe), cancellationToken: ct);
+        var priceCents = await siteSettings.GetMembershipPriceCentsAsync(ct);
+        var session = await new SessionService().CreateAsync(BuildSessionOptions(user, stripe, priceCents), cancellationToken: ct);
 
         db.MembershipPayments.Add(new MembershipPayment
         {
             UserId = user.Id,
             StripeCheckoutSessionId = session.Id,
-            AmountCents = stripe.PriceAmountCents,
+            AmountCents = priceCents,
             Currency = stripe.Currency,
             Status = MembershipPaymentStatus.Pending,
             CreatedAtUtc = DateTime.UtcNow,
@@ -41,7 +44,7 @@ public sealed class MembershipCheckoutService(
         return session.Url;
     }
 
-    private SessionCreateOptions BuildSessionOptions(ApplicationUser user, StripeOptions stripe)
+    private SessionCreateOptions BuildSessionOptions(ApplicationUser user, StripeOptions stripe, int priceCents)
     {
         var baseUrl = (gardenOptions.Value.PublicUrl ?? "").TrimEnd('/');
         return new SessionCreateOptions
@@ -57,7 +60,7 @@ public sealed class MembershipCheckoutService(
                     PriceData = new SessionLineItemPriceDataOptions
                     {
                         Currency = stripe.Currency,
-                        UnitAmount = stripe.PriceAmountCents,
+                        UnitAmount = priceCents,
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {
                             Name = "Annual garden membership",

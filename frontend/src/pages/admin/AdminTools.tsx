@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { cleanupOrphanImages, importBlog, type ImportBlogResult } from '../../api/adminTools'
+import { cleanupOrphanImages, getMembershipPrice, importBlog, updateMembershipPrice, type ImportBlogResult } from '../../api/adminTools'
 
 type ImportState =
   | { status: 'idle' }
@@ -18,6 +18,38 @@ export default function AdminTools() {
   const navigate = useNavigate()
   const [importState, setImportState] = useState<ImportState>({ status: 'idle' })
   const [cleanupState, setCleanupState] = useState<CleanupState>({ status: 'idle' })
+  const [priceDollars, setPriceDollars] = useState('')
+  const [priceLoaded, setPriceLoaded] = useState(false)
+  const [priceSaving, setPriceSaving] = useState(false)
+  const [priceMessage, setPriceMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+
+  useEffect(() => {
+    getMembershipPrice()
+      .then(({ priceCents }) => {
+        setPriceDollars((priceCents / 100).toString())
+        setPriceLoaded(true)
+      })
+      .catch((err) => setPriceMessage({ kind: 'error', text: err instanceof Error ? err.message : 'Could not load the price.' }))
+  }, [])
+
+  const savePrice = async () => {
+    const dollars = Number(priceDollars)
+    if (!Number.isFinite(dollars) || dollars <= 0) {
+      setPriceMessage({ kind: 'error', text: 'Enter a price in dollars, for example 25.' })
+      return
+    }
+    setPriceSaving(true)
+    setPriceMessage(null)
+    try {
+      const { priceCents } = await updateMembershipPrice(Math.round(dollars * 100))
+      setPriceDollars((priceCents / 100).toString())
+      setPriceMessage({ kind: 'ok', text: 'Saved. The new price is now shown across the site.' })
+    } catch (err) {
+      setPriceMessage({ kind: 'error', text: err instanceof Error ? err.message : 'Could not save the price.' })
+    } finally {
+      setPriceSaving(false)
+    }
+  }
 
   const runImport = async () => {
     const answer = prompt('How many of the most recent posts to import? (leave blank for all)', '5')
@@ -56,6 +88,32 @@ export default function AdminTools() {
       <header className="admin-page-header">
         <h1 id="settings-heading" className="admin-page-title">Settings</h1>
       </header>
+
+      <div className="card">
+        <h2 className="section-title">Membership price</h2>
+        <p className="card-note">The annual membership fee shown on the website and charged at checkout.</p>
+        <div className="field">
+          <label className="field-label" htmlFor="membership-price">Price per year</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: 220 }}>
+            <span aria-hidden="true">$</span>
+            <input
+              id="membership-price"
+              type="number"
+              min="1"
+              step="1"
+              inputMode="decimal"
+              value={priceDollars}
+              onChange={(e) => setPriceDollars(e.target.value)}
+              disabled={!priceLoaded || priceSaving}
+            />
+          </div>
+        </div>
+        <button type="button" className="primary-button" onClick={savePrice} disabled={!priceLoaded || priceSaving}>
+          {priceSaving ? 'Saving…' : 'Save price'}
+        </button>
+        {priceMessage?.kind === 'ok' && <div className="card-note" role="status">{priceMessage.text}</div>}
+        {priceMessage?.kind === 'error' && <div className="form-error" role="alert">{priceMessage.text}</div>}
+      </div>
 
       <details className="admin-advanced-panel">
         <summary className="admin-advanced-summary">Advanced</summary>
