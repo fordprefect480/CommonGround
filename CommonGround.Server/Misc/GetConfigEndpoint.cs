@@ -8,6 +8,7 @@ public sealed class GetConfigEndpoint(
     IOptions<GardenOptions> garden,
     IOptions<ContactOptions> contact,
     IOptions<StripeOptions> stripe,
+    SiteSettingsService settings,
     IConfiguration configuration)
     : EndpointWithoutRequest<GetConfigEndpoint.ConfigResult>
 {
@@ -17,7 +18,8 @@ public sealed class GetConfigEndpoint(
         string? TurnstileSiteKey,
         string? Version,
         string? CommitSha,
-        bool PaymentsEnabled);
+        bool PaymentsEnabled,
+        int MembershipPriceCents);
 
     public override void Configure()
     {
@@ -25,7 +27,7 @@ public sealed class GetConfigEndpoint(
         AllowAnonymous();
     }
 
-    public override Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
         var appInsightsConnectionString =
             configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
@@ -43,10 +45,12 @@ public sealed class GetConfigEndpoint(
             ? null
             : configuration["BuildInfo:CommitSha"];
 
-        return Send.OkAsync(
+        var priceCents = await settings.GetMembershipPriceCentsAsync(ct);
+
+        await Send.OkAsync(
             new ConfigResult(
                 garden.Value.Name, appInsightsConnectionString, turnstileSiteKey, version, commitSha,
-                stripe.Value.IsConfigured),
+                stripe.Value.IsConfigured, priceCents),
             ct);
     }
 }

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useAppConfig } from '../AppConfigContext'
+import { formatMembershipPrice } from '../format'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSButton, MSEyebrow, MSSection } from './home/Primitives'
 import { BP_MOBILE, BP_TABLET, useMediaQuery } from './home/responsive'
@@ -16,7 +17,9 @@ const PLOTHOLDER_POLICY_URL =
   'https://docs.google.com/document/d/1qo1aQFR9cNnfqWeZBeoupWW1nB5y596vn5SLJeGq5v0/edit?usp=sharing'
 
 export default function LeaseAPlot() {
-  const { gardenName } = useAppConfig()
+  const config = useAppConfig()
+  const { gardenName } = config
+  const priceLabel = formatMembershipPrice(config.membershipPriceCents)
   const handleNav = usePageNav('lease')
   const isTablet = useMediaQuery(BP_TABLET)
   const isMobile = useMediaQuery(BP_MOBILE)
@@ -181,7 +184,7 @@ export default function LeaseAPlot() {
         >
           <DetailCard title="Become a member first">
             Raised bed rental is only available to financial members.
-            Membership is just $25/year and comes with plenty of other
+            Membership is just {priceLabel}/year and comes with plenty of other
             benefits.{' '}
             <a
               href="#"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAppConfig } from '../AppConfigContext'
+import { formatMembershipPrice } from '../format'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSButton, MSEyebrow, MSSection } from './home/Primitives'
 import { BP_MOBILE, BP_TABLET, useMediaQuery } from './home/responsive'
@@ -21,7 +22,9 @@ const MEMBERSHIP_POLICY_URL =
   'https://docs.google.com/document/d/e/2PACX-1vTLkpl3NPXKBBSoaMlIGRp-j6OnU-jmZ5BG209WEY5SPZrA6GN0ql7LAJF9gCYx92oKBt1oEey-BCn7/pub'
 
 export default function Membership() {
-  const { gardenName } = useAppConfig()
+  const config = useAppConfig()
+  const { gardenName } = config
+  const priceLabel = formatMembershipPrice(config.membershipPriceCents)
   const handleNav = usePageNav('membership')
   const [searchParams, setSearchParams] = useSearchParams()
   const [signupOpen, setSignupOpen] = useState(false)
@@ -158,10 +161,10 @@ export default function Membership() {
                 margin: '14px 0 20px',
               }}
             >
-              Just $25 a year.
+              Just {priceLabel} a year.
             </h2>
             <p style={bodyPara}>
-              Membership is just $25/year and it comes with some great
+              Membership is just {priceLabel}/year and it comes with some great
               benefits.
             </p>
             <p style={{ ...bodyPara, marginBottom: 28 }}>
@@ -252,7 +255,7 @@ export default function Membership() {
             will be carried over to the new financial year.
           </DetailCard>
           <DetailCard title="Household memberships">
-            Household memberships are available for $25/year but we will
+            Household memberships are available for {priceLabel}/year but we will
             require details of all members who will attend the garden for
             insurance purposes. Only the nominated primary member has voting
             rights at the AGM.

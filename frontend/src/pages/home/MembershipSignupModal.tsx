@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { MSButton } from './Primitives'
 import { useAppConfig } from '../../AppConfigContext'
+import { formatMembershipPrice } from '../../format'
 import { signup } from '../../api/membership'
 import { loadTurnstileScript } from '../../turnstile'
 
@@ -16,6 +17,7 @@ const MAX_SECONDARY = 4
 export function MembershipSignupModal({ open, onClose }: MembershipSignupModalProps) {
   const navigate = useNavigate()
   const config = useAppConfig()
+  const priceLabel = formatMembershipPrice(config.membershipPriceCents)
   const captchaSiteKey = config.turnstileSiteKey ?? null
   const captchaContainerRef = useRef<HTMLDivElement | null>(null)
   const captchaWidgetIdRef = useRef<string | null>(null)
@@ -204,7 +206,7 @@ export function MembershipSignupModal({ open, onClose }: MembershipSignupModalPr
             Become a member
           </h3>
           <p style={{ fontSize: 15, lineHeight: 1.5, color: 'var(--fg-2)', margin: 0 }}>
-            Membership is $25/year. You&rsquo;ll be taken to a secure payment page to finish.
+            Membership is {priceLabel}/year. You&rsquo;ll be taken to a secure payment page to finish.
           </p>
 
           <div style={{ display: 'flex', gap: 10 }}>
