@@ -672,12 +672,13 @@ button.footer-link:disabled {
   background: var(--ivory);
   border: 1px solid var(--ink-200);
   border-radius: var(--r-lg);
-  overflow: hidden;
+  overflow-x: auto;
   animation: fadeInUp 0.4s ease-out;
 }
 
 .admin-table {
   width: 100%;
+  min-width: 38rem;
   border-collapse: collapse;
   font-family: var(--font-sans);
   font-size: 0.95rem;
@@ -690,13 +691,13 @@ button.footer-link:disabled {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--ink-500);
-  padding: 0.85rem 1.25rem;
+  padding: 0.7rem 0.8rem;
   background: var(--paper-soft);
   border-bottom: 1px solid var(--ink-100);
 }
 
 .admin-table tbody td {
-  padding: 0.85rem 1.25rem;
+  padding: 0.7rem 0.8rem;
   border-bottom: 1px solid var(--ink-100);
   color: var(--ink-900);
 }
@@ -711,10 +712,62 @@ button.footer-link:disabled {
   border-bottom: 1px solid transparent;
 }
 
+/* Rows for read-only items managed elsewhere (e.g. Eventbrite). Greyed out
+   to read as "you can't edit these here". */
+.admin-table-row-muted td {
+  color: var(--ink-500);
+  background: var(--paper-soft);
+}
+
+.admin-table-row-muted:hover td {
+  background: var(--paper-soft);
+}
+
+.admin-source-badge {
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  font-size: 0.65rem;
+  background: var(--ink-100);
+  color: var(--ink-500);
+}
+
 .admin-table-row-clickable { cursor: pointer; }
 
-.admin-table-row-clickable:hover .admin-table-link {
+.admin-table-row-clickable:hover .admin-table-link,
+.admin-table-link:hover {
   border-bottom-color: var(--ink-500);
+}
+
+.admin-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-500);
+  font-size: 1.1rem;
+  line-height: 1;
+  border-radius: var(--r-md);
+  cursor: grab;
+  touch-action: none;
+}
+
+.admin-drag-handle:hover {
+  background: var(--paper-soft);
+  color: var(--ink-900);
+}
+
+.admin-drag-handle:focus-visible {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: 2px;
+}
+
+.admin-table-row-dragging {
+  background: var(--ivory);
+  box-shadow: var(--shadow-1);
 }
 
 .admin-name-badge {
@@ -954,22 +1007,89 @@ button.footer-link:disabled {
 }
 
 @media (max-width: 720px) {
-  .admin-header-inner { flex-wrap: wrap; padding: 12px 16px; gap: 12px; }
-  .admin-nav          { width: 100%; flex-wrap: wrap; }
-  .admin-main         { padding: 1.5rem 1.25rem; }
+  .admin-body         { flex-direction: column; gap: 0; padding: 0 1.25rem; }
+  .admin-sidebar      { position: static; width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 1.25rem 0 0; }
+  .admin-sidebar-nav  { flex-direction: row; flex-wrap: wrap; }
+  .admin-main,
+  .admin-body .admin-main { padding: 1.5rem 0; }
+
+  /* Stack the page header so the action buttons get a full-width row
+     instead of being squeezed (and wrapped) next to the large title. */
+  .admin-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  .admin-page-header .admin-actions {
+    gap: 0.75rem;
+  }
+  .admin-page-header .admin-actions .primary-button {
+    flex: 1;
+  }
+
+  /* Members table -> stacked cards. The wrapper's border/background is
+     dropped so each row becomes its own card. */
+  .admin-table-wrap {
+    border: none;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .admin-table,
+  .admin-table tbody { display: block; }
+
+  .admin-table { min-width: 0; }
 
   .admin-table thead { display: none; }
 
-  .admin-table tbody td {
-    display: block;
-    padding: 0.45rem 1.25rem;
-    border-bottom: none;
-  }
-
   .admin-table tbody tr {
     display: block;
-    padding: 0.85rem 0;
+    background: var(--ivory);
+    border: 1px solid var(--ink-200);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-1);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .admin-table tbody tr:last-child { margin-bottom: 0; }
+
+  /* Each cell is a label/value row. The column heading is restamped from
+     the cell's data-label since the <thead> is hidden. The value sits on
+     the right and breaks anywhere so long emails wrap inside the card. */
+  .admin-table tbody td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3rem 0;
+    border-bottom: none;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-table tbody td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-500);
+    text-align: left;
+  }
+
+  /* Name cell = the card title: full width, no label, with a divider. */
+  .admin-table tbody td.admin-card-title {
+    display: block;
+    text-align: left;
+    padding: 0 0 0.6rem;
+    margin-bottom: 0.5rem;
     border-bottom: 1px solid var(--ink-100);
+  }
+  .admin-table tbody td.admin-card-title::before { content: none; }
+  .admin-table tbody td.admin-card-title .admin-table-link {
+    font-size: 1.05rem;
   }
 }
 
