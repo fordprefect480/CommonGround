@@ -13,7 +13,6 @@ public sealed class UpdateInstagramPostEndpoint(AppDbContext db, IActivityLogger
     {
         public int Id { get; set; }
         public string EmbedHtml { get; set; } = "";
-        public int? DisplayOrder { get; set; }
     }
 
     public override void Configure()
@@ -38,7 +37,6 @@ public sealed class UpdateInstagramPostEndpoint(AppDbContext db, IActivityLogger
         }
 
         post.EmbedHtml = sanitized;
-        if (req.DisplayOrder is { } order) post.DisplayOrder = order;
         post.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync(ct);

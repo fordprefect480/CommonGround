@@ -13,5 +13,4 @@ public record InstagramPostAdminDto(
     DateTime UpdatedAt);
 
 public record InstagramPostWriteDto(
-    string EmbedHtml,
-    int? DisplayOrder);
+    string EmbedHtml);

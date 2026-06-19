@@ -14,6 +14,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   'instagram.post_created': 'Instagram tile created',
   'instagram.post_updated': 'Instagram tile updated',
   'instagram.post_deleted': 'Instagram tile deleted',
+  'instagram.posts_reordered': 'Instagram tiles reordered',
   'email.test_sent': 'Test email sent',
   'email.newsletter_sent': 'Newsletter sent',
   'email.unsubscribed': 'Unsubscribed from mailing list',

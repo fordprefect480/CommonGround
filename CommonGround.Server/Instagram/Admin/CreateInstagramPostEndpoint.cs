@@ -24,8 +24,7 @@ public sealed class CreateInstagramPostEndpoint(AppDbContext db, IActivityLogger
             return;
         }
 
-        var displayOrder = req.DisplayOrder
-            ?? ((await db.InstagramPosts.MaxAsync(p => (int?)p.DisplayOrder, ct) ?? -1) + 1);
+        var displayOrder = (await db.InstagramPosts.MaxAsync(p => (int?)p.DisplayOrder, ct) ?? -1) + 1;
 
         var now = DateTime.UtcNow;
         var post = new InstagramPost
