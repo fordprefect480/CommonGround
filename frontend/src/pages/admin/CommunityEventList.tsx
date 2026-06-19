@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import {
   deleteCommunityEvent,
   fetchAdminCommunityEvents,
+  fetchUpcomingEvents,
   type CommunityEventAdmin,
+  type UpcomingEvent,
 } from '../../api/events'
 
 type State =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; events: CommunityEventAdmin[] }
+  | { status: 'ready'; events: CommunityEventAdmin[]; eventbrite: UpcomingEvent[] }
 
 const dateFmt = new Intl.DateTimeFormat('en-AU', {
   weekday: 'short',
@@ -26,8 +28,14 @@ export default function CommunityEventList() {
 
   const reload = () => {
     setState({ status: 'loading' })
-    fetchAdminCommunityEvents()
-      .then((events) => setState({ status: 'ready', events }))
+    Promise.all([fetchAdminCommunityEvents(), fetchUpcomingEvents(24)])
+      .then(([events, upcoming]) =>
+        setState({
+          status: 'ready',
+          events,
+          eventbrite: upcoming.filter((e) => e.source === 'eventbrite'),
+        }),
+      )
       .catch((err: unknown) =>
         setState({
           status: 'error',
@@ -51,6 +59,8 @@ export default function CommunityEventList() {
   }
 
   const now = Date.now()
+  const isEmpty =
+    state.status === 'ready' && state.events.length === 0 && state.eventbrite.length === 0
 
   return (
     <section className="admin-page" aria-labelledby="events-heading">
@@ -75,17 +85,18 @@ export default function CommunityEventList() {
         >
           Mid Coast Sustainability on Eventbrite
         </a>{' '}
-        appear automatically alongside these on the homepage.
+        appear automatically (greyed out below) and on the homepage. They&rsquo;re managed on
+        Eventbrite, so they can&rsquo;t be edited here.
       </p>
 
       {state.status === 'loading' && <p className="admin-loading">Loading&hellip;</p>}
       {state.status === 'error' && (
         <div className="form-error" role="alert">{state.message}</div>
       )}
-      {state.status === 'ready' && state.events.length === 0 && (
+      {isEmpty && (
         <p className="admin-empty">No manual events yet. Click "New event" to add one.</p>
       )}
-      {state.status === 'ready' && state.events.length > 0 && (
+      {state.status === 'ready' && !isEmpty && (
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
@@ -101,11 +112,13 @@ export default function CommunityEventList() {
                 const start = new Date(ev.startUtc)
                 const past = (ev.endUtc ? new Date(ev.endUtc) : start).getTime() < now
                 return (
-                  <tr key={ev.id}>
-                    <td>{ev.title}</td>
-                    <td>{dateFmt.format(start)}</td>
-                    <td>{past ? <span style={{ color: 'var(--fg-3)' }}>Past</span> : 'Upcoming'}</td>
-                    <td>
+                  <tr key={`manual-${ev.id}`}>
+                    <td data-label="Title">{ev.title}</td>
+                    <td data-label="Starts">{dateFmt.format(start)}</td>
+                    <td data-label="Status">
+                      {past ? <span className="pill">Past</span> : <span className="pill pill-ok">Upcoming</span>}
+                    </td>
+                    <td data-label="Actions">
                       <button
                         type="button"
                         className="footer-link"
@@ -125,6 +138,26 @@ export default function CommunityEventList() {
                   </tr>
                 )
               })}
+              {state.eventbrite.map((ev) => (
+                <tr key={ev.id} className="admin-table-row-muted">
+                  <td data-label="Title">
+                    {ev.title}
+                    {' '}
+                    <span className="pill admin-source-badge">Eventbrite</span>
+                  </td>
+                  <td data-label="Starts">{dateFmt.format(new Date(ev.startUtc))}</td>
+                  <td data-label="Status">Upcoming</td>
+                  <td data-label="Actions">
+                    {ev.url ? (
+                      <a className="footer-link" href={ev.url} target="_blank" rel="noopener noreferrer">
+                        View on Eventbrite
+                      </a>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
