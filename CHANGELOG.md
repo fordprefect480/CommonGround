@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.5.0](https://github.com/fordprefect480/CommonGround/compare/v0.4.0...v0.5.0) (2026-06-19)
+
+
+### Features
+
+* accept membership signup when payments are unavailable ([83b8e23](https://github.com/fordprefect480/CommonGround/commit/83b8e23f0e1243a52126626f151750b19bfca1da))
+* add admin shortcut to site header and rename Events nav to "What's On" ([1bbbcf9](https://github.com/fordprefect480/CommonGround/commit/1bbbcf9d0abb83d435513091be295a35eecc164e))
+* add edit action to blog admin table ([6e75069](https://github.com/fordprefect480/CommonGround/commit/6e750690f67f8596d2cd15db753d0a3f80d4dde2))
+* drag-to-reorder Instagram tiles ([17dfbd4](https://github.com/fordprefect480/CommonGround/commit/17dfbd4f4e5baf3e6176376e4c42e3612c077154))
+* improve members admin table and detail page ([edbc9a3](https://github.com/fordprefect480/CommonGround/commit/edbc9a32772bbc19a2eca36ac3f58ef613a6e6cd))
+* label membership-price changes in the activity log ([83ecd77](https://github.com/fordprefect480/CommonGround/commit/83ecd77040646dc7997af6a0f215bee82e9847b5))
+* make membership price configurable from admin settings ([96bc385](https://github.com/fordprefect480/CommonGround/commit/96bc385951b7b4bec331a9f05fe83aada36e80fb))
+* redesign admin shell with sidebar navigation ([bc52b2e](https://github.com/fordprefect480/CommonGround/commit/bc52b2ef60af52a914bfd8239fc1001629920987))
+* restyle admin tables with mobile cards and horizontal scroll ([153127f](https://github.com/fordprefect480/CommonGround/commit/153127fe15469729334dffce7894ba5faa3dfd7e))
+* show upcoming Eventbrite events in admin events table ([6711706](https://github.com/fordprefect480/CommonGround/commit/6711706e62c5f721b1925e255042bcfcab66cc37))
+* streamline admin membership table ([7b48281](https://github.com/fordprefect480/CommonGround/commit/7b482810390f96fbca920772e9b860537a501065))
+
 ## [0.4.0](https://github.com/fordprefect480/CommonGround/compare/v0.3.1...v0.4.0) (2026-06-14)
 
 
