@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useAppConfig } from '../AppConfigContext'
+import Seo from '../Seo'
 import { fetchUpcomingEvents, type UpcomingEvent } from '../api/events'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSEyebrow, MSSection, Photo } from './home/Primitives'
@@ -7,17 +7,11 @@ import { BP_TABLET, useMediaQuery } from './home/responsive'
 import { eventDayFmt, eventIcon, formatEventTimeRange } from './home/Sections'
 
 export default function Events() {
-  const { gardenName } = useAppConfig()
   const handleNav = usePageNav('events')
   const [events, setEvents] = useState<UpcomingEvent[] | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const isStacked = useMediaQuery(BP_TABLET)
-
-  useEffect(() => {
-    document.title = `Events | ${gardenName}`
-    return () => { document.title = gardenName }
-  }, [gardenName])
 
   useEffect(() => {
     let cancelled = false
@@ -35,6 +29,10 @@ export default function Events() {
 
   return (
     <div data-screen-label="SWCG · events">
+      <Seo
+        title="Events"
+        description="Workshops, working bees and community events at Seaford Wetlands Community Garden. See what's coming up and join us in the garden in Seaford, SA."
+      />
       <MSHeader active="events" onNav={handleNav} />
 
       <MSSection bg="var(--paper)" py={88}>

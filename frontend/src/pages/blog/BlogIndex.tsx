@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchBlogPosts, type BlogPostSummary } from '../../api/blog'
+import Seo from '../../Seo'
 import { useAppConfig } from '../../AppConfigContext'
 import { MSFooter, MSHeader, usePageNav } from '../home/Chrome'
 import BlogCard from './BlogCard'
@@ -25,15 +26,14 @@ export default function BlogIndex() {
     return () => { cancelled = true }
   }, [])
 
-  useEffect(() => {
-    document.title = `Blog | ${gardenName}`
-    return () => { document.title = gardenName }
-  }, [gardenName])
-
   const handleNav = usePageNav('blog')
 
   return (
     <div>
+      <Seo
+        title="Blog"
+        description={`News, stories and updates from ${gardenName} - growing tips, working bees, harvests and community events.`}
+      />
       <MSHeader active="blog" onNav={handleNav} />
       <main className="blog-index-main">
         <header className="blog-index-header">

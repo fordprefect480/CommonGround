@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import Seo from '../Seo'
 import { useAppConfig } from '../AppConfigContext'
 import { formatMembershipPrice } from '../format'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
@@ -18,20 +18,18 @@ const PLOTHOLDER_POLICY_URL =
 
 export default function LeaseAPlot() {
   const config = useAppConfig()
-  const { gardenName } = config
   const priceLabel = formatMembershipPrice(config.membershipPriceCents)
   const handleNav = usePageNav('lease')
   const isTablet = useMediaQuery(BP_TABLET)
   const isMobile = useMediaQuery(BP_MOBILE)
   const detailCols = isMobile ? 1 : isTablet ? 2 : 3
 
-  useEffect(() => {
-    document.title = `Lease a plot | ${gardenName}`
-    return () => { document.title = gardenName }
-  }, [gardenName])
-
   return (
     <div data-screen-label="SWCG · lease a plot">
+      <Seo
+        title="Lease a plot"
+        description={`Lease your own raised garden bed at Seaford Wetlands Community Garden from ${priceLabel}. Beds come with compost, mulch, fertiliser and water - grow your own vegetables, herbs and flowers.`}
+      />
       <MSHeader active="lease" onNav={handleNav} />
 
       <MSSection bg="var(--paper)" py={88}>
