@@ -8,12 +8,10 @@ import {
 
 interface FormState {
   embedHtml: string
-  displayOrder: number
 }
 
 const EMPTY: FormState = {
   embedHtml: '',
-  displayOrder: 0,
 }
 
 export default function InstagramTileEditor() {
@@ -27,16 +25,6 @@ export default function InstagramTileEditor() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isNew) return
-    fetchAdminInstagramPosts()
-      .then((posts) => {
-        const nextOrder = posts.length === 0 ? 0 : Math.max(...posts.map((p) => p.displayOrder)) + 1
-        setForm((prev) => ({ ...prev, displayOrder: nextOrder }))
-      })
-      .catch(() => { /* defaults are fine */ })
-  }, [isNew])
-
-  useEffect(() => {
     if (isNew) return
     setLoading(true)
     fetchAdminInstagramPosts()
@@ -46,10 +34,7 @@ export default function InstagramTileEditor() {
           setError('Tile not found.')
           return
         }
-        setForm({
-          embedHtml: found.embedHtml,
-          displayOrder: found.displayOrder,
-        })
+        setForm({ embedHtml: found.embedHtml })
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Load failed'))
       .finally(() => setLoading(false))
@@ -64,7 +49,6 @@ export default function InstagramTileEditor() {
     try {
       const payload = {
         embedHtml: form.embedHtml,
-        displayOrder: form.displayOrder,
       }
       if (isNew) {
         await createInstagramPost(payload)
@@ -104,16 +88,6 @@ export default function InstagramTileEditor() {
             rows={10}
             placeholder='<blockquote class="instagram-media" data-instgrm-permalink="..." …>…</blockquote>'
             style={{ fontFamily: 'var(--font-mono)', fontSize: 12, width: '100%', resize: 'vertical' }}
-          />
-        </label>
-
-        <label className="field">
-          <span className="field-label">Display order</span>
-          <input
-            type="number"
-            value={form.displayOrder}
-            onChange={(e) => update({ displayOrder: Number(e.target.value) })}
-            min={0}
           />
         </label>
 

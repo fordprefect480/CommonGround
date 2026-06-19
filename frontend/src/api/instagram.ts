@@ -11,7 +11,6 @@ export interface InstagramPostAdmin extends InstagramPost {
 
 export interface InstagramPostWrite {
   embedHtml: string
-  displayOrder: number | null
 }
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
@@ -68,5 +67,14 @@ export async function deleteInstagramPost(id: number): Promise<void> {
   await ensureOk(await fetch(`/api/admin/instagram/posts/${id}`, {
     method: 'DELETE',
     credentials: 'include',
+  }))
+}
+
+export async function reorderInstagramPosts(ids: number[]): Promise<void> {
+  await ensureOk(await fetch('/api/admin/instagram/posts/reorder', {
+    method: 'PUT',
+    headers: JSON_HEADERS,
+    credentials: 'include',
+    body: JSON.stringify({ ids }),
   }))
 }
