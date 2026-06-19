@@ -1,5 +1,11 @@
 # Agent Notes
 
+## Commits
+
+- Commit as the repository owner only. Do **not** add `Co-Authored-By: Claude`
+  (or any AI co-author) trailers, and do not add `Claude-Session` links to
+  commit messages.
+
 ## Running the app locally
 
 Use the Aspire CLI from the repo root:
