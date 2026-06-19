@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import Seo from '../Seo'
 import { useAuth } from '../AuthContext'
 import { completeCheckout } from '../api/membership'
 
@@ -38,6 +39,7 @@ export default function MembershipWelcome() {
 
   return (
     <main className="admin-login">
+      <Seo title="Welcome" noindex />
       <div className="card admin-login-card">
         {state === 'error' ? (
           <>
