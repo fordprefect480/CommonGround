@@ -944,6 +944,12 @@ button.footer-link:disabled {
   animation: fadeInUp 0.5s ease-out;
 }
 
+.admin-login-logo {
+  align-self: center;
+  object-fit: contain;
+  display: block;
+}
+
 /* Bootstrap config-load error */
 .app-bootstrap-error {
   flex: 1;
@@ -1077,6 +1083,26 @@ button.footer-link:disabled {
     letter-spacing: 0.08em;
     color: var(--ink-500);
     text-align: left;
+  }
+
+  /* Stacked variant (Activity): the cells hold long summaries and JSON
+     detail blocks, so left-align them and put the label above the value
+     instead of the compact label/value row used by the other tables. */
+  .admin-table--stacked tbody td {
+    display: block;
+    text-align: left;
+  }
+  .admin-table--stacked tbody td:not(:last-child) {
+    margin-bottom: 0.5rem;
+  }
+  .admin-table--stacked tbody td::before {
+    display: block;
+    margin-bottom: 0.15rem;
+  }
+  /* Rows without details render an empty cell - drop it so the card doesn't
+     show a dangling "Details" label. */
+  .admin-table--stacked tbody td:empty {
+    display: none;
   }
 
   /* Name cell = the card title: full width, no label, with a divider. */
