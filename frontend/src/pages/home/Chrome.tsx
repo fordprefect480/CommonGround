@@ -53,7 +53,7 @@ const NAV_ITEMS: ReadonlyArray<readonly [NavId, string]> = [
   ['membership', 'Membership'],
   ['lease', 'Lease a plot'],
   ['blog', 'Blog'],
-  ['events', 'Events'],
+  ['events', "What's On"],
   ['donate', 'Donate'],
   ['resources', 'Resources'],
 ]
@@ -271,6 +271,15 @@ export function MSHeader({ active, onNav }: ChromeProps) {
                 Join
               </MSButton>
             )}
+            {state.status === 'authenticated' && state.me.isAdmin && (
+              <MSButton
+                size="sm"
+                onClick={() => navigate('/admin')}
+                style={{ marginLeft: 6, whiteSpace: 'nowrap' }}
+              >
+                Admin
+              </MSButton>
+            )}
             <AuthChip />
           </nav>
         )}
@@ -372,22 +381,27 @@ function MobileNavDrawer({
         </nav>
         <div style={{ height: 1, background: 'var(--ink-100)', margin: '16px 0' }} />
         {state.status === 'authenticated' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Link to="/profile" onClick={onClose} style={drawerLink(false)}>
-              Profile
-            </Link>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {state.me.isAdmin && (
-              <Link
-                to="/admin"
-                onClick={onClose}
-                style={{ ...drawerLink(false), color: 'var(--apple-700)' }}
+              <MSButton
+                size="lg"
+                onClick={() => {
+                  onClose()
+                  navigate('/admin')
+                }}
+                style={{ justifyContent: 'center' }}
               >
                 Admin
-              </Link>
+              </MSButton>
             )}
-            <button type="button" onClick={handleSignOut} style={drawerLink(false)}>
-              Sign out
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Link to="/profile" onClick={onClose} style={drawerLink(false)}>
+                Profile
+              </Link>
+              <button type="button" onClick={handleSignOut} style={drawerLink(false)}>
+                Sign out
+              </button>
+            </div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -548,16 +562,6 @@ function AuthChip() {
           >
             Profile
           </Link>
-          {me.isAdmin && (
-            <Link
-              to="/admin"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              style={{ ...itemStyle, color: 'var(--apple-700)' }}
-            >
-              Admin
-            </Link>
-          )}
           <button
             type="button"
             role="menuitem"
