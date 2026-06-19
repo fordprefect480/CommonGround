@@ -29,7 +29,7 @@ const EMPTY_FORM: FormState = {
   isSubscribedToMailingList: true,
 }
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
+const dateFormatter = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
 function formatJoinedAt(iso: string): string {
   const d = new Date(iso)
@@ -108,7 +108,7 @@ export default function Members() {
   return (
     <section className="admin-page" aria-labelledby="members-heading">
       <header className="admin-page-header">
-        <h1 id="members-heading" className="admin-page-title">Membership</h1>
+        <h1 id="members-heading" className="admin-page-title">Members</h1>
         {!showForm && (
           <div className="admin-actions">
             <button
@@ -117,7 +117,7 @@ export default function Members() {
               onClick={() => window.location.assign('/api/admin/members/export.xlsx')}
               disabled={state.status !== 'ready' || state.members.length === 0}
             >
-              Export to XLSX
+              Export
             </button>
             <button type="button" className="primary-button" onClick={() => setShowForm(true)}>
               Add user
@@ -318,19 +318,19 @@ function MembersTable({ members, now }: { members: Member[]; now: number }) {
                 role="link"
                 aria-label={`View membership details for ${member.displayName ?? member.email ?? 'member'}`}
               >
-                <td>
+                <td className="admin-card-title" data-label="Name">
                   <span className="admin-table-link">
                     {member.displayName ?? member.email ?? '(no name)'}
                   </span>
                   {isAdmin && <span className="pill pill-ok admin-name-badge">Admin</span>}
                 </td>
-                <td>{member.email ?? '-'}</td>
-                <td>{member.phoneNumber ?? '-'}</td>
-                <td>{formatJoinedAt(member.joinedAt)}</td>
-                <td>
+                <td data-label="Email">{member.email ?? '-'}</td>
+                <td data-label="Phone">{member.phoneNumber ?? '-'}</td>
+                <td data-label="Member since">{formatJoinedAt(member.joinedAt)}</td>
+                <td data-label="Membership">
                   <span className={pill.className}>{pill.label}</span>
                 </td>
-                <td>
+                <td data-label="Mailing list">
                   <span className={member.isSubscribedToMailingList ? 'pill pill-ok' : 'pill'}>
                     {member.isSubscribedToMailingList ? 'Subscribed' : 'Unsubscribed'}
                   </span>
