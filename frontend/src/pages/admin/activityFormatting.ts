@@ -23,6 +23,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   'tool.blog_import_run': 'Blog import run',
   'tool.orphan_cleanup_run': 'Orphan image cleanup',
   'tool.members_exported': 'Members exported',
+  'settings.membership_price.updated': 'Membership price updated',
 }
 
 const absoluteFormatter = new Intl.DateTimeFormat(undefined, {
