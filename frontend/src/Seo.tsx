@@ -24,6 +24,8 @@ interface SeoProps {
   jsonLd?: Record<string, unknown> | Record<string, unknown>[]
 }
 
+/** Canonical production origin - keeps canonical/og:url stable across preview and dev hosts. */
+export const SITE_URL = 'https://seafordwetlandscommunitygarden.com'
 const DEFAULT_IMAGE = '/swcg/hero-image.png'
 const JSON_LD_ID = 'seo-jsonld'
 
@@ -59,8 +61,8 @@ export default function Seo({ title, description, image, type = 'website', noind
 
   useEffect(() => {
     const fullTitle = title ? `${title} | ${gardenName}` : gardenName
-    const url = window.location.origin + pathname
-    const imageUrl = new URL(image ?? DEFAULT_IMAGE, window.location.origin).href
+    const url = SITE_URL + pathname
+    const imageUrl = new URL(image ?? DEFAULT_IMAGE, SITE_URL).href
 
     document.title = fullTitle
     upsertMeta('name', 'description', desc)

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Seo from '../Seo'
+import Seo, { SITE_URL } from '../Seo'
 import { useAppConfig } from '../AppConfigContext'
 import { MSFooter, MSHeader, type NavId } from './home/Chrome'
 import {
@@ -77,9 +77,9 @@ export default function Home() {
           name: gardenName,
           alternateName: 'SWCG',
           description: HOME_DESCRIPTION,
-          url: window.location.origin,
-          logo: `${window.location.origin}/swcg/logo-mark.svg`,
-          image: `${window.location.origin}/swcg/hero-image.png`,
+          url: SITE_URL,
+          logo: `${SITE_URL}/swcg/logo-mark.svg`,
+          image: `${SITE_URL}/swcg/hero-image.png`,
           email: 'seafordcg@gmail.com',
           address: {
             '@type': 'PostalAddress',
