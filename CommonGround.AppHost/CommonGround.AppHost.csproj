@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.4.3">
+<Project Sdk="Aspire.AppHost.Sdk/13.4.5">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -15,10 +15,10 @@
   <ItemGroup>
     <!-- Override vulnerable MessagePack 2.5.192 pulled in transitively via Aspire.Hosting -> StreamJsonRpc (GHSA-hv8m-jj95-wg3x) -->
     <PackageReference Include="MessagePack" Version="2.5.302" />
-    <PackageReference Include="Aspire.Hosting.Azure.AppContainers" Version="13.4.3" />
-    <PackageReference Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.4.3" />
-    <PackageReference Include="Aspire.Hosting.Azure.Sql" Version="13.4.3" />
-    <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.4.3" />
-    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.4.3" />
+    <PackageReference Include="Aspire.Hosting.Azure.AppContainers" Version="13.4.5" />
+    <PackageReference Include="Aspire.Hosting.Azure.ApplicationInsights" Version="13.4.5" />
+    <PackageReference Include="Aspire.Hosting.Azure.Sql" Version="13.4.5" />
+    <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.4.5" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.4.5" />
   </ItemGroup>
 </Project>
