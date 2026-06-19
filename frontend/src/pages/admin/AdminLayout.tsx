@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import Seo from '../../Seo'
 import { useAuth } from '../../AuthContext'
 import { MSHeader, usePageNav } from '../home/Chrome'
 
@@ -21,6 +22,7 @@ export default function AdminLayout() {
 
   return (
     <div className="admin-shell">
+      <Seo title="Admin" noindex />
       <MSHeader active="home" onNav={onNav} />
       <div className="admin-body">
         <aside className="admin-sidebar">

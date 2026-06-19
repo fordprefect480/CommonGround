@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import Seo from '../Seo'
 import { useAppConfig } from '../AppConfigContext'
 import { formatMembershipPrice } from '../format'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
@@ -23,7 +24,6 @@ const MEMBERSHIP_POLICY_URL =
 
 export default function Membership() {
   const config = useAppConfig()
-  const { gardenName } = config
   const priceLabel = formatMembershipPrice(config.membershipPriceCents)
   const handleNav = usePageNav('membership')
   const [searchParams, setSearchParams] = useSearchParams()
@@ -32,11 +32,6 @@ export default function Membership() {
   const isTablet = useMediaQuery(BP_TABLET)
   const isMobile = useMediaQuery(BP_MOBILE)
   const detailCols = isMobile ? 1 : isTablet ? 2 : 3
-
-  useEffect(() => {
-    document.title = `Membership | ${gardenName}`
-    return () => { document.title = gardenName }
-  }, [gardenName])
 
   useEffect(() => {
     if (searchParams.get('join') === '1') {
@@ -55,6 +50,10 @@ export default function Membership() {
 
   return (
     <div data-screen-label="SWCG · membership">
+      <Seo
+        title="Membership"
+        description={`Become a member of Seaford Wetlands Community Garden for ${priceLabel}. Members get garden access, communal harvests, insurance cover, free workshops, social events and a say at the AGM.`}
+      />
       <MSHeader active="membership" onNav={handleNav} />
 
       {canceled && (

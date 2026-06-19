@@ -1,7 +1,6 @@
-import { useEffect } from 'react'
 import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useAppConfig } from '../AppConfigContext'
+import Seo from '../Seo'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSEyebrow, MSSection } from './home/Primitives'
 import { BP_MOBILE, useMediaQuery } from './home/responsive'
@@ -65,17 +64,15 @@ function directionsUrl(garden: NearbyGarden): string {
 }
 
 export default function Resources() {
-  const { gardenName } = useAppConfig()
   const handleNav = usePageNav('resources')
   const isMobile = useMediaQuery(BP_MOBILE)
 
-  useEffect(() => {
-    document.title = `Resources | ${gardenName}`
-    return () => { document.title = gardenName }
-  }, [gardenName])
-
   return (
     <div data-screen-label="SWCG · resources">
+      <Seo
+        title="Resources"
+        description="Garden policies, member documents and a map of community gardens around Seaford and southern Adelaide, South Australia."
+      />
       <MSHeader active="resources" onNav={handleNav} />
 
       <MSSection bg="var(--paper)" py={88}>

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Seo from '../Seo'
+import { useAppConfig } from '../AppConfigContext'
 import { MSFooter, MSHeader, type NavId } from './home/Chrome'
 import {
   ContactPage,
@@ -12,9 +14,13 @@ import {
   PartnersStrip,
 } from './home/Sections'
 
+const HOME_DESCRIPTION =
+  "Seaford Wetlands Community Garden is South Australia's largest community garden - join as a member, lease a raised garden bed, and take part in workshops, working bees and events in Seaford, SA."
+
 export default function Home() {
   const [active, setActive] = useState<NavId>('home')
   const navigate = useNavigate()
+  const { gardenName } = useAppConfig()
 
   useEffect(() => {
     const hash = window.location.hash
@@ -63,6 +69,29 @@ export default function Home() {
 
   return (
     <div data-screen-label="SWCG · home">
+      <Seo
+        description={HOME_DESCRIPTION}
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: gardenName,
+          alternateName: 'SWCG',
+          description: HOME_DESCRIPTION,
+          url: window.location.origin,
+          logo: `${window.location.origin}/swcg/logo-mark.svg`,
+          image: `${window.location.origin}/swcg/hero-image.png`,
+          email: 'seafordcg@gmail.com',
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: '100 Seaford Rd',
+            addressLocality: 'Seaford',
+            addressRegion: 'SA',
+            postalCode: '5169',
+            addressCountry: 'AU',
+          },
+          sameAs: ['https://www.facebook.com/SeafordCG'],
+        }}
+      />
       <MSHeader active={active} onNav={handleNav} />
       <HomeHero onNav={handleNav} />
       <HomeAbout onNav={handleNav} />
