@@ -72,6 +72,8 @@ export default function BlogPostList() {
                     <td>{p.authorName}</td>
                     <td>{new Date(p.updatedAt).toLocaleDateString()}</td>
                     <td>
+                      <Link className="footer-link" to={`/admin/blog/${p.id}/edit`}>Edit</Link>
+                      {' · '}
                       {published && <a className="footer-link" href={`/blog/${p.slug}`} target="_blank" rel="noopener noreferrer">View</a>}
                       {published && ' · '}
                       <button type="button" className="footer-link" onClick={() => handleDelete(p)}>Delete</button>
