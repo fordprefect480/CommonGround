@@ -29,6 +29,45 @@ function formatJoinedAt(iso: string): string {
   return Number.isNaN(d.getTime()) ? '-' : dateFormatter.format(d)
 }
 
+// Membership always runs to a 1 July boundary, which is also the Australian
+// financial-year boundary. A paid-through date at or beyond today therefore
+// covers the current financial year (same rule as the profile page).
+function currentFinancialYearLabel(now: Date): string {
+  const startYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1
+  return `${startYear}/${String(startYear + 1).slice(-2)}`
+}
+
+function MembershipCard({ paidThrough }: { paidThrough: string | null }) {
+  const now = new Date()
+  const fyLabel = currentFinancialYearLabel(now)
+  const isPaid = paidThrough != null && new Date(paidThrough).getTime() >= now.getTime()
+
+  return (
+    <section className="card admin-form">
+      <h2 className="section-title">Membership</h2>
+
+      <p className="card-note" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span className={isPaid ? 'pill pill-ok' : 'pill pill-warn'} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+          {isPaid ? 'Paid' : 'Not yet paid'}
+        </span>
+        <span>for the {fyLabel} financial year</span>
+      </p>
+
+      {isPaid ? (
+        <p className="card-note" style={{ margin: 0 }}>
+          Membership is valid until {dateFormatter.format(new Date(paidThrough!))}.
+        </p>
+      ) : (
+        paidThrough && (
+          <p className="card-note" style={{ margin: 0 }}>
+            Last membership ran until {dateFormatter.format(new Date(paidThrough))}.
+          </p>
+        )
+      )}
+    </section>
+  )
+}
+
 function memberToForm(member: Member): FormState {
   return {
     firstName: member.firstName ?? '',
@@ -118,10 +157,10 @@ export default function MemberDetail() {
       <form className="card admin-form" onSubmit={submit}>
         {saveError && <div className="form-error" role="alert">{saveError}</div>}
 
-        <label className="field">
+        <div className="field">
           <span className="field-label">Email</span>
-          <input value={member.email ?? ''} readOnly disabled />
-        </label>
+          <span className="field-readonly">{member.email ?? '-'}</span>
+        </div>
 
         <div className="field">
           <span className="field-label">Member since</span>
@@ -181,9 +220,13 @@ export default function MemberDetail() {
         </div>
       </form>
 
-      <div className="admin-subsection">
-        <h2 className="section-title">Payment history</h2>
-        <PaymentHistoryTable memberId={member.id} />
+      <div className="profile-forms">
+        <MembershipCard paidThrough={member.membershipPaidThroughUtc} />
+
+        <section className="card admin-form">
+          <h2 className="section-title">Payment history</h2>
+          <PaymentHistoryTable memberId={member.id} />
+        </section>
       </div>
     </section>
   )
