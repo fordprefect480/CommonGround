@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.5.1" />
-    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.4.3" />
+    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.4.5" />
     <!-- Registers the Azure AD auth providers (e.g. ActiveDirectoryDefault) that Microsoft.Data.SqlClient 6+ no longer bundles; required for managed-identity auth to Azure SQL in production. -->
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="1.0.0" />
     <PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.5.0" />
