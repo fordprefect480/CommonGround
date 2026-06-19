@@ -41,6 +41,13 @@ export default function Login() {
     <main className="admin-login">
       <Seo title="Sign in" noindex />
       <form className="card admin-login-card" onSubmit={handleSubmit} noValidate>
+        <img
+          src="/swcg/logo-apple.png"
+          width="56"
+          height="66"
+          alt=""
+          className="admin-login-logo"
+        />
         <h1 className="section-title">Sign in</h1>
         <p className="card-note">Sign in to {gardenName}.</p>
 

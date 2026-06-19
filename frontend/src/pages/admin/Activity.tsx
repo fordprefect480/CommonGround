@@ -102,7 +102,7 @@ function ActivityTable({ items }: { items: ActivityItem[] }) {
 
   return (
     <div className="admin-table-wrap">
-      <table className="admin-table">
+      <table className="admin-table admin-table--stacked">
         <thead>
           <tr>
             <th scope="col">When</th>
@@ -115,8 +115,8 @@ function ActivityTable({ items }: { items: ActivityItem[] }) {
         <tbody>
           {items.map((item) => (
             <tr key={item.id}>
-              <td title={formatAbsolute(item.occurredAt)}>{formatRelative(item.occurredAt)}</td>
-              <td>
+              <td data-label="When" title={formatAbsolute(item.occurredAt)}>{formatRelative(item.occurredAt)}</td>
+              <td data-label="Who">
                 {(() => {
                   const display = item.actorName ?? item.actorEmail ?? '(unknown)'
                   const tooltip = item.actorName && item.actorEmail ? item.actorEmail : undefined
@@ -125,9 +125,9 @@ function ActivityTable({ items }: { items: ActivityItem[] }) {
                     : <span title={tooltip}>{item.actorName ?? item.actorEmail ?? '-'}</span>
                 })()}
               </td>
-              <td><span className="pill">{labelFor(item.activityType)}</span></td>
-              <td>{item.summary}</td>
-              <td>
+              <td data-label="Type"><span className="pill">{labelFor(item.activityType)}</span></td>
+              <td data-label="Summary">{item.summary}</td>
+              <td data-label="Details">
                 {item.detailsJson ? (
                   <details>
                     <summary>View</summary>
