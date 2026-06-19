@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { blogImageUrl, fetchBlogPost, type BlogPost as BlogPostT } from '../../api/blog'
-import Seo from '../../Seo'
+import Seo, { SITE_URL } from '../../Seo'
 import { useAppConfig } from '../../AppConfigContext'
 import { MSFooter, MSHeader, usePageNav } from '../home/Chrome'
 import BlogCard from './BlogCard'
@@ -50,11 +50,11 @@ export default function BlogPost() {
           ...(post.publishedAt ? { datePublished: post.publishedAt } : {}),
           ...(post.categoryName ? { articleSection: post.categoryName } : {}),
           ...(blogImageUrl(post.featuredImageId)
-            ? { image: new URL(blogImageUrl(post.featuredImageId)!, window.location.origin).href }
+            ? { image: new URL(blogImageUrl(post.featuredImageId)!, SITE_URL).href }
             : {}),
           author: { '@type': 'Person', name: post.authorName },
           publisher: { '@type': 'Organization', name: gardenName },
-          mainEntityOfPage: window.location.href,
+          mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
         } : undefined}
       />
       <MSHeader active="blog" onNav={handleNav} />
