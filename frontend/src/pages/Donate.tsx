@@ -1,5 +1,4 @@
-import { useEffect } from 'react'
-import { useAppConfig } from '../AppConfigContext'
+import Seo from '../Seo'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSEyebrow, MSSection } from './home/Primitives'
 import { BP_TABLET, useMediaQuery } from './home/responsive'
@@ -11,17 +10,15 @@ const BANK_DETAILS: ReadonlyArray<readonly [string, string]> = [
 ]
 
 export default function Donate() {
-  const { gardenName } = useAppConfig()
   const handleNav = usePageNav('donate')
   const isTablet = useMediaQuery(BP_TABLET)
 
-  useEffect(() => {
-    document.title = `Donate | ${gardenName}`
-    return () => { document.title = gardenName }
-  }, [gardenName])
-
   return (
     <div data-screen-label="SWCG · donate">
+      <Seo
+        title="Donate"
+        description="Support Seaford Wetlands Community Garden with a donation. Your contribution helps us build garden beds, run free workshops and keep the garden growing for the whole community."
+      />
       <MSHeader active="donate" onNav={handleNav} />
 
       <MSSection bg="var(--paper)" py={88}>

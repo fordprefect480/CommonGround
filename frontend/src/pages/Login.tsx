@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import Seo from '../Seo'
 import { useAppConfig } from '../AppConfigContext'
 import { useAuth } from '../AuthContext'
 import { login } from '../api/auth'
@@ -38,6 +39,7 @@ export default function Login() {
 
   return (
     <main className="admin-login">
+      <Seo title="Sign in" noindex />
       <form className="card admin-login-card" onSubmit={handleSubmit} noValidate>
         <h1 className="section-title">Sign in</h1>
         <p className="card-note">Sign in to {gardenName}.</p>

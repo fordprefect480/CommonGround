@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { blogImageUrl, fetchBlogPost, type BlogPost as BlogPostT } from '../../api/blog'
+import Seo, { SITE_URL } from '../../Seo'
 import { useAppConfig } from '../../AppConfigContext'
 import { MSFooter, MSHeader, usePageNav } from '../home/Chrome'
 import BlogCard from './BlogCard'
@@ -31,16 +32,31 @@ export default function BlogPost() {
     return () => { cancelled = true }
   }, [slug])
 
-  useEffect(() => {
-    const baseTitle = `Blog | ${gardenName}`
-    document.title = state.status === 'ready' ? `${state.post.title} | ${gardenName}` : baseTitle
-    return () => { document.title = gardenName }
-  }, [state, gardenName])
-
   const handleNav = usePageNav()
+  const post = state.status === 'ready' ? state.post : null
 
   return (
     <div>
+      <Seo
+        title={post ? post.title : 'Blog'}
+        description={post?.excerpt ?? `Read the latest posts from ${gardenName}.`}
+        image={post ? blogImageUrl(post.featuredImageId) : undefined}
+        type={post ? 'article' : 'website'}
+        jsonLd={post ? {
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          headline: post.title,
+          ...(post.excerpt ? { description: post.excerpt } : {}),
+          ...(post.publishedAt ? { datePublished: post.publishedAt } : {}),
+          ...(post.categoryName ? { articleSection: post.categoryName } : {}),
+          ...(blogImageUrl(post.featuredImageId)
+            ? { image: new URL(blogImageUrl(post.featuredImageId)!, SITE_URL).href }
+            : {}),
+          author: { '@type': 'Person', name: post.authorName },
+          publisher: { '@type': 'Organization', name: gardenName },
+          mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
+        } : undefined}
+      />
       <MSHeader active="blog" onNav={handleNav} />
       <main className="blog-post-main">
         <PostBody state={state} />

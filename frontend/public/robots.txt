@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /login
+Disallow: /profile
+Disallow: /membership/welcome
+
+Sitemap: https://seafordwetlandscommunitygarden.com/sitemap.xml
