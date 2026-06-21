@@ -33,9 +33,7 @@ public sealed class GetConfigEndpoint(
             configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
             ?? configuration.GetConnectionString("appinsights");
 
-        var turnstileSiteKey = string.IsNullOrWhiteSpace(contact.Value.TurnstileSiteKey)
-            ? null
-            : contact.Value.TurnstileSiteKey;
+        var turnstileSiteKey = contact.Value.TurnstileSiteKey;
 
         var version = string.IsNullOrWhiteSpace(configuration["BuildInfo:Version"])
             ? null
