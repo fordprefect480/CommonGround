@@ -168,6 +168,15 @@ export interface MembershipPaymentRecord {
   createdAtUtc: string
 }
 
+export async function recordMembershipPayment(id: string): Promise<Member> {
+  const res = await fetch(`/api/admin/members/${encodeURIComponent(id)}/record-membership-payment`, {
+    method: 'POST',
+    credentials: 'include',
+  })
+  if (!res.ok) throw new Error(`Failed to record payment (${res.status})`)
+  return res.json()
+}
+
 export async function fetchMemberPayments(id: string): Promise<MembershipPaymentRecord[]> {
   const res = await fetch(`/api/admin/members/${encodeURIComponent(id)}/payments`, { credentials: 'include' })
   if (!res.ok) throw new Error(`Failed to load payments (${res.status})`)

@@ -6,6 +6,7 @@ import { MSHeader, usePageNav } from '../home/Chrome'
 const ADMIN_NAV: ReadonlyArray<readonly [string, string]> = [
   ['/admin', 'Dashboard'],
   ['/admin/members', 'Members'],
+  ['/admin/leased-beds', 'Leased beds'],
   ['/admin/blog', 'Blog'],
   ['/admin/events', 'Events'],
   ['/admin/instagram', 'Instagram'],

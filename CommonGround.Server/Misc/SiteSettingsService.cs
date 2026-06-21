@@ -21,4 +21,17 @@ public sealed class SiteSettingsService(AppDbContext db)
         settings.MembershipPriceCents = cents;
         await db.SaveChangesAsync(ct);
     }
+
+    public Task<int> GetLeasedBedPriceCentsAsync(CancellationToken ct) =>
+        db.SiteSettings.AsNoTracking().Select(s => s.LeasedBedPriceCents).SingleAsync(ct);
+
+    /// <summary>
+    /// Updates the default leased-bed price. Caller is responsible for validating the amount first.
+    /// </summary>
+    public async Task SetLeasedBedPriceCentsAsync(int cents, CancellationToken ct)
+    {
+        var settings = await db.SiteSettings.SingleAsync(ct);
+        settings.LeasedBedPriceCents = cents;
+        await db.SaveChangesAsync(ct);
+    }
 }

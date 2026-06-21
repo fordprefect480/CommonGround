@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { fetchMember, updateMember, type Member } from '../../api/auth'
+import { fetchMember, recordMembershipPayment, updateMember, type Member } from '../../api/auth'
 import PaymentHistoryTable from './PaymentHistoryTable'
 
 const ADMIN_ROLE = 'Admin'
@@ -37,10 +37,25 @@ function currentFinancialYearLabel(now: Date): string {
   return `${startYear}/${String(startYear + 1).slice(-2)}`
 }
 
-function MembershipCard({ paidThrough }: { paidThrough: string | null }) {
+function MembershipCard({ memberId, paidThrough, onRecorded }: { memberId: string; paidThrough: string | null; onRecorded: (m: Member) => void }) {
   const now = new Date()
   const fyLabel = currentFinancialYearLabel(now)
   const isPaid = paidThrough != null && new Date(paidThrough).getTime() >= now.getTime()
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const record = async () => {
+    if (!confirm('Record an offline membership payment (cash or bank transfer)? This marks the membership paid for the year.')) return
+    setBusy(true)
+    setError(null)
+    try {
+      onRecorded(await recordMembershipPayment(memberId))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not record the payment.')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <section className="card admin-form">
@@ -64,6 +79,13 @@ function MembershipCard({ paidThrough }: { paidThrough: string | null }) {
           </p>
         )
       )}
+
+      {error && <div className="form-error" role="alert">{error}</div>}
+      <div className="admin-actions">
+        <button type="button" className="secondary-button" onClick={record} disabled={busy}>
+          {busy ? 'Recording…' : 'Record offline payment'}
+        </button>
+      </div>
     </section>
   )
 }
@@ -221,7 +243,11 @@ export default function MemberDetail() {
       </form>
 
       <div className="profile-forms">
-        <MembershipCard paidThrough={member.membershipPaidThroughUtc} />
+        <MembershipCard
+          memberId={member.id}
+          paidThrough={member.membershipPaidThroughUtc}
+          onRecorded={(updated) => { setState({ status: 'ready', member: updated }); setForm(memberToForm(updated)) }}
+        />
 
         <section className="card admin-form">
           <h2 className="section-title">Payment history</h2>
