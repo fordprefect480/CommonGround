@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { cleanupOrphanImages, getMembershipPrice, importBlog, updateMembershipPrice, type ImportBlogResult } from '../../api/adminTools'
+import {
+  cleanupOrphanImages,
+  getLeasedBedPrice,
+  getMembershipPrice,
+  importBlog,
+  updateLeasedBedPrice,
+  updateMembershipPrice,
+  type ImportBlogResult,
+} from '../../api/adminTools'
+import LeasedBedInventory from './LeasedBedInventory'
 
 type ImportState =
   | { status: 'idle' }
@@ -18,38 +27,6 @@ export default function AdminTools() {
   const navigate = useNavigate()
   const [importState, setImportState] = useState<ImportState>({ status: 'idle' })
   const [cleanupState, setCleanupState] = useState<CleanupState>({ status: 'idle' })
-  const [priceDollars, setPriceDollars] = useState('')
-  const [priceLoaded, setPriceLoaded] = useState(false)
-  const [priceSaving, setPriceSaving] = useState(false)
-  const [priceMessage, setPriceMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
-
-  useEffect(() => {
-    getMembershipPrice()
-      .then(({ priceCents }) => {
-        setPriceDollars((priceCents / 100).toString())
-        setPriceLoaded(true)
-      })
-      .catch((err) => setPriceMessage({ kind: 'error', text: err instanceof Error ? err.message : 'Could not load the price.' }))
-  }, [])
-
-  const savePrice = async () => {
-    const dollars = Number(priceDollars)
-    if (!Number.isFinite(dollars) || dollars <= 0) {
-      setPriceMessage({ kind: 'error', text: 'Enter a price in dollars, for example 25.' })
-      return
-    }
-    setPriceSaving(true)
-    setPriceMessage(null)
-    try {
-      const { priceCents } = await updateMembershipPrice(Math.round(dollars * 100))
-      setPriceDollars((priceCents / 100).toString())
-      setPriceMessage({ kind: 'ok', text: 'Saved. The new price is now shown across the site.' })
-    } catch (err) {
-      setPriceMessage({ kind: 'error', text: err instanceof Error ? err.message : 'Could not save the price.' })
-    } finally {
-      setPriceSaving(false)
-    }
-  }
 
   const runImport = async () => {
     const answer = prompt('How many of the most recent posts to import? (leave blank for all)', '5')
@@ -89,31 +66,25 @@ export default function AdminTools() {
         <h1 id="settings-heading" className="admin-page-title">Settings</h1>
       </header>
 
-      <div className="card">
-        <h2 className="section-title">Membership price</h2>
-        <p className="card-note">The annual membership fee shown on the website and charged at checkout.</p>
-        <div className="field">
-          <label className="field-label" htmlFor="membership-price">Price per year</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: 220 }}>
-            <span aria-hidden="true">$</span>
-            <input
-              id="membership-price"
-              type="number"
-              min="1"
-              step="1"
-              inputMode="decimal"
-              value={priceDollars}
-              onChange={(e) => setPriceDollars(e.target.value)}
-              disabled={!priceLoaded || priceSaving}
-            />
-          </div>
-        </div>
-        <button type="button" className="primary-button" onClick={savePrice} disabled={!priceLoaded || priceSaving}>
-          {priceSaving ? 'Saving…' : 'Save price'}
-        </button>
-        {priceMessage?.kind === 'ok' && <div className="card-note" role="status">{priceMessage.text}</div>}
-        {priceMessage?.kind === 'error' && <div className="form-error" role="alert">{priceMessage.text}</div>}
-      </div>
+      <PriceCard
+        id="membership-price"
+        title="Membership price"
+        note="The annual membership fee shown on the website and charged at checkout."
+        load={() => getMembershipPrice().then((r) => r.priceCents)}
+        save={(cents) => updateMembershipPrice(cents).then((r) => r.priceCents)}
+        allowZero={false}
+      />
+
+      <PriceCard
+        id="leased-bed-price"
+        title="Leased bed price"
+        note="The default annual fee for a leased bed. An admin can override it per bed when allocating."
+        load={() => getLeasedBedPrice().then((r) => r.priceCents)}
+        save={(cents) => updateLeasedBedPrice(cents).then((r) => r.priceCents)}
+        allowZero
+      />
+
+      <LeasedBedInventory />
 
       <details className="admin-advanced-panel">
         <summary className="admin-advanced-summary">Advanced</summary>
@@ -155,5 +126,82 @@ export default function AdminTools() {
         </div>
       </details>
     </section>
+  )
+}
+
+function PriceCard({
+  id,
+  title,
+  note,
+  load,
+  save,
+  allowZero,
+}: {
+  id: string
+  title: string
+  note: string
+  load: () => Promise<number>
+  save: (cents: number) => Promise<number>
+  allowZero: boolean
+}) {
+  const [dollars, setDollars] = useState('')
+  const [loaded, setLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+
+  useEffect(() => {
+    load()
+      .then((cents) => {
+        setDollars((cents / 100).toString())
+        setLoaded(true)
+      })
+      .catch((err) => setMessage({ kind: 'error', text: err instanceof Error ? err.message : 'Could not load the price.' }))
+  }, [load])
+
+  const onSave = async () => {
+    const value = Number(dollars)
+    if (!Number.isFinite(value) || value < 0 || (!allowZero && value <= 0)) {
+      setMessage({ kind: 'error', text: allowZero ? 'Enter a price in dollars, for example 80.' : 'Enter a price in dollars, for example 25.' })
+      return
+    }
+    setSaving(true)
+    setMessage(null)
+    try {
+      const cents = await save(Math.round(value * 100))
+      setDollars((cents / 100).toString())
+      setMessage({ kind: 'ok', text: 'Saved. The new price is now shown across the site.' })
+    } catch (err) {
+      setMessage({ kind: 'error', text: err instanceof Error ? err.message : 'Could not save the price.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="card">
+      <h2 className="section-title">{title}</h2>
+      <p className="card-note">{note}</p>
+      <div className="field">
+        <label className="field-label" htmlFor={id}>Price per year</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: 220 }}>
+          <span aria-hidden="true">$</span>
+          <input
+            id={id}
+            type="number"
+            min={allowZero ? '0' : '1'}
+            step="1"
+            inputMode="decimal"
+            value={dollars}
+            onChange={(e) => setDollars(e.target.value)}
+            disabled={!loaded || saving}
+          />
+        </div>
+      </div>
+      <button type="button" className="primary-button" onClick={onSave} disabled={!loaded || saving}>
+        {saving ? 'Saving…' : 'Save price'}
+      </button>
+      {message?.kind === 'ok' && <div className="card-note" role="status">{message.text}</div>}
+      {message?.kind === 'error' && <div className="form-error" role="alert">{message.text}</div>}
+    </div>
   )
 }

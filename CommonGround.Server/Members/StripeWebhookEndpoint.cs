@@ -1,4 +1,5 @@
 using CommonGround.Server.Configuration;
+using CommonGround.Server.LeasedBeds;
 using FastEndpoints;
 using Microsoft.Extensions.Options;
 using Stripe;
@@ -9,6 +10,7 @@ namespace CommonGround.Server.Members;
 public sealed class StripeWebhookEndpoint(
     IOptions<StripeOptions> stripeOptions,
     MembershipActivationService activation,
+    LeasedBedActivationService bedActivation,
     ILogger<StripeWebhookEndpoint> logger)
     : EndpointWithoutRequest
 {
@@ -45,13 +47,17 @@ public sealed class StripeWebhookEndpoint(
 
         if (stripeEvent.Data.Object is Session session)
         {
+            var isBedLease = session.Metadata?.TryGetValue("kind", out var kind) == true && kind == "bed-lease";
+
             if (stripeEvent.Type == "checkout.session.completed" && session.PaymentStatus == "paid")
             {
-                await activation.ActivateAsync(session.Id, session.PaymentIntentId, ct);
+                if (isBedLease) await bedActivation.ActivateAsync(session.Id, session.PaymentIntentId, ct);
+                else await activation.ActivateAsync(session.Id, session.PaymentIntentId, ct);
             }
             else if (stripeEvent.Type == "checkout.session.expired")
             {
-                await activation.ExpireAsync(session.Id, ct);
+                if (isBedLease) await bedActivation.ExpireAsync(session.Id, ct);
+                else await activation.ExpireAsync(session.Id, ct);
             }
         }
 

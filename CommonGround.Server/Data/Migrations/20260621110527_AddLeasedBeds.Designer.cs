@@ -4,6 +4,7 @@ using CommonGround.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CommonGround.Server.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260621110527_AddLeasedBeds")]
+    partial class AddLeasedBeds
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -879,8 +882,7 @@ namespace CommonGround.Server.Data.Migrations
 
                     b.HasIndex("StripeCheckoutSessionId")
                         .IsUnique()
-                        .HasDatabaseName("IX_MembershipPayment_StripeCheckoutSessionId")
-                        .HasFilter("[StripeCheckoutSessionId] <> ''");
+                        .HasDatabaseName("IX_MembershipPayment_StripeCheckoutSessionId");
 
                     b.HasIndex("UserId");
 
