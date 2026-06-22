@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.7.0](https://github.com/fordprefect480/CommonGround/compare/v0.6.0...v0.7.0) (2026-06-22)
+
+
+### Features
+
+* let admins edit a freetext note on each leased bed ([7665345](https://github.com/fordprefect480/CommonGround/commit/766534551e0cd33d28a97af355032c313a7b60cc))
+
+
+### Bug Fixes
+
+* return empty 200 from Stripe webhook instead of serializing the CancellationToken ([5e689d9](https://github.com/fordprefect480/CommonGround/commit/5e689d9fad7f60ec28a2adebb900987395281bf2))
+* serve SPA fallback so deep links like the Stripe redirect don't 404 ([e665aa8](https://github.com/fordprefect480/CommonGround/commit/e665aa821133b1249c99b518923f42efd9253b65))
+* show payment history below the membership and leased bed cards on profile ([33cc5aa](https://github.com/fordprefect480/CommonGround/commit/33cc5aa98196438dbd0b56104d9ac827a5b44e30))
+
 ## [0.6.0](https://github.com/fordprefect480/CommonGround/compare/v0.5.0...v0.6.0) (2026-06-22)
 
 
