@@ -162,16 +162,19 @@ export interface MembershipPaymentRecord {
   amountCents: number
   currency: string
   status: string
+  method: 'Stripe' | 'Manual'
   paidAtUtc: string | null
   periodStartUtc: string | null
   periodEndUtc: string | null
   createdAtUtc: string
 }
 
-export async function recordMembershipPayment(id: string): Promise<Member> {
+export async function recordMembershipPayment(id: string, amountCents: number): Promise<Member> {
   const res = await fetch(`/api/admin/members/${encodeURIComponent(id)}/record-membership-payment`, {
     method: 'POST',
     credentials: 'include',
+    headers: json,
+    body: JSON.stringify({ amountCents }),
   })
   if (!res.ok) throw new Error(`Failed to record payment (${res.status})`)
   return res.json()

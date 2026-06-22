@@ -85,6 +85,7 @@ export default function PaymentHistoryTable({ memberId }: { memberId?: string })
           <tr>
             <th scope="col">Date</th>
             <th scope="col">Amount</th>
+            <th scope="col">Method</th>
             <th scope="col">Membership period</th>
             {showStatus && <th scope="col">Status</th>}
           </tr>
@@ -92,11 +93,12 @@ export default function PaymentHistoryTable({ memberId }: { memberId?: string })
         <tbody>
           {state.payments.map((p) => (
             <tr key={p.id}>
-              <td>{formatDate(p.paidAtUtc ?? p.createdAtUtc)}</td>
-              <td>{formatAmount(p.amountCents, p.currency)}</td>
-              <td>{formatPeriod(p.periodStartUtc, p.periodEndUtc)}</td>
+              <td data-label="Date">{formatDate(p.paidAtUtc ?? p.createdAtUtc)}</td>
+              <td data-label="Amount">{formatAmount(p.amountCents, p.currency)}</td>
+              <td data-label="Method">{p.method === 'Manual' ? 'Manual' : 'Stripe'}</td>
+              <td data-label="Membership period">{formatPeriod(p.periodStartUtc, p.periodEndUtc)}</td>
               {showStatus && (
-                <td>
+                <td data-label="Status">
                   <span className={STATUS_PILL[p.status] ?? 'pill'}>{p.status}</span>
                 </td>
               )}

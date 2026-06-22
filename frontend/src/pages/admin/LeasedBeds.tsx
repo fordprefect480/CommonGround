@@ -17,6 +17,7 @@ import {
   type LeasedBedsOverview,
 } from '../../api/leasedBeds'
 import { formatPrice } from '../../format'
+import RecordPaymentModal from './RecordPaymentModal'
 
 type State =
   | { status: 'loading' }
@@ -44,6 +45,7 @@ export default function LeasedBeds() {
   const [error, setError] = useState<string | null>(null)
   const [addLabel, setAddLabel] = useState('')
   const [busy, setBusy] = useState(false)
+  const [paymentBed, setPaymentBed] = useState<AdminBed | null>(null)
 
   const reloadAll = async () => {
     const [overview, requests, price] = await Promise.all([
@@ -72,16 +74,10 @@ export default function LeasedBeds() {
     }
   }
 
-  const handleRecordPayment = async (bed: AdminBed) => {
-    if (!bed.currentLease) return
-    if (!confirm(`Record an offline payment for bed ${bed.label}? This marks the lease active.`)) return
-    setError(null)
-    try {
-      await recordLeasePayment(bed.currentLease.leaseId)
-      await reloadAll()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not record the payment.')
-    }
+  const handleRecordPayment = async (amountCents: number) => {
+    if (!paymentBed?.currentLease) return
+    await recordLeasePayment(paymentBed.currentLease.leaseId, amountCents)
+    await reloadAll()
   }
 
   const handleRemove = async (request: AdminBedRequest) => {
@@ -263,7 +259,7 @@ export default function LeasedBeds() {
                             <>
                               {lease.status === 'AwaitingPayment' && (
                                 <>
-                                  <button type="button" className="footer-link" onClick={() => handleRecordPayment(bed)} disabled={busy}>Record payment</button>
+                                  <button type="button" className="footer-link" onClick={() => setPaymentBed(bed)} disabled={busy}>Record a manual payment</button>
                                   {' · '}
                                 </>
                               )}
@@ -288,6 +284,15 @@ export default function LeasedBeds() {
           </>
         )
       })()}
+
+      <RecordPaymentModal
+        open={paymentBed !== null}
+        title="Record a manual payment"
+        description={paymentBed ? `Record a cash or bank-transfer payment for bed ${paymentBed.label}.` : undefined}
+        initialAmountCents={paymentBed?.currentLease?.priceAtAllocationCents ?? 0}
+        onClose={() => setPaymentBed(null)}
+        onConfirm={handleRecordPayment}
+      />
     </section>
   )
 }

@@ -24,6 +24,7 @@ public sealed record MembershipPaymentDto(
     int AmountCents,
     string Currency,
     string Status,
+    string Method,
     DateTime? PaidAtUtc,
     DateTime? PeriodStartUtc,
     DateTime? PeriodEndUtc,
@@ -32,6 +33,6 @@ public sealed record MembershipPaymentDto(
 internal static class MembershipPaymentMapping
 {
     public static MembershipPaymentDto ToDto(this MembershipPayment p) =>
-        new(p.Id, p.AmountCents, p.Currency, p.Status.ToString(),
+        new(p.Id, p.AmountCents, p.Currency, p.Status.ToString(), p.Method.ToString(),
             p.PaidAtUtc, p.PeriodStartUtc, p.PeriodEndUtc, p.CreatedAtUtc);
 }

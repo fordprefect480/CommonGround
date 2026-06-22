@@ -8,24 +8,36 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CommonGround.Server.Members;
 
-/// <summary>Records an offline (cash/bank-transfer) membership payment and advances the renewal date.</summary>
+/// <summary>Records a manual (cash/bank-transfer) membership payment of the given amount and advances the renewal date.</summary>
 public sealed class RecordMembershipPaymentEndpoint(
     AppDbContext db,
     UserManager<ApplicationUser> userManager,
-    SiteSettingsService settings,
     IActivityLogger activityLogger)
-    : EndpointWithoutRequest<MemberDto>
+    : Endpoint<RecordMembershipPaymentEndpoint.Request, MemberDto>
 {
+    public sealed class Request
+    {
+        public string Id { get; set; } = "";
+
+        /// <summary>The amount actually received, in cents. Set by the admin in the record-payment dialog.</summary>
+        public int AmountCents { get; set; }
+    }
+
     public override void Configure()
     {
         Post("/members/{id}/record-membership-payment");
         Group<AdminGroup>();
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var id = Route<string>("id");
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == id, ct);
+        if (req.AmountCents < 0)
+        {
+            await Send.ResultAsync(Results.BadRequest(new { error = "Enter an amount of $0 or more." }));
+            return;
+        }
+
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == req.Id, ct);
         if (user is null)
         {
             await Send.NotFoundAsync(ct);
@@ -34,14 +46,13 @@ public sealed class RecordMembershipPaymentEndpoint(
 
         var now = DateTime.UtcNow;
         var periodEnd = MembershipPeriod.ComputePaidThrough(now);
-        var amount = await settings.GetMembershipPriceCentsAsync(ct);
 
         db.MembershipPayments.Add(new MembershipPayment
         {
             UserId = user.Id,
             Method = PaymentMethod.Manual,
             StripeCheckoutSessionId = "",
-            AmountCents = amount,
+            AmountCents = req.AmountCents,
             Currency = "aud",
             Status = MembershipPaymentStatus.Paid,
             CreatedAtUtc = now,
