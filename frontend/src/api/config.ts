@@ -6,6 +6,7 @@ export interface AppConfig {
   commitSha?: string | null
   paymentsEnabled: boolean
   membershipPriceCents: number
+  leasedBedPriceCents: number
 }
 
 export async function fetchAppConfig(): Promise<AppConfig> {
