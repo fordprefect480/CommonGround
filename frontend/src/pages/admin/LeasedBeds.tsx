@@ -216,13 +216,6 @@ export default function LeasedBeds() {
               onRemove={handleRemove}
             />
 
-            <AssignToMemberSection
-              members={state.members}
-              availableBeds={availableBeds}
-              standardPriceCents={state.standardPriceCents}
-              onAssign={assignToMember}
-            />
-
             <h2 className="section-title">All beds</h2>
             {/*
               "Add bed" control hidden for now. The backend (POST /api/admin/leased-beds/beds)
@@ -311,7 +304,16 @@ export default function LeasedBeds() {
                                 {' · '}
                                 <button type="button" className="footer-link" onClick={() => handleDelete(bed)} disabled={busy}>Delete</button>
                               */}
-                              <span className="card-note">—</span>
+                              {bed.isActive ? (
+                                <BedAssignControls
+                                  bed={bed}
+                                  members={state.members}
+                                  standardPriceCents={state.standardPriceCents}
+                                  onAssign={assignToMember}
+                                />
+                              ) : (
+                                <span className="card-note">—</span>
+                              )}
                             </>
                           )}
                         </td>
@@ -403,20 +405,22 @@ function WaitlistSection({
   )
 }
 
-function AssignToMemberSection({
+// Inline "assign to a member" control shown in an available bed's Actions cell.
+// Lets an admin give the bed to any existing member directly (no application/waitlist needed).
+function BedAssignControls({
+  bed,
   members,
-  availableBeds,
   standardPriceCents,
   onAssign,
 }: {
+  bed: AdminBed
   members: Member[]
-  availableBeds: AdminBed[]
   standardPriceCents: number
   onAssign: (userId: string, bedId: number, customPriceCents: number) => Promise<void>
 }) {
+  const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
   const [userId, setUserId] = useState('')
-  const [bedId, setBedId] = useState<number | ''>(availableBeds[0]?.id ?? '')
   const [priceDollars, setPriceDollars] = useState((standardPriceCents / 100).toString())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -431,13 +435,13 @@ function AssignToMemberSection({
     return sorted.filter((m) => memberLabel(m).toLowerCase().includes(q))
   }, [sorted, filter])
 
+  if (!open) {
+    return <button type="button" className="footer-link" onClick={() => setOpen(true)}>Assign member</button>
+  }
+
   const submit = async () => {
     if (!userId) {
       setError('Choose a member.')
-      return
-    }
-    if (bedId === '') {
-      setError('Choose a bed.')
       return
     }
     const dollars = Number(priceDollars)
@@ -448,64 +452,49 @@ function AssignToMemberSection({
     setBusy(true)
     setError(null)
     try {
-      await onAssign(userId, bedId, Math.round(dollars * 100))
-      setUserId('')
-      setFilter('')
+      // On success the page reloads and this row gains a lease, so the control unmounts.
+      await onAssign(userId, bed.id, Math.round(dollars * 100))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not assign the bed.')
-    } finally {
       setBusy(false)
     }
   }
 
   return (
-    <div className="card">
-      <h2 className="section-title">Assign a bed to a member</h2>
-      {availableBeds.length === 0 ? (
-        <p className="card-note">No beds available to assign.</p>
-      ) : (
-        <>
-          <p className="card-note">Give a bed to an existing member directly — they don't need to be on the waiting list.</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-            <input
-              type="search"
-              aria-label="Search members"
-              placeholder="Search members by name or email"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              disabled={busy}
-              style={{ minWidth: 240 }}
-            />
-            <select value={userId} onChange={(e) => setUserId(e.target.value)} disabled={busy} aria-label="Member">
-              <option value="">Choose a member…</option>
-              {filtered.map((m) => (
-                <option key={m.id} value={m.id}>{memberLabel(m)}</option>
-              ))}
-            </select>
-            <select value={bedId} onChange={(e) => setBedId(e.target.value === '' ? '' : Number(e.target.value))} disabled={busy} aria-label="Bed">
-              {availableBeds.map((b) => (
-                <option key={b.id} value={b.id}>{b.label}</option>
-              ))}
-            </select>
-            <span aria-hidden="true">$</span>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              inputMode="decimal"
-              aria-label="Lease price"
-              value={priceDollars}
-              onChange={(e) => setPriceDollars(e.target.value)}
-              disabled={busy}
-              style={{ maxWidth: 100 }}
-            />
-            <button type="button" className="primary-button" onClick={submit} disabled={busy}>
-              {busy ? 'Assigning…' : 'Assign bed'}
-            </button>
-            {error && <span className="form-error" role="alert" style={{ width: '100%' }}>{error}</span>}
-          </div>
-        </>
-      )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 220 }}>
+      <input
+        type="search"
+        aria-label="Search members"
+        placeholder="Search members"
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+        disabled={busy}
+      />
+      <select value={userId} onChange={(e) => setUserId(e.target.value)} disabled={busy} aria-label="Member">
+        <option value="">Choose a member…</option>
+        {filtered.map((m) => (
+          <option key={m.id} value={m.id}>{memberLabel(m)}</option>
+        ))}
+      </select>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <span aria-hidden="true">$</span>
+        <input
+          type="number"
+          min="0"
+          step="1"
+          inputMode="decimal"
+          aria-label="Lease price"
+          value={priceDollars}
+          onChange={(e) => setPriceDollars(e.target.value)}
+          disabled={busy}
+          style={{ maxWidth: 90 }}
+        />
+        <button type="button" className="primary-button" onClick={submit} disabled={busy}>
+          {busy ? 'Assigning…' : 'Assign'}
+        </button>
+        <button type="button" className="footer-link" onClick={() => { setOpen(false); setError(null) }} disabled={busy}>Cancel</button>
+      </div>
+      {error && <span className="form-error" role="alert">{error}</span>}
     </div>
   )
 }
