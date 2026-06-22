@@ -24,6 +24,20 @@ const ACTIVITY_LABELS: Record<string, string> = {
   'tool.orphan_cleanup_run': 'Orphan image cleanup',
   'tool.members_exported': 'Members exported',
   'settings.membership_price.updated': 'Membership price updated',
+  'settings.leased_bed_price.updated': 'Leased bed price updated',
+  'member.payment_recorded': 'Membership payment recorded',
+  'leased_bed.added': 'Leased bed added',
+  'leased_bed.updated': 'Leased bed updated',
+  'leased_bed.deleted': 'Leased bed deleted',
+  'leased_bed.requested': 'Bed application submitted',
+  'leased_bed.request_withdrawn': 'Bed request withdrawn',
+  'leased_bed.request_removed': 'Bed request removed',
+  'leased_bed.assigned': 'Bed assigned',
+  'leased_bed.released': 'Bed released',
+  'leased_bed.paid': 'Bed payment received',
+  'leased_bed.payment_recorded': 'Bed payment recorded',
+  'leased_bed.payment_orphaned': 'Bed payment needs review',
+  'leased_bed.renewed': 'Bed lease renewed',
 }
 
 const absoluteFormatter = new Intl.DateTimeFormat(undefined, {

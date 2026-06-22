@@ -19,6 +19,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<SentEmail> SentEmails => Set<SentEmail>();
     public DbSet<SentEmailRecipient> SentEmailRecipients => Set<SentEmailRecipient>();
     public DbSet<SiteSettings> SiteSettings => Set<SiteSettings>();
+    public DbSet<Bed> Beds => Set<Bed>();
+    public DbSet<BedLease> BedLeases => Set<BedLease>();
+    public DbSet<BedRequest> BedRequests => Set<BedRequest>();
+    public DbSet<BedLeasePayment> BedLeasePayments => Set<BedLeasePayment>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -54,8 +58,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Filtered so offline (Manual) payments with an empty session id don't collide,
+            // while Stripe sessions stay unique for idempotent webhook processing.
             b.HasIndex(p => p.StripeCheckoutSessionId)
                 .IsUnique()
+                .HasFilter("[StripeCheckoutSessionId] <> ''")
                 .HasDatabaseName("IX_MembershipPayment_StripeCheckoutSessionId");
         });
 
@@ -214,7 +221,96 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
         builder.Entity<SiteSettings>(b =>
         {
-            b.HasData(new SiteSettings { Id = 1, MembershipPriceCents = 2500 });
+            b.HasData(new SiteSettings { Id = 1, MembershipPriceCents = 2500, LeasedBedPriceCents = 8000 });
         });
+
+        builder.Entity<Bed>(b =>
+        {
+            b.Property(x => x.Label).HasMaxLength(50).IsRequired();
+            b.Property(x => x.Notes).HasMaxLength(500);
+
+            // Labels are unique among live beds; a soft-deleted bed's label can be reused.
+            b.HasIndex(x => x.Label)
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0")
+                .HasDatabaseName("IX_Bed_Label");
+
+            // Soft-deleted beds drop out of every query automatically.
+            b.HasQueryFilter(x => !x.IsDeleted);
+
+            b.HasData(SeedBeds());
+        });
+
+        builder.Entity<BedLease>(b =>
+        {
+            b.Property(x => x.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
+
+            b.HasOne(x => x.Bed)
+                .WithMany(x => x.Leases)
+                .HasForeignKey(x => x.BedId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasIndex(x => x.BedId).HasDatabaseName("IX_BedLease_BedId");
+            b.HasIndex(x => x.UserId).HasDatabaseName("IX_BedLease_UserId");
+        });
+
+        builder.Entity<BedRequest>(b =>
+        {
+            b.Property(r => r.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
+
+            b.HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasIndex(r => r.UserId).HasDatabaseName("IX_BedRequest_UserId");
+            b.HasIndex(r => new { r.Status, r.CreatedAtUtc }).HasDatabaseName("IX_BedRequest_Status_CreatedAtUtc");
+        });
+
+        builder.Entity<BedLeasePayment>(b =>
+        {
+            b.Property(p => p.StripeCheckoutSessionId).HasMaxLength(255).IsRequired();
+            b.Property(p => p.StripePaymentIntentId).HasMaxLength(255);
+            b.Property(p => p.Currency).HasMaxLength(3).IsRequired();
+            b.Property(p => p.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
+
+            b.HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(p => p.BedLease)
+                .WithMany(l => l.Payments)
+                .HasForeignKey(p => p.BedLeaseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Filtered so many Manual payments (empty session id) don't collide, while
+            // Stripe sessions stay unique for idempotent webhook processing.
+            b.HasIndex(p => p.StripeCheckoutSessionId)
+                .IsUnique()
+                .HasFilter("[StripeCheckoutSessionId] <> ''")
+                .HasDatabaseName("IX_BedLeasePayment_StripeCheckoutSessionId");
+
+            b.HasIndex(p => p.BedLeaseId).HasDatabaseName("IX_BedLeasePayment_BedLeaseId");
+        });
+    }
+
+    private static List<Bed> SeedBeds()
+    {
+        var beds = new List<Bed>();
+        var id = 1;
+        foreach (var section in new[] { "N", "S" })
+        {
+            for (var number = 1; number <= 16; number++)
+            {
+                beds.Add(new Bed { Id = id++, Label = $"{section}{number}", IsActive = true });
+            }
+        }
+        return beds;
     }
 }

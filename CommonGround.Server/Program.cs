@@ -31,6 +31,10 @@ builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
 builder.Services.AddScoped<CommonGround.Server.Members.MembershipActivationService>();
 builder.Services.AddScoped<CommonGround.Server.Members.MembershipCheckoutService>();
 builder.Services.AddScoped<SiteSettingsService>();
+builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedService>();
+builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedCheckoutService>();
+builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedActivationService>();
+builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedNotifications>();
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<AppDbContext>()
     .SetApplicationName("CommonGround");
@@ -43,6 +47,7 @@ builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailO
 builder.Services.Configure<ContactOptions>(builder.Configuration.GetSection(ContactOptions.SectionName));
 builder.Services.Configure<StripeOptions>(builder.Configuration.GetSection(StripeOptions.SectionName));
 builder.Services.Configure<EventbriteOptions>(builder.Configuration.GetSection(EventbriteOptions.SectionName));
+builder.Services.Configure<LeasedBedsOptions>(builder.Configuration.GetSection(LeasedBedsOptions.SectionName));
 builder.Services.AddHttpClient<TurnstileVerifier>();
 builder.Services.AddHttpClient<EventbriteClient>(c => c.Timeout = TimeSpan.FromSeconds(10));
 

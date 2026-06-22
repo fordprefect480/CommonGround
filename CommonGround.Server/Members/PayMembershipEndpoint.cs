@@ -1,4 +1,5 @@
 using CommonGround.Server.Data;
+using CommonGround.Server.LeasedBeds;
 using FastEndpoints;
 using Microsoft.AspNetCore.Identity;
 
@@ -34,10 +35,16 @@ public sealed class PayMembershipEndpoint(
             return;
         }
 
+        // Active members can pay only inside the renewal window (one month before expiry);
+        // outside it, there's nothing to pay for.
         if (user.MembershipPaidThroughUtc is { } paidThrough && paidThrough > DateTime.UtcNow)
         {
-            await Send.ResultAsync(Results.BadRequest(new { error = "Your membership is already active." }));
-            return;
+            var today = FinancialYear.Today(DateTime.UtcNow);
+            if (!FinancialYear.IsRenewalOpen(today, FinancialYear.Today(paidThrough)))
+            {
+                await Send.ResultAsync(Results.BadRequest(new { error = "Your membership is already active." }));
+                return;
+            }
         }
 
         string checkoutUrl;

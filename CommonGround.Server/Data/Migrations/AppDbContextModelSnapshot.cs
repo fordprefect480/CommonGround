@@ -171,6 +171,406 @@ namespace CommonGround.Server.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("CommonGround.Server.Data.Bed", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Label")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Bed_Label")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("Beds");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N1"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N2"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N3"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N4"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N5"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N6"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N7"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N8"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N9"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N10"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N11"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N12"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N13"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N14"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N15"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "N16"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S1"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S2"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S3"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S4"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S5"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S6"
+                        },
+                        new
+                        {
+                            Id = 23,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S7"
+                        },
+                        new
+                        {
+                            Id = 24,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S8"
+                        },
+                        new
+                        {
+                            Id = 25,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S9"
+                        },
+                        new
+                        {
+                            Id = 26,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S10"
+                        },
+                        new
+                        {
+                            Id = 27,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S11"
+                        },
+                        new
+                        {
+                            Id = 28,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S12"
+                        },
+                        new
+                        {
+                            Id = 29,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S13"
+                        },
+                        new
+                        {
+                            Id = 30,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S14"
+                        },
+                        new
+                        {
+                            Id = 31,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S15"
+                        },
+                        new
+                        {
+                            Id = 32,
+                            IsActive = true,
+                            IsDeleted = false,
+                            Label = "S16"
+                        });
+                });
+
+            modelBuilder.Entity("CommonGround.Server.Data.BedLease", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BedId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("ExpiresOn")
+                        .HasColumnType("date");
+
+                    b.Property<int>("PriceAtAllocationCents")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BedId")
+                        .HasDatabaseName("IX_BedLease_BedId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_BedLease_UserId");
+
+                    b.ToTable("BedLeases");
+                });
+
+            modelBuilder.Entity("CommonGround.Server.Data.BedLeasePayment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AmountCents")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BedLeaseId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("PaidAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StripeCheckoutSessionId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("StripePaymentIntentId")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BedLeaseId")
+                        .HasDatabaseName("IX_BedLeasePayment_BedLeaseId");
+
+                    b.HasIndex("StripeCheckoutSessionId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_BedLeasePayment_StripeCheckoutSessionId")
+                        .HasFilter("[StripeCheckoutSessionId] <> ''");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("BedLeasePayments");
+                });
+
+            modelBuilder.Entity("CommonGround.Server.Data.BedRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<DateTime?>("ResolvedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_BedRequest_UserId");
+
+                    b.HasIndex("Status", "CreatedAtUtc")
+                        .HasDatabaseName("IX_BedRequest_Status_CreatedAtUtc");
+
+                    b.ToTable("BedRequests");
+                });
+
             modelBuilder.Entity("CommonGround.Server.Data.BlogCategory", b =>
                 {
                     b.Property<int>("Id")
@@ -444,6 +844,9 @@ namespace CommonGround.Server.Data.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("nvarchar(3)");
 
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("PaidAtUtc")
                         .HasColumnType("datetime2");
 
@@ -473,7 +876,8 @@ namespace CommonGround.Server.Data.Migrations
 
                     b.HasIndex("StripeCheckoutSessionId")
                         .IsUnique()
-                        .HasDatabaseName("IX_MembershipPayment_StripeCheckoutSessionId");
+                        .HasDatabaseName("IX_MembershipPayment_StripeCheckoutSessionId")
+                        .HasFilter("[StripeCheckoutSessionId] <> ''");
 
                     b.HasIndex("UserId");
 
@@ -604,6 +1008,9 @@ namespace CommonGround.Server.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("LeasedBedPriceCents")
+                        .HasColumnType("int");
+
                     b.Property<int>("MembershipPriceCents")
                         .HasColumnType("int");
 
@@ -615,6 +1022,7 @@ namespace CommonGround.Server.Data.Migrations
                         new
                         {
                             Id = 1,
+                            LeasedBedPriceCents = 8000,
                             MembershipPriceCents = 2500
                         });
                 });
@@ -779,6 +1187,55 @@ namespace CommonGround.Server.Data.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Actor");
+                });
+
+            modelBuilder.Entity("CommonGround.Server.Data.BedLease", b =>
+                {
+                    b.HasOne("CommonGround.Server.Data.Bed", "Bed")
+                        .WithMany("Leases")
+                        .HasForeignKey("BedId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CommonGround.Server.Data.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Bed");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CommonGround.Server.Data.BedLeasePayment", b =>
+                {
+                    b.HasOne("CommonGround.Server.Data.BedLease", "BedLease")
+                        .WithMany("Payments")
+                        .HasForeignKey("BedLeaseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CommonGround.Server.Data.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BedLease");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CommonGround.Server.Data.BedRequest", b =>
+                {
+                    b.HasOne("CommonGround.Server.Data.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("CommonGround.Server.Data.BlogImage", b =>
@@ -946,6 +1403,16 @@ namespace CommonGround.Server.Data.Migrations
             modelBuilder.Entity("CommonGround.Server.Data.ApplicationUser", b =>
                 {
                     b.Navigation("SecondaryMembers");
+                });
+
+            modelBuilder.Entity("CommonGround.Server.Data.Bed", b =>
+                {
+                    b.Navigation("Leases");
+                });
+
+            modelBuilder.Entity("CommonGround.Server.Data.BedLease", b =>
+                {
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("CommonGround.Server.Data.SentEmail", b =>

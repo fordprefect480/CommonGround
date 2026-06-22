@@ -19,7 +19,8 @@ public sealed class GetConfigEndpoint(
         string? Version,
         string? CommitSha,
         bool PaymentsEnabled,
-        int MembershipPriceCents);
+        int MembershipPriceCents,
+        int LeasedBedPriceCents);
 
     public override void Configure()
     {
@@ -44,11 +45,12 @@ public sealed class GetConfigEndpoint(
             : configuration["BuildInfo:CommitSha"];
 
         var priceCents = await settings.GetMembershipPriceCentsAsync(ct);
+        var bedPriceCents = await settings.GetLeasedBedPriceCentsAsync(ct);
 
         await Send.OkAsync(
             new ConfigResult(
                 garden.Value.Name, appInsightsConnectionString, turnstileSiteKey, version, commitSha,
-                stripe.Value.IsConfigured, priceCents),
+                stripe.Value.IsConfigured, priceCents, bedPriceCents),
             ct);
     }
 }

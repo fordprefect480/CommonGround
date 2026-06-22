@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { changePassword, fetchMe, updateMe } from '../../api/auth'
 import { payMembership } from '../../api/membership'
 import { useAppConfig } from '../../AppConfigContext'
+import LeasedBedCard from './LeasedBedCard'
 import PaymentHistoryTable from './PaymentHistoryTable'
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error'
@@ -186,6 +187,8 @@ export default function AdminProfile() {
       <div className="profile-forms">
         <MembershipStatus paidThrough={paidThrough} />
 
+        <LeasedBedCard />
+
         <section className="card admin-form">
           <h2 className="section-title">Payment history</h2>
           <PaymentHistoryTable />
@@ -212,6 +215,11 @@ function MembershipStatus({ paidThrough }: { paidThrough: string | null }) {
   const fyLabel = currentFinancialYearLabel(now)
   const isPaid = paidThrough != null && new Date(paidThrough).getTime() >= now.getTime()
 
+  // Renewal opens one month before the membership expires.
+  const renewOpensAt = paidThrough ? new Date(paidThrough) : null
+  if (renewOpensAt) renewOpensAt.setMonth(renewOpensAt.getMonth() - 1)
+  const canRenew = isPaid && renewOpensAt != null && now.getTime() >= renewOpensAt.getTime()
+
   const startPayment = async () => {
     setStatus('starting')
     setError(null)
@@ -236,9 +244,28 @@ function MembershipStatus({ paidThrough }: { paidThrough: string | null }) {
       </p>
 
       {isPaid ? (
-        <p className="card-note" style={{ margin: 0 }}>
-          Your membership is valid until {new Date(paidThrough!).toLocaleDateString()}.
-        </p>
+        <>
+          <p className="card-note" style={{ margin: 0 }}>
+            Your membership is valid until {new Date(paidThrough!).toLocaleDateString()}.
+          </p>
+          {canRenew && (
+            <>
+              {error && <div className="form-error" role="alert">{error}</div>}
+              {paymentsEnabled && (
+                <div className="admin-actions">
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={startPayment}
+                    disabled={status === 'starting'}
+                  >
+                    {status === 'starting' ? 'Starting payment…' : 'Renew membership'}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </>
       ) : (
         <>
           {paidThrough && (

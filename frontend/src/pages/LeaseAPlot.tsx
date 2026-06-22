@@ -1,6 +1,6 @@
 import Seo from '../Seo'
 import { useAppConfig } from '../AppConfigContext'
-import { formatMembershipPrice } from '../format'
+import { formatPrice } from '../format'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSButton, MSEyebrow, MSSection } from './home/Primitives'
 import { BP_MOBILE, BP_TABLET, useMediaQuery } from './home/responsive'
@@ -18,7 +18,8 @@ const PLOTHOLDER_POLICY_URL =
 
 export default function LeaseAPlot() {
   const config = useAppConfig()
-  const priceLabel = formatMembershipPrice(config.membershipPriceCents)
+  const priceLabel = formatPrice(config.membershipPriceCents)
+  const bedPriceLabel = formatPrice(config.leasedBedPriceCents)
   const handleNav = usePageNav('lease')
   const isTablet = useMediaQuery(BP_TABLET)
   const isMobile = useMediaQuery(BP_MOBILE)
@@ -28,7 +29,7 @@ export default function LeaseAPlot() {
     <div data-screen-label="SWCG · lease a plot">
       <Seo
         title="Lease a plot"
-        description={`Lease your own raised garden bed at Seaford Wetlands Community Garden from ${priceLabel}. Beds come with compost, mulch, fertiliser and water - grow your own vegetables, herbs and flowers.`}
+        description={`Lease your own raised garden bed at Seaford Wetlands Community Garden from ${bedPriceLabel}. Beds come with compost, mulch, fertiliser and water - grow your own vegetables, herbs and flowers.`}
       />
       <MSHeader active="lease" onNav={handleNav} />
 
@@ -64,7 +65,7 @@ export default function LeaseAPlot() {
               fertiliser and water.
             </p>
             <p style={{ ...bodyPara, marginBottom: 0 }}>
-              Rental rates are $80/year and raised bed rental is only
+              Rental rates are {bedPriceLabel}/year and raised bed rental is only
               available to financial members.
             </p>
           </div>
@@ -104,7 +105,7 @@ export default function LeaseAPlot() {
                 margin: '14px 0 20px',
               }}
             >
-              Just $80 a year.
+              Just {bedPriceLabel} a year.
             </h2>
             <p style={bodyPara}>
               A private bed gives you your own space to grow what you like,
