@@ -158,6 +158,7 @@ export default function MemberDetail() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [paymentsRefresh, setPaymentsRefresh] = useState(0)
 
   useEffect(() => {
     if (!id) return
@@ -297,7 +298,7 @@ export default function MemberDetail() {
         <MembershipCard
           memberId={member.id}
           paidThrough={member.membershipPaidThroughUtc}
-          onRecorded={(updated) => { setState({ status: 'ready', member: updated }); setForm(memberToForm(updated)) }}
+          onRecorded={(updated) => { setState({ status: 'ready', member: updated }); setForm(memberToForm(updated)); setPaymentsRefresh((n) => n + 1) }}
         />
 
         <LeasedBedsCard memberId={member.id} />
@@ -305,7 +306,7 @@ export default function MemberDetail() {
 
       <section className="card admin-form">
         <h2 className="section-title">Payment history</h2>
-        <PaymentHistoryTable memberId={member.id} />
+        <PaymentHistoryTable memberId={member.id} refreshToken={paymentsRefresh} />
       </section>
     </section>
   )
