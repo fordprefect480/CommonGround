@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { getLeasedBedPrice } from '../../api/adminTools'
 import {
+  addBed,
   assignBed,
+  deleteBed,
   fetchBedRequests,
   fetchLeasedBeds,
   recordLeasePayment,
   releaseLease,
   removeBedRequest,
+  updateBed,
   type AdminBed,
   type AdminBedRequest,
   type AdminBedRequests,
@@ -39,6 +42,8 @@ function leaseStatusLabel(status: BedLeaseStatus): string {
 export default function LeasedBeds() {
   const [state, setState] = useState<State>({ status: 'loading' })
   const [error, setError] = useState<string | null>(null)
+  const [addLabel, setAddLabel] = useState('')
+  const [busy, setBusy] = useState(false)
 
   const reloadAll = async () => {
     const [overview, requests, price] = await Promise.all([
@@ -90,6 +95,52 @@ export default function LeasedBeds() {
     }
   }
 
+  const handleAddBed = async () => {
+    const trimmed = addLabel.trim()
+    if (!trimmed) {
+      setError('Enter a label for the new bed.')
+      return
+    }
+    setBusy(true)
+    setError(null)
+    try {
+      await addBed({ label: trimmed })
+      setAddLabel('')
+      await reloadAll()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not add the bed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleToggleService = async (bed: AdminBed) => {
+    setBusy(true)
+    setError(null)
+    try {
+      await updateBed(bed.id, { isActive: !bed.isActive })
+      await reloadAll()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update the bed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleDelete = async (bed: AdminBed) => {
+    if (!confirm(`Delete bed ${bed.label}? It will be removed from the list; any past lease records are kept.`)) return
+    setBusy(true)
+    setError(null)
+    try {
+      await deleteBed(bed.id)
+      await reloadAll()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete the bed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <section className="admin-page" aria-labelledby="leased-beds-heading">
       <header className="admin-page-header">
@@ -130,6 +181,21 @@ export default function LeasedBeds() {
             />
 
             <h2 className="section-title">All beds</h2>
+            <div className="field" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+              <input
+                type="text"
+                aria-label="New bed label"
+                placeholder="Label, e.g. N1 or X2039"
+                value={addLabel}
+                onChange={(e) => setAddLabel(e.target.value)}
+                disabled={busy}
+                maxLength={50}
+                style={{ maxWidth: 220 }}
+              />
+              <button type="button" className="primary-button" onClick={handleAddBed} disabled={busy}>
+                Add bed
+              </button>
+            </div>
             <div className="admin-table-wrap">
               <table className="admin-table">
                 <thead>
@@ -168,13 +234,21 @@ export default function LeasedBeds() {
                             <>
                               {lease.status === 'AwaitingPayment' && (
                                 <>
-                                  <button type="button" className="footer-link" onClick={() => handleRecordPayment(bed)}>Record payment</button>
+                                  <button type="button" className="footer-link" onClick={() => handleRecordPayment(bed)} disabled={busy}>Record payment</button>
                                   {' · '}
                                 </>
                               )}
-                              <button type="button" className="footer-link" onClick={() => handleRelease(bed)}>Release</button>
+                              <button type="button" className="footer-link" onClick={() => handleRelease(bed)} disabled={busy}>Release</button>
                             </>
-                          ) : '—'}
+                          ) : (
+                            <>
+                              <button type="button" className="footer-link" onClick={() => handleToggleService(bed)} disabled={busy}>
+                                {bed.isActive ? 'Take out of service' : 'Return to service'}
+                              </button>
+                              {' · '}
+                              <button type="button" className="footer-link" onClick={() => handleDelete(bed)} disabled={busy}>Delete</button>
+                            </>
+                          )}
                         </td>
                       </tr>
                     )

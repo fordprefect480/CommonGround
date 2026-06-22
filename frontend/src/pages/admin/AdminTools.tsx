@@ -9,7 +9,6 @@ import {
   updateMembershipPrice,
   type ImportBlogResult,
 } from '../../api/adminTools'
-import LeasedBedInventory from './LeasedBedInventory'
 
 type ImportState =
   | { status: 'idle' }
@@ -85,8 +84,6 @@ export default function AdminTools() {
           allowZero
         />
       </div>
-
-      <LeasedBedInventory />
 
       <details className="admin-advanced-panel">
         <summary className="admin-advanced-summary">Advanced</summary>
