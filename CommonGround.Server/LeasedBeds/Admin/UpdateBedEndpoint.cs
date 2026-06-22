@@ -22,7 +22,11 @@ public sealed class UpdateBedEndpoint(
         /// <summary>When provided, replaces the notes (empty clears them). Null leaves them unchanged.</summary>
         public string? Notes { get; set; }
 
-        /// <summary>When provided, takes the bed out of service (false) or returns it (true). Null leaves it unchanged.</summary>
+        /// <summary>
+        /// When provided, takes the bed out of service (false) or returns it (true). Null leaves it unchanged.
+        /// NOTE: The "Take out of service / Return to service" action is currently hidden from the admin UI,
+        /// but this is intentionally kept and fully functional in case we need to surface it again.
+        /// </summary>
         public bool? IsActive { get; set; }
     }
 
