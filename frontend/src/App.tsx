@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactElement } from 'react'
+import { lazy, Suspense, useEffect, type ReactElement } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppInsightsContext, AppInsightsErrorBoundary } from '@microsoft/applicationinsights-react-js'
 import './App.css'
@@ -54,6 +54,7 @@ export default function App() {
         <AppConfigProvider>
           <AuthProvider>
             <Suspense fallback={<div style={{ minHeight: '60vh' }} aria-busy="true" />}>
+            <ScrollToTop />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/membership" element={<Membership />} />
@@ -99,6 +100,22 @@ export default function App() {
       </AppInsightsErrorBoundary>
     </AppInsightsContext.Provider>
   )
+}
+
+// React Router doesn't reset scroll on navigation, so a route change kept the
+// previous page's scroll offset (e.g. clicking "Lease a plot" halfway down Home
+// landed halfway down the lease page). Reset to the top on every path change,
+// except when there's a hash - those target an on-page anchor (e.g. Home's
+// /#section-events), which the destination page scrolls to itself.
+function ScrollToTop() {
+  const { pathname, hash } = useLocation()
+
+  useEffect(() => {
+    if (hash) return
+    window.scrollTo(0, 0)
+  }, [pathname, hash])
+
+  return null
 }
 
 interface RequireAuthProps {
