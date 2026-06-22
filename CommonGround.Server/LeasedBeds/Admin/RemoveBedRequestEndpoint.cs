@@ -11,22 +11,18 @@ public sealed class RemoveBedRequestEndpoint(
     AppDbContext db,
     LeasedBedService beds,
     IActivityLogger activityLogger)
-    : Endpoint<RemoveBedRequestEndpoint.Request, AdminBedRequests>
+    : EndpointWithoutRequest<AdminBedRequests>
 {
-    public sealed class Request
-    {
-        public int RequestId { get; set; }
-    }
-
     public override void Configure()
     {
         Delete("/requests/{requestId:int}");
         Group<AdminLeasedBedsGroup>();
     }
 
-    public override async Task HandleAsync(Request req, CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
-        var request = await db.BedRequests.Include(r => r.User).SingleOrDefaultAsync(r => r.Id == req.RequestId, ct);
+        var requestId = Route<int>("requestId");
+        var request = await db.BedRequests.Include(r => r.User).SingleOrDefaultAsync(r => r.Id == requestId, ct);
         if (request is null)
         {
             await Send.NotFoundAsync(ct);

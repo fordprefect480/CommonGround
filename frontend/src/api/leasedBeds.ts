@@ -219,10 +219,12 @@ export async function removeBedRequest(requestId: number): Promise<AdminBedReque
   return res.json()
 }
 
-export async function recordLeasePayment(leaseId: number): Promise<LeasedBedsOverview> {
+export async function recordLeasePayment(leaseId: number, amountCents: number): Promise<LeasedBedsOverview> {
   const res = await fetch(`/api/admin/leased-beds/leases/${leaseId}/record-payment`, {
     method: 'POST',
     credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amountCents }),
   })
   if (!res.ok) throw await readError(res, 'Could not record the payment')
   return res.json()

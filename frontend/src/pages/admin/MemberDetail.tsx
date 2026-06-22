@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { fetchMember, recordMembershipPayment, updateMember, type Member } from '../../api/auth'
+import { fetchLeasedBeds, type AdminBed, type BedLeaseStatus } from '../../api/leasedBeds'
+import { useAppConfig } from '../../AppConfigContext'
+import { financialYearLabel, formatPrice, membershipPaidThroughFyLabel } from '../../format'
 import PaymentHistoryTable from './PaymentHistoryTable'
+import RecordPaymentModal from './RecordPaymentModal'
 
 const ADMIN_ROLE = 'Admin'
 
@@ -29,33 +33,14 @@ function formatJoinedAt(iso: string): string {
   return Number.isNaN(d.getTime()) ? '-' : dateFormatter.format(d)
 }
 
-// Membership always runs to a 1 July boundary, which is also the Australian
-// financial-year boundary. A paid-through date at or beyond today therefore
-// covers the current financial year (same rule as the profile page).
-function currentFinancialYearLabel(now: Date): string {
-  const startYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1
-  return `${startYear}/${String(startYear + 1).slice(-2)}`
-}
-
 function MembershipCard({ memberId, paidThrough, onRecorded }: { memberId: string; paidThrough: string | null; onRecorded: (m: Member) => void }) {
+  const { membershipPriceCents } = useAppConfig()
   const now = new Date()
-  const fyLabel = currentFinancialYearLabel(now)
   const isPaid = paidThrough != null && new Date(paidThrough).getTime() >= now.getTime()
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const record = async () => {
-    if (!confirm('Record an offline membership payment (cash or bank transfer)? This marks the membership paid for the year.')) return
-    setBusy(true)
-    setError(null)
-    try {
-      onRecorded(await recordMembershipPayment(memberId))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not record the payment.')
-    } finally {
-      setBusy(false)
-    }
-  }
+  // When paid, label the FY the membership actually runs to (which may be next
+  // year's, thanks to the near-EOFY carryover); otherwise the current FY.
+  const fyLabel = isPaid ? membershipPaidThroughFyLabel(paidThrough!) : financialYearLabel(now)
+  const [modalOpen, setModalOpen] = useState(false)
 
   return (
     <section className="card admin-form">
@@ -80,11 +65,77 @@ function MembershipCard({ memberId, paidThrough, onRecorded }: { memberId: strin
         )
       )}
 
-      {error && <div className="form-error" role="alert">{error}</div>}
       <div className="admin-actions">
-        <button type="button" className="secondary-button" onClick={record} disabled={busy}>
-          {busy ? 'Recording…' : 'Record offline payment'}
+        <button type="button" className="secondary-button" onClick={() => setModalOpen(true)}>
+          Record a manual payment
         </button>
+      </div>
+
+      <RecordPaymentModal
+        open={modalOpen}
+        title="Record a manual payment"
+        description="Record a cash or bank-transfer membership payment. The renewal date is set automatically."
+        initialAmountCents={membershipPriceCents}
+        onClose={() => setModalOpen(false)}
+        onConfirm={async (amountCents) => { onRecorded(await recordMembershipPayment(memberId, amountCents)) }}
+      />
+    </section>
+  )
+}
+
+function leaseStatusLabel(status: BedLeaseStatus): string {
+  switch (status) {
+    case 'AwaitingPayment':
+      return 'Awaiting payment'
+    case 'Active':
+      return 'Active'
+    case 'Expired':
+      return 'Expired'
+    case 'Released':
+      return 'Released'
+  }
+}
+
+function LeasedBedsCard({ memberId }: { memberId: string }) {
+  const [beds, setBeds] = useState<AdminBed[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchLeasedBeds()
+      .then((overview) => {
+        if (!cancelled) setBeds(overview.beds.filter((b) => b.currentLease?.memberId === memberId))
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load leased beds.')
+      })
+    return () => { cancelled = true }
+  }, [memberId])
+
+  return (
+    <section className="card admin-form">
+      <h2 className="section-title">Leased beds</h2>
+
+      {error && <div className="form-error" role="alert">{error}</div>}
+      {!error && beds === null && <p className="card-note" style={{ margin: 0 }}>Loading&hellip;</p>}
+      {beds !== null && beds.length === 0 && <p className="card-note" style={{ margin: 0 }}>No leased bed.</p>}
+
+      {beds?.map((bed) => {
+        const lease = bed.currentLease!
+        return (
+          <p key={bed.id} className="card-note" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span className={lease.isPaid ? 'pill pill-ok' : 'pill pill-warn'} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+              Bed {bed.label}
+            </span>
+            <span>
+              {leaseStatusLabel(lease.status)} · {formatPrice(lease.priceAtAllocationCents)} · expires {dateFormatter.format(new Date(lease.expiresOn))}
+            </span>
+          </p>
+        )
+      })}
+
+      <div className="admin-actions">
+        <Link to="/admin/leased-beds" className="footer-link">Manage leased beds</Link>
       </div>
     </section>
   )
@@ -107,6 +158,7 @@ export default function MemberDetail() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [paymentsRefresh, setPaymentsRefresh] = useState(0)
 
   useEffect(() => {
     if (!id) return
@@ -246,14 +298,16 @@ export default function MemberDetail() {
         <MembershipCard
           memberId={member.id}
           paidThrough={member.membershipPaidThroughUtc}
-          onRecorded={(updated) => { setState({ status: 'ready', member: updated }); setForm(memberToForm(updated)) }}
+          onRecorded={(updated) => { setState({ status: 'ready', member: updated }); setForm(memberToForm(updated)); setPaymentsRefresh((n) => n + 1) }}
         />
 
-        <section className="card admin-form">
-          <h2 className="section-title">Payment history</h2>
-          <PaymentHistoryTable memberId={member.id} />
-        </section>
+        <LeasedBedsCard memberId={member.id} />
       </div>
+
+      <section className="card admin-form">
+        <h2 className="section-title">Payment history</h2>
+        <PaymentHistoryTable memberId={member.id} refreshToken={paymentsRefresh} />
+      </section>
     </section>
   )
 }
