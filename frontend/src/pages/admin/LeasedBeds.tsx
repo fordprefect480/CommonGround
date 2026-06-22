@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { getLeasedBedPrice } from '../../api/adminTools'
 import {
-  addBed,
+  // addBed, // Hidden from the admin UI for now; backend endpoint kept in case we re-enable it later.
   assignBed,
-  deleteBed,
+  // deleteBed, // Hidden from the admin UI for now; backend endpoint kept in case we re-enable it later.
   fetchBedRequests,
   fetchLeasedBeds,
   recordLeasePayment,
@@ -42,7 +42,7 @@ function leaseStatusLabel(status: BedLeaseStatus): string {
 export default function LeasedBeds() {
   const [state, setState] = useState<State>({ status: 'loading' })
   const [error, setError] = useState<string | null>(null)
-  const [addLabel, setAddLabel] = useState('')
+  // const [addLabel, setAddLabel] = useState('') // Used only by the hidden "Add bed" control (see below).
   const [busy, setBusy] = useState(false)
 
   const reloadAll = async () => {
@@ -95,51 +95,56 @@ export default function LeasedBeds() {
     }
   }
 
-  const handleAddBed = async () => {
-    const trimmed = addLabel.trim()
-    if (!trimmed) {
-      setError('Enter a label for the new bed.')
-      return
-    }
-    setBusy(true)
-    setError(null)
-    try {
-      await addBed({ label: trimmed })
-      setAddLabel('')
-      await reloadAll()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not add the bed.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const handleToggleService = async (bed: AdminBed) => {
-    setBusy(true)
-    setError(null)
-    try {
-      await updateBed(bed.id, { isActive: !bed.isActive })
-      await reloadAll()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not update the bed.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const handleDelete = async (bed: AdminBed) => {
-    if (!confirm(`Delete bed ${bed.label}? It will be removed from the list; any past lease records are kept.`)) return
-    setBusy(true)
-    setError(null)
-    try {
-      await deleteBed(bed.id)
-      await reloadAll()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not delete the bed.')
-    } finally {
-      setBusy(false)
-    }
-  }
+  // The "Add bed", "Take out of service / Return to service" and "Delete bed" actions are
+  // hidden from the admin UI for now. The backend endpoints (POST /beds, PATCH /beds/{id}
+  // with isActive, DELETE /beds/{id}) are still in place, so these handlers can be restored
+  // verbatim if we decide to surface the actions again.
+  //
+  // const handleAddBed = async () => {
+  //   const trimmed = addLabel.trim()
+  //   if (!trimmed) {
+  //     setError('Enter a label for the new bed.')
+  //     return
+  //   }
+  //   setBusy(true)
+  //   setError(null)
+  //   try {
+  //     await addBed({ label: trimmed })
+  //     setAddLabel('')
+  //     await reloadAll()
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : 'Could not add the bed.')
+  //   } finally {
+  //     setBusy(false)
+  //   }
+  // }
+  //
+  // const handleToggleService = async (bed: AdminBed) => {
+  //   setBusy(true)
+  //   setError(null)
+  //   try {
+  //     await updateBed(bed.id, { isActive: !bed.isActive })
+  //     await reloadAll()
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : 'Could not update the bed.')
+  //   } finally {
+  //     setBusy(false)
+  //   }
+  // }
+  //
+  // const handleDelete = async (bed: AdminBed) => {
+  //   if (!confirm(`Delete bed ${bed.label}? It will be removed from the list; any past lease records are kept.`)) return
+  //   setBusy(true)
+  //   setError(null)
+  //   try {
+  //     await deleteBed(bed.id)
+  //     await reloadAll()
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : 'Could not delete the bed.')
+  //   } finally {
+  //     setBusy(false)
+  //   }
+  // }
 
   const handleEditNote = async (bed: AdminBed) => {
     const next = window.prompt(`Note for bed ${bed.label} (leave blank to clear):`, bed.notes ?? '')
@@ -200,21 +205,26 @@ export default function LeasedBeds() {
             />
 
             <h2 className="section-title">All beds</h2>
-            <div className="field" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-              <input
-                type="text"
-                aria-label="New bed label"
-                placeholder="Label, e.g. N1 or X2039"
-                value={addLabel}
-                onChange={(e) => setAddLabel(e.target.value)}
-                disabled={busy}
-                maxLength={50}
-                style={{ maxWidth: 220 }}
-              />
-              <button type="button" className="primary-button" onClick={handleAddBed} disabled={busy}>
-                Add bed
-              </button>
-            </div>
+            {/*
+              "Add bed" control hidden for now. The backend (POST /api/admin/leased-beds/beds)
+              still supports adding beds, so this can be restored if we need it later.
+
+              <div className="field" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+                <input
+                  type="text"
+                  aria-label="New bed label"
+                  placeholder="Label, e.g. N1 or X2039"
+                  value={addLabel}
+                  onChange={(e) => setAddLabel(e.target.value)}
+                  disabled={busy}
+                  maxLength={50}
+                  style={{ maxWidth: 220 }}
+                />
+                <button type="button" className="primary-button" onClick={handleAddBed} disabled={busy}>
+                  Add bed
+                </button>
+              </div>
+            */}
             <div className="admin-table-wrap">
               <table className="admin-table">
                 <thead>
@@ -271,11 +281,18 @@ export default function LeasedBeds() {
                             </>
                           ) : (
                             <>
-                              <button type="button" className="footer-link" onClick={() => handleToggleService(bed)} disabled={busy}>
-                                {bed.isActive ? 'Take out of service' : 'Return to service'}
-                              </button>
-                              {' · '}
-                              <button type="button" className="footer-link" onClick={() => handleDelete(bed)} disabled={busy}>Delete</button>
+                              {/*
+                                "Take out of service / Return to service" and "Delete" actions hidden for now.
+                                The backend still supports them (PATCH /beds/{id} with isActive, DELETE /beds/{id}),
+                                so they can be restored if we need them later.
+
+                                <button type="button" className="footer-link" onClick={() => handleToggleService(bed)} disabled={busy}>
+                                  {bed.isActive ? 'Take out of service' : 'Return to service'}
+                                </button>
+                                {' · '}
+                                <button type="button" className="footer-link" onClick={() => handleDelete(bed)} disabled={busy}>Delete</button>
+                              */}
+                              <span className="card-note">—</span>
                             </>
                           )}
                         </td>
