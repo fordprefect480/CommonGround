@@ -57,7 +57,7 @@ export default function LeasedBeds() {
 
   const handleRelease = async (bed: AdminBed) => {
     if (!bed.currentLease) return
-    if (!confirm(`Release bed ${bed.code} from ${bed.currentLease.memberName ?? 'this member'}? This frees the bed.`)) return
+    if (!confirm(`Release bed ${bed.label} from ${bed.currentLease.memberName ?? 'this member'}? This frees the bed.`)) return
     setError(null)
     try {
       await releaseLease(bed.currentLease.leaseId)
@@ -69,7 +69,7 @@ export default function LeasedBeds() {
 
   const handleRecordPayment = async (bed: AdminBed) => {
     if (!bed.currentLease) return
-    if (!confirm(`Record an offline payment for bed ${bed.code}? This marks the lease active.`)) return
+    if (!confirm(`Record an offline payment for bed ${bed.label}? This marks the lease active.`)) return
     setError(null)
     try {
       await recordLeasePayment(bed.currentLease.leaseId)
@@ -148,8 +148,7 @@ export default function LeasedBeds() {
                     return (
                       <tr key={bed.id} className={bed.isActive ? undefined : 'admin-table-row-muted'}>
                         <td data-label="Bed">
-                          <strong>{bed.code}</strong>
-                          {bed.label ? <> &middot; {bed.label}</> : null}
+                          <strong>{bed.label}</strong>
                           {!bed.isActive && <> <span className="pill">Out of service</span></>}
                         </td>
                         <td data-label="Holder">{lease?.memberName ?? (bed.isActive ? <span className="pill pill-ok">Available</span> : '—')}</td>
@@ -310,7 +309,7 @@ function AssignControls({
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
       <select value={bedId} onChange={(e) => setBedId(e.target.value === '' ? '' : Number(e.target.value))} disabled={busy}>
         {availableBeds.map((b) => (
-          <option key={b.id} value={b.id}>{b.code}{b.label ? ` · ${b.label}` : ''}</option>
+          <option key={b.id} value={b.id}>{b.label}</option>
         ))}
       </select>
       <span aria-hidden="true">$</span>

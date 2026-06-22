@@ -47,7 +47,7 @@ public sealed class ReleaseLeaseEndpoint(
 
         await activityLogger.LogAsync(
             "leased_bed.released",
-            $"released bed {lease.Bed?.Code}",
+            $"released bed {lease.Bed?.Label}",
             targetType: "BedLease",
             targetId: lease.Id.ToString(),
             ct: ct);

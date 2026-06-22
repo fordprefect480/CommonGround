@@ -21,29 +21,29 @@ public static class LeasedBedEmails
     public static string BuildWaitlistedHtml(string memberName, int total) =>
         Wrap($"<p>{Enc(memberName)} has joined the waiting list. There are now {total} members on the waiting list.</p>");
 
-    public static string BuildAssignmentText(string memberName, string bedCode, string fyLabel, DateOnly expiresOn, string? amount, string? profileUrl)
+    public static string BuildAssignmentText(string memberName, string bedLabel, string fyLabel, DateOnly expiresOn, string? amount, string? profileUrl)
     {
         var expiry = expiresOn.ToString("d MMM yyyy");
         if (amount is null)
         {
-            return $"Hi {memberName},\n\nYou've been assigned bed {bedCode} for the {fyLabel} financial year (expires {expiry}). No payment is required - your lease is confirmed.\n\nWe look forward to seeing you in the garden.\n";
+            return $"Hi {memberName},\n\nYou've been assigned bed {bedLabel} for the {fyLabel} financial year (expires {expiry}). No payment is required - your lease is confirmed.\n\nWe look forward to seeing you in the garden.\n";
         }
         var payLine = profileUrl is null
             ? $"Please complete your payment of {amount} from your profile to confirm it."
             : $"Please complete your payment of {amount} from your profile to confirm it: {profileUrl}";
-        return $"Hi {memberName},\n\nYou've been assigned bed {bedCode} for the {fyLabel} financial year (expires {expiry}). {payLine}\n";
+        return $"Hi {memberName},\n\nYou've been assigned bed {bedLabel} for the {fyLabel} financial year (expires {expiry}). {payLine}\n";
     }
 
-    public static string BuildAssignmentHtml(string memberName, string bedCode, string fyLabel, DateOnly expiresOn, string? amount, string? profileUrl)
+    public static string BuildAssignmentHtml(string memberName, string bedLabel, string fyLabel, DateOnly expiresOn, string? amount, string? profileUrl)
     {
         var expiry = Enc(expiresOn.ToString("d MMM yyyy"));
-        var code = Enc(bedCode);
+        var label = Enc(bedLabel);
         var fy = Enc(fyLabel);
         if (amount is null)
         {
             return Wrap($"""
                 <h2 style="margin:0 0 16px;">Hi {Enc(memberName)},</h2>
-                <p>You've been assigned bed <strong>{code}</strong> for the {fy} financial year (expires {expiry}).</p>
+                <p>You've been assigned bed <strong>{label}</strong> for the {fy} financial year (expires {expiry}).</p>
                 <p>No payment is required &mdash; your lease is confirmed.</p>
                 <p>We look forward to seeing you in the garden.</p>
                 """);
@@ -53,7 +53,7 @@ public static class LeasedBedEmails
             : $"""Please complete your payment of {Enc(amount)} from <a href="{Enc(profileUrl)}">your profile</a> to confirm it.""";
         return Wrap($"""
             <h2 style="margin:0 0 16px;">Hi {Enc(memberName)},</h2>
-            <p>You've been assigned bed <strong>{code}</strong> for the {fy} financial year (expires {expiry}).</p>
+            <p>You've been assigned bed <strong>{label}</strong> for the {fy} financial year (expires {expiry}).</p>
             <p>{payLink}</p>
             """);
     }

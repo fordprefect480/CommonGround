@@ -58,14 +58,14 @@ public sealed class AssignBedEndpoint(
 
         if (!bed.IsActive)
         {
-            await Send.ResultAsync(Results.BadRequest(new { error = $"Bed {bed.Code} is out of service." }));
+            await Send.ResultAsync(Results.BadRequest(new { error = $"Bed {bed.Label} is out of service." }));
             return;
         }
 
         // Re-check availability to guard the page-load/click race and two admins assigning at once.
         if (await beds.IsBedOccupiedAsync(bed.Id, ct))
         {
-            await Send.ResultAsync(Results.BadRequest(new { error = $"Bed {bed.Code} is already leased." }));
+            await Send.ResultAsync(Results.BadRequest(new { error = $"Bed {bed.Label} is already leased." }));
             return;
         }
 
@@ -97,14 +97,14 @@ public sealed class AssignBedEndpoint(
 
         await activityLogger.LogAsync(
             "leased_bed.assigned",
-            $"assigned bed {bed.Code} to {request.User?.DisplayName ?? request.User?.Email ?? request.UserId}",
+            $"assigned bed {bed.Label} to {request.User?.DisplayName ?? request.User?.Email ?? request.UserId}",
             targetType: "BedLease",
             targetId: lease.Id.ToString(),
             ct: ct);
 
         if (request.User is not null)
         {
-            await notifications.SendAssignmentAsync(request.User, bed.Code, lease.ExpiresOn, price, ct);
+            await notifications.SendAssignmentAsync(request.User, bed.Label, lease.ExpiresOn, price, ct);
         }
 
         await Send.OkAsync(await beds.GetOverviewAsync(ct), ct);

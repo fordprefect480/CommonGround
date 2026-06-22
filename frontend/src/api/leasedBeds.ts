@@ -21,10 +21,7 @@ export interface AdminBedAllocation {
 
 export interface AdminBed {
   id: number
-  code: string
-  section: string
-  number: number
-  label: string | null
+  label: string
   isActive: boolean
   notes: string | null
   isOccupied: boolean
@@ -37,8 +34,7 @@ export interface LeasedBedsOverview {
 }
 
 export interface AddBedInput {
-  section: 'N' | 'S'
-  label?: string | null
+  label: string
   notes?: string | null
 }
 
@@ -58,8 +54,7 @@ export interface MembershipInfo {
 
 export interface MyLease {
   leaseId: number
-  bedCode: string
-  label: string | null
+  bedLabel: string
   status: BedLeaseStatus
   priceAtAllocationCents: number
   isPaid: boolean

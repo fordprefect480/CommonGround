@@ -88,7 +88,7 @@ public sealed class RenewLeaseEndpoint(
 
             await activityLogger.LogAsync(
                 "leased_bed.renewed",
-                $"renewed bed {lease.Bed?.Code} for {expiresOn.Year - 1}/{expiresOn.Year}",
+                $"renewed bed {lease.Bed?.Label} for {expiresOn.Year - 1}/{expiresOn.Year}",
                 targetType: "Bed",
                 targetId: lease.BedId.ToString(),
                 ct: ct);

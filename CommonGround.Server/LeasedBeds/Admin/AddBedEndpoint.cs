@@ -14,8 +14,7 @@ public sealed class AddBedEndpoint(
 {
     public sealed class Request
     {
-        public string Section { get; set; } = "";
-        public string? Label { get; set; }
+        public string Label { get; set; } = "";
         public string? Notes { get; set; }
     }
 
@@ -27,18 +26,22 @@ public sealed class AddBedEndpoint(
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var section = req.Section.Trim().ToUpperInvariant();
-        if (section is not ("N" or "S"))
+        var label = LeasedBedService.NormalizeText(req.Label);
+        if (label is null)
         {
-            await Send.ResultAsync(Results.BadRequest(new { error = "Section must be N or S." }));
+            await Send.ResultAsync(Results.BadRequest(new { error = "A bed label is required." }));
+            return;
+        }
+
+        if (await db.Beds.AnyAsync(b => b.Label == label, ct))
+        {
+            await Send.ResultAsync(Results.BadRequest(new { error = $"A bed labelled \"{label}\" already exists." }));
             return;
         }
 
         var bed = new Bed
         {
-            Section = section,
-            Number = await beds.NextBedNumberAsync(section, ct),
-            Label = LeasedBedService.NormalizeText(req.Label),
+            Label = label,
             Notes = LeasedBedService.NormalizeText(req.Notes),
             IsActive = true,
         };
@@ -50,14 +53,14 @@ public sealed class AddBedEndpoint(
         }
         catch (DbUpdateException)
         {
-            // Two admins adding to the same section at once can race for the next number.
-            await Send.ResultAsync(Results.BadRequest(new { error = "Couldn't add the bed just now - please try again." }));
+            // Safety net for the unique-label index if two admins add the same label at once.
+            await Send.ResultAsync(Results.BadRequest(new { error = $"A bed labelled \"{label}\" already exists." }));
             return;
         }
 
         await activityLogger.LogAsync(
             "leased_bed.added",
-            $"added leased bed {bed.Code}",
+            $"added leased bed {bed.Label}",
             targetType: "Bed",
             targetId: bed.Id.ToString(),
             ct: ct);

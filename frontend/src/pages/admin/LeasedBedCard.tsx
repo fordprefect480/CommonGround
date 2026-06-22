@@ -177,7 +177,7 @@ function LeaseRow({
         <p className="card-note" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
           <span className="pill pill-warn" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>Awaiting payment</span>
           <span>
-            You&rsquo;ve been assigned bed {lease.bedCode}. Pay {formatPrice(lease.priceAtAllocationCents)} to confirm your
+            You&rsquo;ve been assigned bed {lease.bedLabel}. Pay {formatPrice(lease.priceAtAllocationCents)} to confirm your
             lease (expires {formatDate(lease.expiresOn)}).
           </span>
         </p>
@@ -201,7 +201,7 @@ function LeaseRow({
       <div>
         <p className="card-note" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
           <span className="pill pill-warn" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>Expired</span>
-          <span>Your lease for bed {lease.bedCode} expired on {formatDate(lease.expiresOn)}.</span>
+          <span>Your lease for bed {lease.bedLabel} expired on {formatDate(lease.expiresOn)}.</span>
         </p>
         {lease.canRenew && <RenewButton busy={busy} onRenew={onRenew} />}
       </div>
@@ -212,7 +212,7 @@ function LeaseRow({
   return (
     <div>
       <p className="card-note" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span className="pill pill-ok" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>Bed {lease.bedCode}</span>
+        <span className="pill pill-ok" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>Bed {lease.bedLabel}</span>
         <span>
           {lease.isPaid ? (lease.paidOnUtc ? `Paid ${formatDate(lease.paidOnUtc)}` : 'No payment required') : 'Awaiting payment'}
           {' · '}Lease expires {formatDate(lease.expiresOn)}.

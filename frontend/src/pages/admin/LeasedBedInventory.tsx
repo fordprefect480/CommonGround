@@ -15,7 +15,6 @@ type State =
 
 export default function LeasedBedInventory() {
   const [state, setState] = useState<State>({ status: 'loading' })
-  const [section, setSection] = useState<'N' | 'S'>('N')
   const [label, setLabel] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
@@ -31,12 +30,17 @@ export default function LeasedBedInventory() {
   const apply = (overview: LeasedBedsOverview) => setState({ status: 'ready', overview })
 
   const handleAdd = async () => {
+    const trimmed = label.trim()
+    if (!trimmed) {
+      setMessage({ kind: 'error', text: 'Enter a label for the bed.' })
+      return
+    }
     setBusy(true)
     setMessage(null)
     try {
-      apply(await addBed({ section, label: label.trim() || null }))
+      apply(await addBed({ label: trimmed }))
       setLabel('')
-      setMessage({ kind: 'ok', text: `Added a bed to section ${section}.` })
+      setMessage({ kind: 'ok', text: `Added bed ${trimmed}.` })
     } catch (err) {
       setMessage({ kind: 'error', text: err instanceof Error ? err.message : 'Could not add the bed.' })
     } finally {
@@ -57,12 +61,12 @@ export default function LeasedBedInventory() {
   }
 
   const handleDelete = async (bed: AdminBed) => {
-    if (!confirm(`Delete bed ${bed.code}? This is only possible if it has never been leased.`)) return
+    if (!confirm(`Delete bed ${bed.label}? It will be removed from the list; any past lease records are kept.`)) return
     setBusy(true)
     setMessage(null)
     try {
       apply(await deleteBed(bed.id))
-      setMessage({ kind: 'ok', text: `Deleted bed ${bed.code}.` })
+      setMessage({ kind: 'ok', text: `Deleted bed ${bed.label}.` })
     } catch (err) {
       setMessage({ kind: 'error', text: err instanceof Error ? err.message : 'Could not delete the bed.' })
     } finally {
@@ -74,8 +78,8 @@ export default function LeasedBedInventory() {
     <div className="card">
       <h2 className="section-title">Leased beds</h2>
       <p className="card-note">
-        The total number of beds is however many are in service. Add a bed, or take one out of service when
-        it&rsquo;s no longer available. A bed that&rsquo;s currently leased must be released first.
+        The total number of beds is however many are in service. Add a bed with whatever label you like, or take one
+        out of service when it&rsquo;s no longer available. A bed that&rsquo;s currently leased must be released first.
       </p>
 
       {state.status === 'loading' && <p className="admin-loading">Loading&hellip;</p>}
@@ -89,24 +93,17 @@ export default function LeasedBedInventory() {
           </p>
 
           <div className="field">
-            <label className="field-label" htmlFor="add-bed-section">Add a bed</label>
+            <label className="field-label" htmlFor="add-bed-label">Add a bed</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <select
-                id="add-bed-section"
-                value={section}
-                onChange={(e) => setSection(e.target.value as 'N' | 'S')}
-                disabled={busy}
-              >
-                <option value="N">North</option>
-                <option value="S">South</option>
-              </select>
               <input
+                id="add-bed-label"
                 type="text"
-                placeholder="Label (optional)"
+                placeholder="Label, e.g. N1 or X2039"
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 disabled={busy}
-                style={{ maxWidth: 200 }}
+                maxLength={50}
+                style={{ maxWidth: 220 }}
               />
               <button type="button" className="primary-button" onClick={handleAdd} disabled={busy}>
                 Add bed
@@ -129,10 +126,7 @@ export default function LeasedBedInventory() {
               <tbody>
                 {state.overview.beds.map((bed) => (
                   <tr key={bed.id} className={bed.isActive ? undefined : 'admin-table-row-muted'}>
-                    <td data-label="Bed">
-                      <strong>{bed.code}</strong>
-                      {bed.label ? <> &middot; {bed.label}</> : null}
-                    </td>
+                    <td data-label="Bed"><strong>{bed.label}</strong></td>
                     <td data-label="Status">
                       {bed.isActive
                         ? bed.isOccupied
