@@ -144,4 +144,9 @@ app.MapDefaultEndpoints();
 
 app.UseFileServer();
 
+// Serve the SPA shell for client-side routes (e.g. /membership/welcome from the
+// Stripe redirect). API routes are under /api and static assets are served above,
+// so anything else is a React Router path that needs index.html.
+app.MapFallbackToFile("index.html");
+
 app.Run();
