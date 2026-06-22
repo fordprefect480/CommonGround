@@ -188,12 +188,12 @@ export default function AdminProfile() {
         <MembershipStatus paidThrough={paidThrough} />
 
         <LeasedBedCard />
-
-        <section className="card admin-form">
-          <h2 className="section-title">Payment history</h2>
-          <PaymentHistoryTable />
-        </section>
       </div>
+
+      <section className="card admin-form">
+        <h2 className="section-title">Payment history</h2>
+        <PaymentHistoryTable />
+      </section>
     </section>
   )
 }
