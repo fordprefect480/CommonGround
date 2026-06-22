@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.6.0](https://github.com/fordprefect480/CommonGround/compare/v0.5.0...v0.6.0) (2026-06-22)
+
+
+### Features
+
+* add leased beds management ([bfb8e00](https://github.com/fordprefect480/CommonGround/commit/bfb8e00d962c31069fc65c99b0e7b82fad0663c2))
+* add leased beds management ([9ba1936](https://github.com/fordprefect480/CommonGround/commit/9ba19366dd007cd9cf59dcedc5527d957ceafefd))
+* free-form bed labels and soft-deletable beds ([6d6edcd](https://github.com/fordprefect480/CommonGround/commit/6d6edcd2435a74d3bffbc60e543a0ac0fd396812))
+* label leased-bed activity log entries ([a03360e](https://github.com/fordprefect480/CommonGround/commit/a03360ef894cd462afe5e794f3b3cf9352415f06))
+* manage bed inventory from the Leased beds page ([e0391d2](https://github.com/fordprefect480/CommonGround/commit/e0391d23a4c9973337163f06f969bedab83e89db))
+* show the configured leased-bed price on the public site ([e6e6814](https://github.com/fordprefect480/CommonGround/commit/e6e6814eab3d05a93ddd8c585eb24824c15d97fb))
+
+
+### Bug Fixes
+
+* trim whitespace from Turnstile keys so the captcha widget loads ([b95c6af](https://github.com/fordprefect480/CommonGround/commit/b95c6af2881e7006b4d57cf7ece10372c9e577be))
+* trim whitespace from Turnstile keys so the captcha widget loads ([db4936a](https://github.com/fordprefect480/CommonGround/commit/db4936ad1a30901c44c944c44e9a25ddc5244035))
+
 ## [0.5.0](https://github.com/fordprefect480/CommonGround/compare/v0.4.0...v0.5.0) (2026-06-19)
 
 
