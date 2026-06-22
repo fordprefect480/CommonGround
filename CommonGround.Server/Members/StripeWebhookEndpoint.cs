@@ -61,6 +61,6 @@ public sealed class StripeWebhookEndpoint(
             }
         }
 
-        await Send.OkAsync(ct);
+        await Send.OkAsync();
     }
 }
