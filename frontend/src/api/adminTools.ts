@@ -38,7 +38,19 @@ export async function getMembershipPrice(): Promise<{ priceCents: number }> {
 }
 
 export async function updateMembershipPrice(priceCents: number): Promise<{ priceCents: number }> {
-  const res = await fetch('/api/admin/tools/membership-price', {
+  return putPrice('/api/admin/tools/membership-price', priceCents)
+}
+
+export async function getLeasedBedPrice(): Promise<{ priceCents: number }> {
+  return getJson('/api/admin/tools/leased-bed-price')
+}
+
+export async function updateLeasedBedPrice(priceCents: number): Promise<{ priceCents: number }> {
+  return putPrice('/api/admin/tools/leased-bed-price', priceCents)
+}
+
+async function putPrice(url: string, priceCents: number): Promise<{ priceCents: number }> {
+  const res = await fetch(url, {
     method: 'PUT',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

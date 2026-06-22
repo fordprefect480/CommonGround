@@ -17,6 +17,8 @@ public class MembershipPayment
 
     public ApplicationUser? User { get; set; }
 
+    public PaymentMethod Method { get; set; }
+
     [MaxLength(255)]
     public string StripeCheckoutSessionId { get; set; } = "";
 

@@ -9,4 +9,7 @@ public class SiteSettings
 
     /// <summary>Annual membership price in the smallest currency unit (cents).</summary>
     public int MembershipPriceCents { get; set; }
+
+    /// <summary>Default annual leased-bed price in the smallest currency unit (cents).</summary>
+    public int LeasedBedPriceCents { get; set; }
 }

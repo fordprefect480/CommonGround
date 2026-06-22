@@ -666,6 +666,7 @@ export function MSFooter({ onNav }: { onNav: (id: NavId) => void }) {
                     fontFamily: 'var(--font-display)',
                     fontWeight: 800,
                     fontSize: 18,
+                    lineHeight: '22px',
                     textTransform: 'uppercase',
                     letterSpacing: '-0.01em',
                     marginTop: 2,

@@ -58,6 +58,14 @@ public sealed class AdminEventsGroup : SubGroup<AdminGroup>
     }
 }
 
+public sealed class AdminLeasedBedsGroup : SubGroup<AdminGroup>
+{
+    public AdminLeasedBedsGroup()
+    {
+        Configure("leased-beds", _ => { });
+    }
+}
+
 public sealed class PublicEventsGroup : Group
 {
     public PublicEventsGroup()

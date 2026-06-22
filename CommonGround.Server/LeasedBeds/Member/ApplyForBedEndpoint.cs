@@ -1,0 +1,72 @@
+using CommonGround.Server.Activity;
+using CommonGround.Server.Data;
+using FastEndpoints;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
+namespace CommonGround.Server.LeasedBeds.Member;
+
+/// <summary>
+/// Single apply / join-waiting-list action. The server re-checks availability and
+/// routes to Pending (beds free) or Waitlisted (full), enforcing active membership
+/// and one in-flight request per member.
+/// </summary>
+public sealed class ApplyForBedEndpoint(
+    UserManager<ApplicationUser> userManager,
+    AppDbContext db,
+    LeasedBedService beds,
+    LeasedBedNotifications notifications,
+    IActivityLogger activityLogger)
+    : EndpointWithoutRequest<MyLeasedBedStatus>
+{
+    public override void Configure()
+    {
+        Post("/leased-beds/requests");
+    }
+
+    public override async Task HandleAsync(CancellationToken ct)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            await Send.UnauthorizedAsync(ct);
+            return;
+        }
+
+        if (!(user.MembershipPaidThroughUtc > DateTime.UtcNow))
+        {
+            await Send.ResultAsync(Results.BadRequest(new { error = "You need an active membership to apply for a bed." }));
+            return;
+        }
+
+        if (await beds.GetActiveRequestAsync(user.Id, ct) is not null)
+        {
+            await Send.ResultAsync(Results.BadRequest(new { error = "You already have a bed request in progress." }));
+            return;
+        }
+
+        var capacity = await beds.GetCapacityAsync(ct);
+        var status = capacity.Remaining > 0 ? BedRequestStatus.Pending : BedRequestStatus.Waitlisted;
+
+        db.BedRequests.Add(new BedRequest
+        {
+            UserId = user.Id,
+            Status = status,
+            CreatedAtUtc = DateTime.UtcNow,
+        });
+        await db.SaveChangesAsync(ct);
+
+        await activityLogger.LogAsync(
+            "leased_bed.requested",
+            status == BedRequestStatus.Pending ? "applied for a bed" : "joined the bed waiting list",
+            targetType: "Member",
+            targetId: user.Id,
+            ct: ct);
+
+        var waitlistTotal = await db.BedRequests.CountAsync(r => r.Status == BedRequestStatus.Waitlisted, ct);
+        await notifications.SendApplicationReceivedAsync(
+            user.DisplayName ?? user.Email ?? "A member", status, capacity.Remaining, waitlistTotal, ct);
+
+        await Send.OkAsync(await beds.GetMyStatusAsync(user, ct), ct);
+    }
+}
