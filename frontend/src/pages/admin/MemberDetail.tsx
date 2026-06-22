@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { fetchMember, recordMembershipPayment, updateMember, type Member } from '../../api/auth'
+import { fetchLeasedBeds, type AdminBed, type BedLeaseStatus } from '../../api/leasedBeds'
+import { formatPrice } from '../../format'
 import PaymentHistoryTable from './PaymentHistoryTable'
 
 const ADMIN_ROLE = 'Admin'
@@ -85,6 +87,64 @@ function MembershipCard({ memberId, paidThrough, onRecorded }: { memberId: strin
         <button type="button" className="secondary-button" onClick={record} disabled={busy}>
           {busy ? 'Recording…' : 'Record offline payment'}
         </button>
+      </div>
+    </section>
+  )
+}
+
+function leaseStatusLabel(status: BedLeaseStatus): string {
+  switch (status) {
+    case 'AwaitingPayment':
+      return 'Awaiting payment'
+    case 'Active':
+      return 'Active'
+    case 'Expired':
+      return 'Expired'
+    case 'Released':
+      return 'Released'
+  }
+}
+
+function LeasedBedsCard({ memberId }: { memberId: string }) {
+  const [beds, setBeds] = useState<AdminBed[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchLeasedBeds()
+      .then((overview) => {
+        if (!cancelled) setBeds(overview.beds.filter((b) => b.currentLease?.memberId === memberId))
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load leased beds.')
+      })
+    return () => { cancelled = true }
+  }, [memberId])
+
+  return (
+    <section className="card admin-form">
+      <h2 className="section-title">Leased beds</h2>
+
+      {error && <div className="form-error" role="alert">{error}</div>}
+      {!error && beds === null && <p className="card-note" style={{ margin: 0 }}>Loading&hellip;</p>}
+      {beds !== null && beds.length === 0 && <p className="card-note" style={{ margin: 0 }}>No leased bed.</p>}
+
+      {beds?.map((bed) => {
+        const lease = bed.currentLease!
+        return (
+          <p key={bed.id} className="card-note" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span className={lease.isPaid ? 'pill pill-ok' : 'pill pill-warn'} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+              Bed {bed.label}
+            </span>
+            <span>
+              {leaseStatusLabel(lease.status)} · {formatPrice(lease.priceAtAllocationCents)} · expires {dateFormatter.format(new Date(lease.expiresOn))}
+            </span>
+          </p>
+        )
+      })}
+
+      <div className="admin-actions">
+        <Link to="/admin/leased-beds" className="footer-link">Manage leased beds</Link>
       </div>
     </section>
   )
@@ -249,11 +309,13 @@ export default function MemberDetail() {
           onRecorded={(updated) => { setState({ status: 'ready', member: updated }); setForm(memberToForm(updated)) }}
         />
 
-        <section className="card admin-form">
-          <h2 className="section-title">Payment history</h2>
-          <PaymentHistoryTable memberId={member.id} />
-        </section>
+        <LeasedBedsCard memberId={member.id} />
       </div>
+
+      <section className="card admin-form">
+        <h2 className="section-title">Payment history</h2>
+        <PaymentHistoryTable memberId={member.id} />
+      </section>
     </section>
   )
 }
