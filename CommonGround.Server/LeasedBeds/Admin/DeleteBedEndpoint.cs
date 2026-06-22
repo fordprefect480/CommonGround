@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CommonGround.Server.LeasedBeds.Admin;
 
+// NOTE: The "Delete bed" action is currently hidden from the admin UI, but this endpoint is
+// intentionally kept and fully functional in case we need to surface bed deletion again.
 public sealed class DeleteBedEndpoint(
     AppDbContext db,
     LeasedBedService beds,

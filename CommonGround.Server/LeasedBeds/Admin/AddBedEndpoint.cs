@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CommonGround.Server.LeasedBeds.Admin;
 
+// NOTE: The "Add bed" action is currently hidden from the admin UI, but this endpoint is
+// intentionally kept and fully functional in case we need to surface bed creation again.
 public sealed class AddBedEndpoint(
     AppDbContext db,
     LeasedBedService beds,
