@@ -22,7 +22,7 @@ import { formatPrice } from '../../format'
 type State =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; overview: LeasedBedsOverview; requests: AdminBedRequests; standardPriceCents: number; members: Member[] }
+  | { status: 'ready'; overview: LeasedBedsOverview; requests: AdminBedRequests; standardPriceCents: number }
 
 const dateFmt = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
 const formatDate = (value: string) => dateFmt.format(new Date(value))
@@ -31,6 +31,13 @@ function memberLabel(m: Member): string {
   const name = m.displayName?.trim() || [m.firstName, m.lastName].filter(Boolean).join(' ').trim()
   if (name && m.email) return `${name} (${m.email})`
   return name || m.email || m.id
+}
+
+/** Parse a dollar string into whole cents, or return a user-facing error message. */
+function parsePriceCents(priceDollars: string): { cents: number } | { error: string } {
+  const dollars = Number(priceDollars)
+  if (!Number.isFinite(dollars) || dollars < 0) return { error: 'Enter a price of $0 or more.' }
+  return { cents: Math.round(dollars * 100) }
 }
 
 function leaseStatusLabel(status: BedLeaseStatus): string {
@@ -49,23 +56,30 @@ function leaseStatusLabel(status: BedLeaseStatus): string {
 export default function LeasedBeds() {
   const [state, setState] = useState<State>({ status: 'loading' })
   const [error, setError] = useState<string | null>(null)
-  // const [addLabel, setAddLabel] = useState('') // Used only by the hidden "Add bed" control (see below).
   const [busy, setBusy] = useState(false)
+  // Members back the "assign to a member" dropdown only; they rarely change, so load once
+  // (sorted for display) rather than refetching on every bed action via reloadAll.
+  const [members, setMembers] = useState<Member[]>([])
+  const sortedMembers = useMemo(
+    () => [...members].sort((a, b) => memberLabel(a).localeCompare(memberLabel(b))),
+    [members],
+  )
 
   const reloadAll = async () => {
-    const [overview, requests, price, members] = await Promise.all([
+    const [overview, requests, price] = await Promise.all([
       fetchLeasedBeds(),
       fetchBedRequests(),
       getLeasedBedPrice(),
-      fetchMembers(),
     ])
-    setState({ status: 'ready', overview, requests, standardPriceCents: price.priceCents, members })
+    setState({ status: 'ready', overview, requests, standardPriceCents: price.priceCents })
   }
 
   useEffect(() => {
     reloadAll().catch((err: unknown) =>
       setState({ status: 'error', message: err instanceof Error ? err.message : 'Failed to load leased beds' }),
     )
+    // Members are auxiliary; a failure here just leaves the assign dropdown empty.
+    fetchMembers().then(setMembers).catch(() => {})
   }, [])
 
   const handleRelease = async (bed: AdminBed) => {
@@ -104,55 +118,10 @@ export default function LeasedBeds() {
   }
 
   // The "Add bed", "Take out of service / Return to service" and "Delete bed" actions are
-  // hidden from the admin UI for now. The backend endpoints (POST /beds, PATCH /beds/{id}
-  // with isActive, DELETE /beds/{id}) are still in place, so these handlers can be restored
-  // verbatim if we decide to surface the actions again.
-  //
-  // const handleAddBed = async () => {
-  //   const trimmed = addLabel.trim()
-  //   if (!trimmed) {
-  //     setError('Enter a label for the new bed.')
-  //     return
-  //   }
-  //   setBusy(true)
-  //   setError(null)
-  //   try {
-  //     await addBed({ label: trimmed })
-  //     setAddLabel('')
-  //     await reloadAll()
-  //   } catch (err) {
-  //     setError(err instanceof Error ? err.message : 'Could not add the bed.')
-  //   } finally {
-  //     setBusy(false)
-  //   }
-  // }
-  //
-  // const handleToggleService = async (bed: AdminBed) => {
-  //   setBusy(true)
-  //   setError(null)
-  //   try {
-  //     await updateBed(bed.id, { isActive: !bed.isActive })
-  //     await reloadAll()
-  //   } catch (err) {
-  //     setError(err instanceof Error ? err.message : 'Could not update the bed.')
-  //   } finally {
-  //     setBusy(false)
-  //   }
-  // }
-  //
-  // const handleDelete = async (bed: AdminBed) => {
-  //   if (!confirm(`Delete bed ${bed.label}? It will be removed from the list; any past lease records are kept.`)) return
-  //   setBusy(true)
-  //   setError(null)
-  //   try {
-  //     await deleteBed(bed.id)
-  //     await reloadAll()
-  //   } catch (err) {
-  //     setError(err instanceof Error ? err.message : 'Could not delete the bed.')
-  //   } finally {
-  //     setBusy(false)
-  //   }
-  // }
+  // hidden from the admin UI for now; their handlers were removed (see git history to restore).
+  // The backend endpoints are still in place — POST /api/admin/leased-beds/beds,
+  // PATCH /api/admin/leased-beds/beds/{id} (isActive) and DELETE /api/admin/leased-beds/beds/{id}
+  // (see addBed/deleteBed/updateBed in api/leasedBeds.ts) — so the actions can be resurfaced later.
 
   const handleEditNote = async (bed: AdminBed) => {
     const next = window.prompt(`Note for bed ${bed.label} (leave blank to clear):`, bed.notes ?? '')
@@ -217,26 +186,7 @@ export default function LeasedBeds() {
             />
 
             <h2 className="section-title">All beds</h2>
-            {/*
-              "Add bed" control hidden for now. The backend (POST /api/admin/leased-beds/beds)
-              still supports adding beds, so this can be restored if we need it later.
-
-              <div className="field" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-                <input
-                  type="text"
-                  aria-label="New bed label"
-                  placeholder="Label, e.g. N1 or X2039"
-                  value={addLabel}
-                  onChange={(e) => setAddLabel(e.target.value)}
-                  disabled={busy}
-                  maxLength={50}
-                  style={{ maxWidth: 220 }}
-                />
-                <button type="button" className="primary-button" onClick={handleAddBed} disabled={busy}>
-                  Add bed
-                </button>
-              </div>
-            */}
+            {/* "Add bed" control hidden for now (backend POST /api/admin/leased-beds/beds still supports it). */}
             <div className="admin-table-wrap">
               <table className="admin-table">
                 <thead>
@@ -292,29 +242,18 @@ export default function LeasedBeds() {
                               <button type="button" className="footer-link" onClick={() => handleRelease(bed)} disabled={busy}>Release</button>
                             </>
                           ) : (
-                            <>
-                              {/*
-                                "Take out of service / Return to service" and "Delete" actions hidden for now.
-                                The backend still supports them (PATCH /beds/{id} with isActive, DELETE /beds/{id}),
-                                so they can be restored if we need them later.
-
-                                <button type="button" className="footer-link" onClick={() => handleToggleService(bed)} disabled={busy}>
-                                  {bed.isActive ? 'Take out of service' : 'Return to service'}
-                                </button>
-                                {' · '}
-                                <button type="button" className="footer-link" onClick={() => handleDelete(bed)} disabled={busy}>Delete</button>
-                              */}
-                              {bed.isActive ? (
-                                <BedAssignControls
-                                  bed={bed}
-                                  members={state.members}
-                                  standardPriceCents={state.standardPriceCents}
-                                  onAssign={assignToMember}
-                                />
-                              ) : (
-                                <span className="card-note">—</span>
-                              )}
-                            </>
+                            // "Take out of service / Return to service" and "Delete" actions hidden for now
+                            // (backend PATCH/DELETE /api/admin/leased-beds/beds/{id} still support them).
+                            bed.isActive ? (
+                              <BedAssignControls
+                                bed={bed}
+                                members={sortedMembers}
+                                standardPriceCents={state.standardPriceCents}
+                                onAssign={assignToMember}
+                              />
+                            ) : (
+                              <span className="card-note">—</span>
+                            )
                           )}
                         </td>
                       </tr>
@@ -407,6 +346,7 @@ function WaitlistSection({
 
 // Inline "assign to a member" control shown in an available bed's Actions cell.
 // Lets an admin give the bed to any existing member directly (no application/waitlist needed).
+// `members` is expected pre-sorted (the parent sorts once for all rows).
 function BedAssignControls({
   bed,
   members,
@@ -425,15 +365,11 @@ function BedAssignControls({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const sorted = useMemo(
-    () => [...members].sort((a, b) => memberLabel(a).localeCompare(memberLabel(b))),
-    [members],
-  )
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase()
-    if (!q) return sorted
-    return sorted.filter((m) => memberLabel(m).toLowerCase().includes(q))
-  }, [sorted, filter])
+    if (!q) return members
+    return members.filter((m) => memberLabel(m).toLowerCase().includes(q))
+  }, [members, filter])
 
   if (!open) {
     return <button type="button" className="footer-link" onClick={() => setOpen(true)}>Assign member</button>
@@ -444,16 +380,16 @@ function BedAssignControls({
       setError('Choose a member.')
       return
     }
-    const dollars = Number(priceDollars)
-    if (!Number.isFinite(dollars) || dollars < 0) {
-      setError('Enter a price of $0 or more.')
+    const price = parsePriceCents(priceDollars)
+    if ('error' in price) {
+      setError(price.error)
       return
     }
     setBusy(true)
     setError(null)
     try {
       // On success the page reloads and this row gains a lease, so the control unmounts.
-      await onAssign(userId, bed.id, Math.round(dollars * 100))
+      await onAssign(userId, bed.id, price.cents)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not assign the bed.')
       setBusy(false)
@@ -524,15 +460,15 @@ function AssignControls({
       setError('Choose a bed.')
       return
     }
-    const dollars = Number(priceDollars)
-    if (!Number.isFinite(dollars) || dollars < 0) {
-      setError('Enter a price of $0 or more.')
+    const price = parsePriceCents(priceDollars)
+    if ('error' in price) {
+      setError(price.error)
       return
     }
     setBusy(true)
     setError(null)
     try {
-      await onAssign(requestId, bedId, Math.round(dollars * 100))
+      await onAssign(requestId, bedId, price.cents)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not assign the bed.')
     } finally {
