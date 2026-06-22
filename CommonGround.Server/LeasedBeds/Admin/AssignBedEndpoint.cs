@@ -8,8 +8,10 @@ using Microsoft.EntityFrameworkCore;
 namespace CommonGround.Server.LeasedBeds.Admin;
 
 /// <summary>
-/// Assigns a specific bed to the member behind a request, snapshotting the fee.
-/// A $0 fee activates the lease immediately; otherwise it is held AwaitingPayment.
+/// Assigns a specific bed to a member, snapshotting the fee.
+/// The member can be identified either by an existing bed request (<see cref="Request.RequestId"/>),
+/// which is then marked fulfilled, or directly by <see cref="Request.UserId"/> for a member who never
+/// applied. A $0 fee activates the lease immediately; otherwise it is held AwaitingPayment.
 /// </summary>
 public sealed class AssignBedEndpoint(
     AppDbContext db,
@@ -21,7 +23,12 @@ public sealed class AssignBedEndpoint(
 {
     public sealed class Request
     {
-        public int RequestId { get; set; }
+        /// <summary>Fulfils an existing bed request. Provide exactly one of <see cref="RequestId"/> or <see cref="UserId"/>.</summary>
+        public int? RequestId { get; set; }
+
+        /// <summary>Assigns directly to an existing member who hasn't applied. Provide exactly one of <see cref="RequestId"/> or <see cref="UserId"/>.</summary>
+        public string? UserId { get; set; }
+
         public int BedId { get; set; }
 
         /// <summary>Overrides the standard price when set. Must be ≥ 0.</summary>
@@ -36,16 +43,52 @@ public sealed class AssignBedEndpoint(
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var request = await db.BedRequests.Include(r => r.User).SingleOrDefaultAsync(r => r.Id == req.RequestId, ct);
-        if (request is null)
+        // Resolve who the bed is for. Either an existing request (which we then fulfil) or a member id.
+        BedRequest? request = null;
+        ApplicationUser? user;
+
+        if (req.RequestId is { } requestId)
         {
-            await Send.NotFoundAsync(ct);
+            request = await db.BedRequests.Include(r => r.User).SingleOrDefaultAsync(r => r.Id == requestId, ct);
+            if (request is null)
+            {
+                await Send.NotFoundAsync(ct);
+                return;
+            }
+
+            if (request.Status is not (BedRequestStatus.Pending or BedRequestStatus.Waitlisted))
+            {
+                await Send.ResultAsync(Results.BadRequest(new { error = "That request has already been resolved." }));
+                return;
+            }
+
+            user = request.User;
+        }
+        else if (!string.IsNullOrWhiteSpace(req.UserId))
+        {
+            user = await db.Users.SingleOrDefaultAsync(u => u.Id == req.UserId, ct);
+            if (user is null)
+            {
+                await Send.ResultAsync(Results.BadRequest(new { error = "That member no longer exists." }));
+                return;
+            }
+
+            // If the member happens to have an in-flight request, fulfil it too so they don't linger on the list.
+            request = await beds.GetActiveRequestAsync(user.Id, ct);
+        }
+        else
+        {
+            await Send.ResultAsync(Results.BadRequest(new { error = "Choose a member to assign the bed to." }));
             return;
         }
 
-        if (request.Status is not (BedRequestStatus.Pending or BedRequestStatus.Waitlisted))
+        // A member may only hold one bed at a time. The request flow can't reach here for an
+        // existing holder (they couldn't have an open request), but the direct UserId path can,
+        // and there's no DB constraint, so guard against giving someone a second overlapping lease.
+        var targetUserId = request?.UserId ?? user!.Id;
+        if (await db.BedLeases.AnyAsync(l => l.UserId == targetUserId && l.Status != BedLeaseStatus.Released, ct))
         {
-            await Send.ResultAsync(Results.BadRequest(new { error = "That request has already been resolved." }));
+            await Send.ResultAsync(Results.BadRequest(new { error = "That member already holds a leased bed." }));
             return;
         }
 
@@ -82,7 +125,7 @@ public sealed class AssignBedEndpoint(
         var lease = new BedLease
         {
             BedId = bed.Id,
-            UserId = request.UserId,
+            UserId = targetUserId,
             StartDate = today,
             ExpiresOn = FinancialYear.GetFinancialYearEnd(today),
             Status = price == 0 ? BedLeaseStatus.Active : BedLeaseStatus.AwaitingPayment,
@@ -91,20 +134,23 @@ public sealed class AssignBedEndpoint(
         };
         db.BedLeases.Add(lease);
 
-        request.Status = BedRequestStatus.Fulfilled;
-        request.ResolvedAtUtc = now;
+        if (request is not null)
+        {
+            request.Status = BedRequestStatus.Fulfilled;
+            request.ResolvedAtUtc = now;
+        }
         await db.SaveChangesAsync(ct);
 
         await activityLogger.LogAsync(
             "leased_bed.assigned",
-            $"assigned bed {bed.Label} to {request.User?.DisplayName ?? request.User?.Email ?? request.UserId}",
+            $"assigned bed {bed.Label} to {user?.DisplayName ?? user?.Email ?? lease.UserId}",
             targetType: "BedLease",
             targetId: lease.Id.ToString(),
             ct: ct);
 
-        if (request.User is not null)
+        if (user is not null)
         {
-            await notifications.SendAssignmentAsync(request.User, bed.Label, lease.ExpiresOn, price, ct);
+            await notifications.SendAssignmentAsync(user, bed.Label, lease.ExpiresOn, price, ct);
         }
 
         await Send.OkAsync(await beds.GetOverviewAsync(ct), ct);
