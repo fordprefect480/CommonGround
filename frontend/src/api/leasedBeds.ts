@@ -167,7 +167,10 @@ export interface AdminBedRequests {
 }
 
 export interface AssignBedInput {
-  requestId: number
+  /** Fulfil an existing bed request. Provide exactly one of requestId / userId. */
+  requestId?: number | null
+  /** Assign directly to an existing member who hasn't applied. Provide exactly one of requestId / userId. */
+  userId?: string | null
   bedId: number
   customPriceCents?: number | null
 }
