@@ -76,7 +76,7 @@ export default function RecordPaymentModal({
         <h2 className="section-title">{title}</h2>
         {description && <p className="card-note" style={{ margin: 0 }}>{description}</p>}
 
-        <form onSubmit={submit}>
+        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <label className="field">
             <span className="field-label">Amount received</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
