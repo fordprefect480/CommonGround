@@ -166,14 +166,18 @@ export interface AdminBedRequests {
   waitlist: AdminBedRequest[]
 }
 
-export interface AssignBedInput {
-  /** Fulfil an existing bed request. Provide exactly one of requestId / userId. */
-  requestId?: number | null
-  /** Assign directly to an existing member who hasn't applied. Provide exactly one of requestId / userId. */
-  userId?: string | null
+interface AssignBedBase {
   bedId: number
   customPriceCents?: number | null
 }
+
+/**
+ * Assign a bed either by fulfilling an existing request (requestId) or directly to a
+ * member who hasn't applied (userId) — exactly one, enforced by the union.
+ */
+export type AssignBedInput =
+  | (AssignBedBase & { requestId: number })
+  | (AssignBedBase & { userId: string })
 
 export interface ReleaseResult {
   overview: LeasedBedsOverview
