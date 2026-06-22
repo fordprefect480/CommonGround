@@ -16,10 +16,25 @@ const dateFormatter = new Intl.DateTimeFormat('en-AU', {
   year: 'numeric',
 })
 
+// Includes the time, for when a payment was actually made.
+const dateTimeFormatter = new Intl.DateTimeFormat('en-AU', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+})
+
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
   const d = new Date(iso)
   return Number.isNaN(d.getTime()) ? '—' : dateFormatter.format(d)
+}
+
+function formatDateTime(iso: string | null): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '—' : dateTimeFormatter.format(d)
 }
 
 function formatAmount(cents: number, currency: string): string {
@@ -43,8 +58,9 @@ const STATUS_PILL: Record<string, string> = {
 }
 
 // Admin views pass a memberId and see a Status column (Paid/Failed); the member's
-// own profile omits memberId and sees only their successful payments.
-export default function PaymentHistoryTable({ memberId }: { memberId?: string }) {
+// own profile omits memberId and sees only their successful payments. Bumping
+// refreshToken re-fetches - e.g. after an admin records a manual payment.
+export default function PaymentHistoryTable({ memberId, refreshToken }: { memberId?: string; refreshToken?: number }) {
   const showStatus = memberId !== undefined
   const [state, setState] = useState<State>({ status: 'loading' })
 
@@ -64,7 +80,7 @@ export default function PaymentHistoryTable({ memberId }: { memberId?: string })
     return () => {
       cancelled = true
     }
-  }, [memberId])
+  }, [memberId, refreshToken])
 
   if (state.status === 'loading') {
     return <p className="admin-loading">Loading payments&hellip;</p>
@@ -85,6 +101,7 @@ export default function PaymentHistoryTable({ memberId }: { memberId?: string })
           <tr>
             <th scope="col">Date</th>
             <th scope="col">Amount</th>
+            <th scope="col">Method</th>
             <th scope="col">Membership period</th>
             {showStatus && <th scope="col">Status</th>}
           </tr>
@@ -92,11 +109,12 @@ export default function PaymentHistoryTable({ memberId }: { memberId?: string })
         <tbody>
           {state.payments.map((p) => (
             <tr key={p.id}>
-              <td>{formatDate(p.paidAtUtc ?? p.createdAtUtc)}</td>
-              <td>{formatAmount(p.amountCents, p.currency)}</td>
-              <td>{formatPeriod(p.periodStartUtc, p.periodEndUtc)}</td>
+              <td data-label="Date">{formatDateTime(p.paidAtUtc ?? p.createdAtUtc)}</td>
+              <td data-label="Amount">{formatAmount(p.amountCents, p.currency)}</td>
+              <td data-label="Method">{p.method === 'Manual' ? 'Manual' : 'Stripe'}</td>
+              <td data-label="Membership period">{formatPeriod(p.periodStartUtc, p.periodEndUtc)}</td>
               {showStatus && (
-                <td>
+                <td data-label="Status">
                   <span className={STATUS_PILL[p.status] ?? 'pill'}>{p.status}</span>
                 </td>
               )}
