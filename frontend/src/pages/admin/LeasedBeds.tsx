@@ -141,6 +141,25 @@ export default function LeasedBeds() {
     }
   }
 
+  const handleEditNote = async (bed: AdminBed) => {
+    const next = window.prompt(`Note for bed ${bed.label} (leave blank to clear):`, bed.notes ?? '')
+    if (next === null) return
+    if (next.length > 500) {
+      setError('A bed note must be 500 characters or fewer.')
+      return
+    }
+    setBusy(true)
+    setError(null)
+    try {
+      await updateBed(bed.id, { notes: next })
+      await reloadAll()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save the note.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <section className="admin-page" aria-labelledby="leased-beds-heading">
       <header className="admin-page-header">
@@ -201,6 +220,7 @@ export default function LeasedBeds() {
                 <thead>
                   <tr>
                     <th scope="col">Bed</th>
+                    <th scope="col">Notes</th>
                     <th scope="col">Holder</th>
                     <th scope="col">Lease</th>
                     <th scope="col">Payment</th>
@@ -216,6 +236,15 @@ export default function LeasedBeds() {
                         <td data-label="Bed">
                           <strong>{bed.label}</strong>
                           {!bed.isActive && <> <span className="pill">Out of service</span></>}
+                        </td>
+                        <td data-label="Notes">
+                          {bed.notes
+                            ? <span style={{ whiteSpace: 'pre-wrap' }}>{bed.notes}</span>
+                            : <span className="card-note">No note</span>}
+                          {' '}
+                          <button type="button" className="footer-link" onClick={() => handleEditNote(bed)} disabled={busy}>
+                            {bed.notes ? 'Edit' : 'Add'}
+                          </button>
                         </td>
                         <td data-label="Holder">{lease?.memberName ?? (bed.isActive ? <span className="pill pill-ok">Available</span> : '—')}</td>
                         <td data-label="Lease">
