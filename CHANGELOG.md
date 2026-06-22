@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.8.0](https://github.com/fordprefect480/CommonGround/compare/v0.7.0...v0.8.0) (2026-06-22)
+
+
+### Features
+
+* let admins assign a bed to an existing member directly ([68de72d](https://github.com/fordprefect480/CommonGround/commit/68de72df6a159d232d759d8d33920778661dff81))
+* record manual payments with an editable amount and show payment method ([2d418f6](https://github.com/fordprefect480/CommonGround/commit/2d418f6198dc4ec0fcc0733d9e53c925784e3a26))
+* show a leased beds card on the admin member details page ([150848b](https://github.com/fordprefect480/CommonGround/commit/150848bc04246af1c1da663eea794675255a60f3))
+
+
+### Bug Fixes
+
+* guard against double-booking a member and surface member-load failures ([9371ee9](https://github.com/fordprefect480/CommonGround/commit/9371ee97e9e099a42593c253ec7947d58ba7fa0c))
+* label membership cards with the financial year actually paid through ([112b705](https://github.com/fordprefect480/CommonGround/commit/112b7052505f9deec49fce33e9e8856b0ed46d73))
+* refresh payment history after recording a payment, and show the time ([b0a568a](https://github.com/fordprefect480/CommonGround/commit/b0a568a9fb7e0347d6a373ca31818c52a02ca5f9))
+* scroll to the top of the page on navigation ([74f5be1](https://github.com/fordprefect480/CommonGround/commit/74f5be1caaded8f457ed6446a13eb08fe72981a4))
+* space out the amount field and button in the manual payment modal ([928d55a](https://github.com/fordprefect480/CommonGround/commit/928d55a5274d02213337117e94e5e02c949bde35))
+* stop route-param-only action endpoints returning 415 on bodyless POST ([88e20f8](https://github.com/fordprefect480/CommonGround/commit/88e20f842bbb1f208304b2fba2dbfe620ce29393))
+
 ## [0.7.0](https://github.com/fordprefect480/CommonGround/compare/v0.6.0...v0.7.0) (2026-06-22)
 
 
