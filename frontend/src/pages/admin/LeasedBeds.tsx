@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getLeasedBedPrice } from '../../api/adminTools'
+import { fetchMembers, type Member } from '../../api/auth'
 import {
   // addBed, // Hidden from the admin UI for now; backend endpoint kept in case we re-enable it later.
   assignBed,
@@ -21,10 +22,16 @@ import { formatPrice } from '../../format'
 type State =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; overview: LeasedBedsOverview; requests: AdminBedRequests; standardPriceCents: number }
+  | { status: 'ready'; overview: LeasedBedsOverview; requests: AdminBedRequests; standardPriceCents: number; members: Member[] }
 
 const dateFmt = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
 const formatDate = (value: string) => dateFmt.format(new Date(value))
+
+function memberLabel(m: Member): string {
+  const name = m.displayName?.trim() || [m.firstName, m.lastName].filter(Boolean).join(' ').trim()
+  if (name && m.email) return `${name} (${m.email})`
+  return name || m.email || m.id
+}
 
 function leaseStatusLabel(status: BedLeaseStatus): string {
   switch (status) {
@@ -46,12 +53,13 @@ export default function LeasedBeds() {
   const [busy, setBusy] = useState(false)
 
   const reloadAll = async () => {
-    const [overview, requests, price] = await Promise.all([
+    const [overview, requests, price, members] = await Promise.all([
       fetchLeasedBeds(),
       fetchBedRequests(),
       getLeasedBedPrice(),
+      fetchMembers(),
     ])
-    setState({ status: 'ready', overview, requests, standardPriceCents: price.priceCents })
+    setState({ status: 'ready', overview, requests, standardPriceCents: price.priceCents, members })
   }
 
   useEffect(() => {
@@ -181,6 +189,10 @@ export default function LeasedBeds() {
           await assignBed({ requestId, bedId, customPriceCents })
           await reloadAll()
         }
+        const assignToMember = async (userId: string, bedId: number, customPriceCents: number) => {
+          await assignBed({ userId, bedId, customPriceCents })
+          await reloadAll()
+        }
         return (
           <>
             <p className="admin-empty">
@@ -202,6 +214,13 @@ export default function LeasedBeds() {
               standardPriceCents={state.standardPriceCents}
               onAssign={assign}
               onRemove={handleRemove}
+            />
+
+            <AssignToMemberSection
+              members={state.members}
+              availableBeds={availableBeds}
+              standardPriceCents={state.standardPriceCents}
+              onAssign={assignToMember}
             />
 
             <h2 className="section-title">All beds</h2>
@@ -379,6 +398,113 @@ function WaitlistSection({
             )}
           </div>
         ))
+      )}
+    </div>
+  )
+}
+
+function AssignToMemberSection({
+  members,
+  availableBeds,
+  standardPriceCents,
+  onAssign,
+}: {
+  members: Member[]
+  availableBeds: AdminBed[]
+  standardPriceCents: number
+  onAssign: (userId: string, bedId: number, customPriceCents: number) => Promise<void>
+}) {
+  const [filter, setFilter] = useState('')
+  const [userId, setUserId] = useState('')
+  const [bedId, setBedId] = useState<number | ''>(availableBeds[0]?.id ?? '')
+  const [priceDollars, setPriceDollars] = useState((standardPriceCents / 100).toString())
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const sorted = useMemo(
+    () => [...members].sort((a, b) => memberLabel(a).localeCompare(memberLabel(b))),
+    [members],
+  )
+  const filtered = useMemo(() => {
+    const q = filter.trim().toLowerCase()
+    if (!q) return sorted
+    return sorted.filter((m) => memberLabel(m).toLowerCase().includes(q))
+  }, [sorted, filter])
+
+  const submit = async () => {
+    if (!userId) {
+      setError('Choose a member.')
+      return
+    }
+    if (bedId === '') {
+      setError('Choose a bed.')
+      return
+    }
+    const dollars = Number(priceDollars)
+    if (!Number.isFinite(dollars) || dollars < 0) {
+      setError('Enter a price of $0 or more.')
+      return
+    }
+    setBusy(true)
+    setError(null)
+    try {
+      await onAssign(userId, bedId, Math.round(dollars * 100))
+      setUserId('')
+      setFilter('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not assign the bed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="card">
+      <h2 className="section-title">Assign a bed to a member</h2>
+      {availableBeds.length === 0 ? (
+        <p className="card-note">No beds available to assign.</p>
+      ) : (
+        <>
+          <p className="card-note">Give a bed to an existing member directly — they don't need to be on the waiting list.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+            <input
+              type="search"
+              aria-label="Search members"
+              placeholder="Search members by name or email"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              disabled={busy}
+              style={{ minWidth: 240 }}
+            />
+            <select value={userId} onChange={(e) => setUserId(e.target.value)} disabled={busy} aria-label="Member">
+              <option value="">Choose a member…</option>
+              {filtered.map((m) => (
+                <option key={m.id} value={m.id}>{memberLabel(m)}</option>
+              ))}
+            </select>
+            <select value={bedId} onChange={(e) => setBedId(e.target.value === '' ? '' : Number(e.target.value))} disabled={busy} aria-label="Bed">
+              {availableBeds.map((b) => (
+                <option key={b.id} value={b.id}>{b.label}</option>
+              ))}
+            </select>
+            <span aria-hidden="true">$</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              inputMode="decimal"
+              aria-label="Lease price"
+              value={priceDollars}
+              onChange={(e) => setPriceDollars(e.target.value)}
+              disabled={busy}
+              style={{ maxWidth: 100 }}
+            />
+            <button type="button" className="primary-button" onClick={submit} disabled={busy}>
+              {busy ? 'Assigning…' : 'Assign bed'}
+            </button>
+            {error && <span className="form-error" role="alert" style={{ width: '100%' }}>{error}</span>}
+          </div>
+        </>
       )}
     </div>
   )
