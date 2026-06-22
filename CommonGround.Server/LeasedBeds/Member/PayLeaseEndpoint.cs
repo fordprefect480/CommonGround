@@ -11,13 +11,8 @@ public sealed class PayLeaseEndpoint(
     LeasedBedCheckoutService checkout,
     AppDbContext db,
     ILogger<PayLeaseEndpoint> logger)
-    : Endpoint<PayLeaseEndpoint.Request, PayLeaseEndpoint.Result>
+    : EndpointWithoutRequest<PayLeaseEndpoint.Result>
 {
-    public sealed class Request
-    {
-        public int LeaseId { get; set; }
-    }
-
     public sealed record Result(string CheckoutUrl);
 
     public override void Configure()
@@ -25,7 +20,7 @@ public sealed class PayLeaseEndpoint(
         Post("/leased-beds/leases/{leaseId:int}/pay");
     }
 
-    public override async Task HandleAsync(Request req, CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
         var user = await userManager.GetUserAsync(User);
         if (user is null)
@@ -43,9 +38,10 @@ public sealed class PayLeaseEndpoint(
             return;
         }
 
+        var leaseId = Route<int>("leaseId");
         var lease = await db.BedLeases
             .Include(l => l.Bed)
-            .SingleOrDefaultAsync(l => l.Id == req.LeaseId && l.UserId == user.Id, ct);
+            .SingleOrDefaultAsync(l => l.Id == leaseId && l.UserId == user.Id, ct);
         if (lease is null)
         {
             await Send.NotFoundAsync(ct);
