@@ -66,23 +66,25 @@ export default function AdminTools() {
         <h1 id="settings-heading" className="admin-page-title">Settings</h1>
       </header>
 
-      <PriceCard
-        id="membership-price"
-        title="Membership price"
-        note="The annual membership fee shown on the website and charged at checkout."
-        load={() => getMembershipPrice().then((r) => r.priceCents)}
-        save={(cents) => updateMembershipPrice(cents).then((r) => r.priceCents)}
-        allowZero={false}
-      />
+      <div className="admin-tools-grid">
+        <PriceCard
+          id="membership-price"
+          title="Membership price"
+          note="The annual membership fee shown on the website and charged at checkout."
+          load={() => getMembershipPrice().then((r) => r.priceCents)}
+          save={(cents) => updateMembershipPrice(cents).then((r) => r.priceCents)}
+          allowZero={false}
+        />
 
-      <PriceCard
-        id="leased-bed-price"
-        title="Leased bed price"
-        note="The default annual fee for a leased bed. An admin can override it per bed when allocating."
-        load={() => getLeasedBedPrice().then((r) => r.priceCents)}
-        save={(cents) => updateLeasedBedPrice(cents).then((r) => r.priceCents)}
-        allowZero
-      />
+        <PriceCard
+          id="leased-bed-price"
+          title="Leased bed price"
+          note="The default annual fee for a leased bed. An admin can override it per bed when allocating."
+          load={() => getLeasedBedPrice().then((r) => r.priceCents)}
+          save={(cents) => updateLeasedBedPrice(cents).then((r) => r.priceCents)}
+          allowZero
+        />
+      </div>
 
       <LeasedBedInventory />
 
