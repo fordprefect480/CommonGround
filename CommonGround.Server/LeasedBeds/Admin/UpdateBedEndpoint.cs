@@ -16,7 +16,7 @@ public sealed class UpdateBedEndpoint(
     {
         public int BedId { get; set; }
 
-        /// <summary>When provided, replaces the label (empty clears it). Null leaves it unchanged.</summary>
+        /// <summary>When non-empty, replaces the label. Null or empty leaves it unchanged (the label is required).</summary>
         public string? Label { get; set; }
 
         /// <summary>When provided, replaces the notes (empty clears them). Null leaves them unchanged.</summary>
@@ -51,7 +51,7 @@ public sealed class UpdateBedEndpoint(
             return;
         }
 
-        if (req.Label is not null) bed.Label = LeasedBedService.NormalizeText(req.Label);
+        if (!string.IsNullOrWhiteSpace(req.Label)) bed.Label = req.Label.Trim();
         if (req.Notes is not null) bed.Notes = LeasedBedService.NormalizeText(req.Notes);
 
         var serviceChanged = req.IsActive is { } active && active != bed.IsActive;
@@ -61,9 +61,9 @@ public sealed class UpdateBedEndpoint(
 
         var summary = serviceChanged
             ? bed.IsActive
-                ? $"returned leased bed {bed.Code} to service"
-                : $"took leased bed {bed.Code} out of service"
-            : $"updated leased bed {bed.Code}";
+                ? $"returned leased bed {bed.Label} to service"
+                : $"took leased bed {bed.Label} out of service"
+            : $"updated leased bed {bed.Label}";
 
         await activityLogger.LogAsync(
             "leased_bed.updated",

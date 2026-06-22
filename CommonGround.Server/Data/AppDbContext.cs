@@ -226,13 +226,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
         builder.Entity<Bed>(b =>
         {
-            b.Property(x => x.Section).HasMaxLength(1).IsRequired();
-            b.Property(x => x.Label).HasMaxLength(50);
+            b.Property(x => x.Label).HasMaxLength(50).IsRequired();
             b.Property(x => x.Notes).HasMaxLength(500);
 
-            b.HasIndex(x => new { x.Section, x.Number })
+            // Labels are unique among live beds; a soft-deleted bed's label can be reused.
+            b.HasIndex(x => x.Label)
                 .IsUnique()
-                .HasDatabaseName("IX_Bed_Section_Number");
+                .HasFilter("[IsDeleted] = 0")
+                .HasDatabaseName("IX_Bed_Label");
+
+            // Soft-deleted beds drop out of every query automatically.
+            b.HasQueryFilter(x => !x.IsDeleted);
 
             b.HasData(SeedBeds());
         });
@@ -304,7 +308,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         {
             for (var number = 1; number <= 16; number++)
             {
-                beds.Add(new Bed { Id = id++, Section = section, Number = number, IsActive = true });
+                beds.Add(new Bed { Id = id++, Label = $"{section}{number}", IsActive = true });
             }
         }
         return beds;

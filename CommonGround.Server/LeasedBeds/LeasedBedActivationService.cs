@@ -57,7 +57,7 @@ public sealed class LeasedBedActivationService(
                 lease.Id, payment.Id);
             await activityLogger.LogAsync(
                 "leased_bed.payment_orphaned",
-                $"Payment received for released bed {lease.Bed?.Code} (lease {lease.Id}) - needs review.",
+                $"Payment received for released bed {lease.Bed?.Label} (lease {lease.Id}) - needs review.",
                 targetType: "BedLease",
                 targetId: lease.Id.ToString(),
                 ct: ct);
@@ -72,7 +72,7 @@ public sealed class LeasedBedActivationService(
 
         await activityLogger.LogAsync(
             "leased_bed.paid",
-            $"{lease.User?.Email} paid for bed {lease.Bed?.Code}",
+            $"{lease.User?.Email} paid for bed {lease.Bed?.Label}",
             targetType: "BedLease",
             targetId: lease.Id.ToString(),
             ct: ct);

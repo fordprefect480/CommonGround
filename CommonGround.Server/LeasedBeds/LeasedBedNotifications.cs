@@ -38,7 +38,7 @@ public sealed class LeasedBedNotifications(
     }
 
     /// <summary>Notifies the member they've been assigned a bed - payment-required or confirmed-free variant.</summary>
-    public async Task SendAssignmentAsync(ApplicationUser member, string bedCode, DateOnly expiresOn, int amountCents, CancellationToken ct)
+    public async Task SendAssignmentAsync(ApplicationUser member, string bedLabel, DateOnly expiresOn, int amountCents, CancellationToken ct)
     {
         if (!emailOptions.Value.IsConfigured || string.IsNullOrWhiteSpace(member.Email))
         {
@@ -52,8 +52,8 @@ public sealed class LeasedBedNotifications(
             : $"{gardenOptions.Value.PublicUrl.TrimEnd('/')}/profile";
         var amount = amountCents > 0 ? $"${amountCents / 100m:0.00}" : null;
 
-        var html = LeasedBedEmails.BuildAssignmentHtml(name, bedCode, fyLabel, expiresOn, amount, profileUrl);
-        var text = LeasedBedEmails.BuildAssignmentText(name, bedCode, fyLabel, expiresOn, amount, profileUrl);
+        var html = LeasedBedEmails.BuildAssignmentHtml(name, bedLabel, fyLabel, expiresOn, amount, profileUrl);
+        var text = LeasedBedEmails.BuildAssignmentText(name, bedLabel, fyLabel, expiresOn, amount, profileUrl);
 
         await SendAsync(member.Email, LeasedBedEmails.AssignedSubject, html, text, ct);
     }

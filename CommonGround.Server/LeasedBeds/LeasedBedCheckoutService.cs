@@ -67,7 +67,7 @@ public sealed class LeasedBedCheckoutService(
                         UnitAmount = lease.PriceAtAllocationCents,
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {
-                            Name = $"Leased garden bed {lease.Bed?.Code}",
+                            Name = $"Leased garden bed {lease.Bed?.Label}",
                         },
                     },
                 },

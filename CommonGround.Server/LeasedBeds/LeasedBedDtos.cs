@@ -20,10 +20,7 @@ public sealed record AdminBedAllocation(
 
 public sealed record AdminBed(
     int Id,
-    string Code,
-    string Section,
-    int Number,
-    string? Label,
+    string Label,
     bool IsActive,
     string? Notes,
     bool IsOccupied,
@@ -51,8 +48,7 @@ public sealed record MembershipInfo(bool IsActive, DateTime? PaidThroughUtc, boo
 /// <summary><paramref name="Status"/> is the effective <c>BedLeaseStatus</c> name (Active past its expiry reads as "Expired").</summary>
 public sealed record MyLease(
     int LeaseId,
-    string BedCode,
-    string? Label,
+    string BedLabel,
     string Status,
     int PriceAtAllocationCents,
     bool IsPaid,

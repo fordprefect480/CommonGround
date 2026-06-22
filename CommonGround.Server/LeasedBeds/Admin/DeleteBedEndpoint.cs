@@ -32,22 +32,22 @@ public sealed class DeleteBedEndpoint(
             return;
         }
 
-        if (await beds.HasLeaseHistoryAsync(bed.Id, ct))
+        if (await beds.IsBedOccupiedAsync(bed.Id, ct))
         {
             await Send.ResultAsync(Results.BadRequest(new
             {
-                error = "This bed has lease history and can't be deleted. Take it out of service instead.",
+                error = "This bed is currently leased. Release or reassign its lease before deleting it.",
             }));
             return;
         }
 
-        var code = bed.Code;
-        db.Beds.Remove(bed);
+        var label = bed.Label;
+        bed.IsDeleted = true;
         await db.SaveChangesAsync(ct);
 
         await activityLogger.LogAsync(
             "leased_bed.deleted",
-            $"deleted leased bed {code}",
+            $"deleted leased bed {label}",
             targetType: "Bed",
             targetId: req.BedId.ToString(),
             ct: ct);

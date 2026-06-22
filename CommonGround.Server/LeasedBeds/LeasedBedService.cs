@@ -14,9 +14,6 @@ public sealed class LeasedBedService(AppDbContext db)
     public Task<bool> IsBedOccupiedAsync(int bedId, CancellationToken ct) =>
         db.BedLeases.AnyAsync(l => l.BedId == bedId && l.Status != BedLeaseStatus.Released, ct);
 
-    public Task<bool> HasLeaseHistoryAsync(int bedId, CancellationToken ct) =>
-        db.BedLeases.AnyAsync(l => l.BedId == bedId, ct);
-
     public async Task<CapacitySummary> GetCapacityAsync(CancellationToken ct)
     {
         var activeBedIds = await db.Beds.Where(b => b.IsActive).Select(b => b.Id).ToListAsync(ct);
@@ -36,8 +33,7 @@ public sealed class LeasedBedService(AppDbContext db)
     public async Task<LeasedBedsOverview> GetOverviewAsync(CancellationToken ct)
     {
         var beds = await db.Beds
-            .OrderBy(b => b.Section)
-            .ThenBy(b => b.Number)
+            .OrderBy(b => b.Label)
             .ToListAsync(ct);
 
         // The lease governing each bed = its most recent non-released lease.
@@ -74,9 +70,6 @@ public sealed class LeasedBedService(AppDbContext db)
 
             return new AdminBed(
                 bed.Id,
-                bed.Code,
-                bed.Section,
-                bed.Number,
                 bed.Label,
                 bed.IsActive,
                 bed.Notes,
@@ -90,13 +83,6 @@ public sealed class LeasedBedService(AppDbContext db)
         var capacity = new CapacitySummary(total, leased, remaining, remaining <= 0);
 
         return new LeasedBedsOverview(capacity, bedDtos);
-    }
-
-    /// <summary>The next unused bed number in a section (max existing + 1, including out-of-service beds).</summary>
-    public async Task<int> NextBedNumberAsync(string section, CancellationToken ct)
-    {
-        var max = await db.Beds.Where(b => b.Section == section).MaxAsync(b => (int?)b.Number, ct) ?? 0;
-        return max + 1;
     }
 
     public static string? NormalizeText(string? value) =>
@@ -163,8 +149,7 @@ public sealed class LeasedBedService(AppDbContext db)
                 var hasNewerForBed = myLeases.Any(o => o.BedId == l.BedId && o.ExpiresOn > l.ExpiresOn);
                 return new MyLease(
                     l.Id,
-                    l.Bed!.Code,
-                    l.Bed.Label,
+                    l.Bed!.Label,
                     EffectiveStatus(l, today),
                     l.PriceAtAllocationCents,
                     IsPaid: paid is not null || l.PriceAtAllocationCents == 0,

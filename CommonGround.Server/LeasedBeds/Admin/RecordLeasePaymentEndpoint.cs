@@ -67,7 +67,7 @@ public sealed class RecordLeasePaymentEndpoint(
 
         await activityLogger.LogAsync(
             "leased_bed.payment_recorded",
-            $"recorded an offline payment for bed {lease.Bed?.Code}",
+            $"recorded an offline payment for bed {lease.Bed?.Label}",
             targetType: "BedLease",
             targetId: lease.Id.ToString(),
             ct: ct);
