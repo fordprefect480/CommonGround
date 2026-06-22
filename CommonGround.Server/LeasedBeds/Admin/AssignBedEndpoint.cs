@@ -82,6 +82,16 @@ public sealed class AssignBedEndpoint(
             return;
         }
 
+        // A member may only hold one bed at a time. The request flow can't reach here for an
+        // existing holder (they couldn't have an open request), but the direct UserId path can,
+        // and there's no DB constraint, so guard against giving someone a second overlapping lease.
+        var targetUserId = request?.UserId ?? user!.Id;
+        if (await db.BedLeases.AnyAsync(l => l.UserId == targetUserId && l.Status != BedLeaseStatus.Released, ct))
+        {
+            await Send.ResultAsync(Results.BadRequest(new { error = "That member already holds a leased bed." }));
+            return;
+        }
+
         var bed = await db.Beds.SingleOrDefaultAsync(b => b.Id == req.BedId, ct);
         if (bed is null)
         {
@@ -115,7 +125,7 @@ public sealed class AssignBedEndpoint(
         var lease = new BedLease
         {
             BedId = bed.Id,
-            UserId = request?.UserId ?? user!.Id,
+            UserId = targetUserId,
             StartDate = today,
             ExpiresOn = FinancialYear.GetFinancialYearEnd(today),
             Status = price == 0 ? BedLeaseStatus.Active : BedLeaseStatus.AwaitingPayment,
