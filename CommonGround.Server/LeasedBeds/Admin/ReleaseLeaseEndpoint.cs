@@ -11,13 +11,8 @@ public sealed class ReleaseLeaseEndpoint(
     AppDbContext db,
     LeasedBedService beds,
     IActivityLogger activityLogger)
-    : Endpoint<ReleaseLeaseEndpoint.Request, ReleaseLeaseEndpoint.Result>
+    : EndpointWithoutRequest<ReleaseLeaseEndpoint.Result>
 {
-    public sealed class Request
-    {
-        public int LeaseId { get; set; }
-    }
-
     public sealed record Result(LeasedBedsOverview Overview, int WaitlistCount);
 
     public override void Configure()
@@ -26,9 +21,10 @@ public sealed class ReleaseLeaseEndpoint(
         Group<AdminLeasedBedsGroup>();
     }
 
-    public override async Task HandleAsync(Request req, CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
-        var lease = await db.BedLeases.Include(l => l.Bed).SingleOrDefaultAsync(l => l.Id == req.LeaseId, ct);
+        var leaseId = Route<int>("leaseId");
+        var lease = await db.BedLeases.Include(l => l.Bed).SingleOrDefaultAsync(l => l.Id == leaseId, ct);
         if (lease is null)
         {
             await Send.NotFoundAsync(ct);

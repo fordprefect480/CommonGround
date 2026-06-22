@@ -19,19 +19,14 @@ public sealed class RenewLeaseEndpoint(
     LeasedBedService beds,
     SiteSettingsService settings,
     IActivityLogger activityLogger)
-    : Endpoint<RenewLeaseEndpoint.Request, MyLeasedBedStatus>
+    : EndpointWithoutRequest<MyLeasedBedStatus>
 {
-    public sealed class Request
-    {
-        public int LeaseId { get; set; }
-    }
-
     public override void Configure()
     {
         Post("/leased-beds/leases/{leaseId:int}/renew");
     }
 
-    public override async Task HandleAsync(Request req, CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
         var user = await userManager.GetUserAsync(User);
         if (user is null)
@@ -40,9 +35,10 @@ public sealed class RenewLeaseEndpoint(
             return;
         }
 
+        var leaseId = Route<int>("leaseId");
         var lease = await db.BedLeases
             .Include(l => l.Bed)
-            .SingleOrDefaultAsync(l => l.Id == req.LeaseId && l.UserId == user.Id, ct);
+            .SingleOrDefaultAsync(l => l.Id == leaseId && l.UserId == user.Id, ct);
         if (lease is null || lease.Status == BedLeaseStatus.Released)
         {
             await Send.NotFoundAsync(ct);

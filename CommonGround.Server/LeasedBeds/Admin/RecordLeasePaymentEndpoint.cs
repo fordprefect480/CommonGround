@@ -11,22 +11,18 @@ public sealed class RecordLeasePaymentEndpoint(
     AppDbContext db,
     LeasedBedService beds,
     IActivityLogger activityLogger)
-    : Endpoint<RecordLeasePaymentEndpoint.Request, LeasedBedsOverview>
+    : EndpointWithoutRequest<LeasedBedsOverview>
 {
-    public sealed class Request
-    {
-        public int LeaseId { get; set; }
-    }
-
     public override void Configure()
     {
         Post("/leases/{leaseId:int}/record-payment");
         Group<AdminLeasedBedsGroup>();
     }
 
-    public override async Task HandleAsync(Request req, CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
-        var lease = await db.BedLeases.Include(l => l.Bed).SingleOrDefaultAsync(l => l.Id == req.LeaseId, ct);
+        var leaseId = Route<int>("leaseId");
+        var lease = await db.BedLeases.Include(l => l.Bed).SingleOrDefaultAsync(l => l.Id == leaseId, ct);
         if (lease is null)
         {
             await Send.NotFoundAsync(ct);

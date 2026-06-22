@@ -14,22 +14,18 @@ public sealed class RecordMembershipPaymentEndpoint(
     UserManager<ApplicationUser> userManager,
     SiteSettingsService settings,
     IActivityLogger activityLogger)
-    : Endpoint<RecordMembershipPaymentEndpoint.Request, MemberDto>
+    : EndpointWithoutRequest<MemberDto>
 {
-    public sealed class Request
-    {
-        public string Id { get; set; } = "";
-    }
-
     public override void Configure()
     {
         Post("/members/{id}/record-membership-payment");
         Group<AdminGroup>();
     }
 
-    public override async Task HandleAsync(Request req, CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == req.Id, ct);
+        var id = Route<string>("id");
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == id, ct);
         if (user is null)
         {
             await Send.NotFoundAsync(ct);
