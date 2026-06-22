@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { changePassword, fetchMe, updateMe } from '../../api/auth'
 import { payMembership } from '../../api/membership'
 import { useAppConfig } from '../../AppConfigContext'
+import { financialYearLabel, membershipPaidThroughFyLabel } from '../../format'
 import LeasedBedCard from './LeasedBedCard'
 import PaymentHistoryTable from './PaymentHistoryTable'
 
@@ -198,22 +199,16 @@ export default function AdminProfile() {
   )
 }
 
-// Membership always runs to a 1 July boundary, which is also the Australian
-// financial-year boundary. A paid-through date at or beyond today therefore
-// covers the current financial year (same rule as the admin members list).
-function currentFinancialYearLabel(now: Date): string {
-  const startYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1
-  return `${startYear}/${String(startYear + 1).slice(-2)}`
-}
-
 function MembershipStatus({ paidThrough }: { paidThrough: string | null }) {
   const { paymentsEnabled } = useAppConfig()
   const [status, setStatus] = useState<'idle' | 'starting' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
 
   const now = new Date()
-  const fyLabel = currentFinancialYearLabel(now)
   const isPaid = paidThrough != null && new Date(paidThrough).getTime() >= now.getTime()
+  // When paid, label the FY the membership actually runs to (which may be next
+  // year's, thanks to the near-EOFY carryover); otherwise the current FY.
+  const fyLabel = isPaid ? membershipPaidThroughFyLabel(paidThrough!) : financialYearLabel(now)
 
   // Renewal opens one month before the membership expires.
   const renewOpensAt = paidThrough ? new Date(paidThrough) : null
