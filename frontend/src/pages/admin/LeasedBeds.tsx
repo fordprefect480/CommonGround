@@ -57,8 +57,9 @@ export default function LeasedBeds() {
   const [state, setState] = useState<State>({ status: 'loading' })
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  // Members back the "assign to a member" dropdown only; they rarely change, so load once
-  // (sorted for display) rather than refetching on every bed action via reloadAll.
+  // Members back the "assign to a member" dropdown. Loaded as part of reloadAll so the list
+  // stays fresh and a failure surfaces as the page error rather than a silent empty dropdown.
+  // Sorted once here for display rather than per row.
   const [members, setMembers] = useState<Member[]>([])
   const sortedMembers = useMemo(
     () => [...members].sort((a, b) => memberLabel(a).localeCompare(memberLabel(b))),
@@ -66,20 +67,20 @@ export default function LeasedBeds() {
   )
 
   const reloadAll = async () => {
-    const [overview, requests, price] = await Promise.all([
+    const [overview, requests, price, members] = await Promise.all([
       fetchLeasedBeds(),
       fetchBedRequests(),
       getLeasedBedPrice(),
+      fetchMembers(),
     ])
     setState({ status: 'ready', overview, requests, standardPriceCents: price.priceCents })
+    setMembers(members)
   }
 
   useEffect(() => {
     reloadAll().catch((err: unknown) =>
       setState({ status: 'error', message: err instanceof Error ? err.message : 'Failed to load leased beds' }),
     )
-    // Members are auxiliary; a failure here just leaves the assign dropdown empty.
-    fetchMembers().then(setMembers).catch(() => {})
   }, [])
 
   const handleRelease = async (bed: AdminBed) => {
