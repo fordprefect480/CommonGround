@@ -54,6 +54,43 @@ export async function logout(): Promise<void> {
   await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
 }
 
+export async function requestPasswordReset(email: string): Promise<void> {
+  let res: Response
+  try {
+    res = await fetch('/api/auth/forgotPassword', {
+      method: 'POST',
+      headers: json,
+      body: JSON.stringify({ email }),
+    })
+  } catch {
+    throw new Error('Could not reach the server. Please try again.')
+  }
+  // The endpoint always returns 200 for valid input so it can't be used to
+  // probe which emails have accounts; any non-OK status is a real error.
+  if (res.ok) return
+  const text = await res.text().catch(() => '')
+  throw new Error(parseProblemDetails(text) ?? `Request failed (HTTP ${res.status})`)
+}
+
+export async function resetPassword(email: string, resetCode: string, newPassword: string): Promise<void> {
+  let res: Response
+  try {
+    res = await fetch('/api/auth/resetPassword', {
+      method: 'POST',
+      headers: json,
+      body: JSON.stringify({ email, resetCode, newPassword }),
+    })
+  } catch {
+    throw new Error('Could not reach the server. Please try again.')
+  }
+  if (res.ok) return
+  const text = await res.text().catch(() => '')
+  throw new Error(
+    parseProblemDetails(text) ??
+      'This reset link is invalid or has expired. Please request a new one.',
+  )
+}
+
 export async function fetchMe(): Promise<Me | null> {
   const res = await fetch('/api/account/me', { credentials: 'include' })
   if (res.status === 401 || res.status === 403) return null
