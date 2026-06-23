@@ -705,6 +705,26 @@ button.footer-link:disabled {
 .admin-table tbody tr:last-child td { border-bottom: none; }
 .admin-table tbody tr:hover         { background: var(--table-row-hover); }
 
+.blog-thumb {
+  display: block;
+  width: 4rem;
+  height: 3rem;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  background: var(--paper-soft);
+}
+
+.blog-thumb-empty {
+  border: 1px dashed var(--ink-200);
+}
+
+.blog-row-excerpt {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--ink-500);
+}
+
 .admin-table-link {
   color: inherit;
   font-weight: 600;

@@ -32,7 +32,8 @@ public record BlogPostAdminListItemDto(
     int Status,
     DateTime? PublishedAt,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    string Excerpt);
 
 public record BlogPostAdminDto(
     int Id,

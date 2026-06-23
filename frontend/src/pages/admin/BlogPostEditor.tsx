@@ -1,12 +1,10 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
-  blogImageUrl,
   createBlogPost,
   fetchAdminBlogPost,
   fetchBlogCategories,
   updateBlogPost,
-  uploadBlogImage,
   type BlogCategory,
 } from '../../api/blog'
 
@@ -19,7 +17,6 @@ interface FormState {
   title: string
   bodyHtml: string
   categoryId: number | null
-  featuredImageId: number | null
   status: number
 }
 
@@ -27,8 +24,18 @@ const EMPTY: FormState = {
   title: '',
   bodyHtml: '',
   categoryId: null,
-  featuredImageId: null,
   status: STATUS_DRAFT,
+}
+
+// The featured image is derived from the first image in the post body. Image
+// sources look like "/api/blog/images/{id}", so we recover the id from there.
+function deriveFeaturedImageId(bodyHtml: string): number | null {
+  const src = new DOMParser()
+    .parseFromString(bodyHtml, 'text/html')
+    .querySelector('img')
+    ?.getAttribute('src')
+  const match = src?.match(/\/api\/blog\/images\/(\d+)/)
+  return match ? Number(match[1]) : null
 }
 
 export default function BlogPostEditor() {
@@ -56,7 +63,6 @@ export default function BlogPostEditor() {
           title: post.title,
           bodyHtml: post.bodyHtml,
           categoryId: post.categoryId,
-          featuredImageId: post.featuredImageId,
           status: post.status,
         })
         setOriginalStatus(post.status)
@@ -67,15 +73,6 @@ export default function BlogPostEditor() {
 
   const update = (patch: Partial<FormState>) => setForm((prev) => ({ ...prev, ...patch }))
 
-  const handleFeaturedUpload = async (file: File) => {
-    try {
-      const result = await uploadBlogImage(file)
-      update({ featuredImageId: result.id })
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Upload failed')
-    }
-  }
-
   const submit = async (status: number) => {
     setSubmitting(true)
     setError(null)
@@ -85,7 +82,7 @@ export default function BlogPostEditor() {
         excerpt: null,
         bodyHtml: form.bodyHtml,
         categoryId: form.categoryId,
-        featuredImageId: form.featuredImageId,
+        featuredImageId: deriveFeaturedImageId(form.bodyHtml),
         status,
       }
       const result = isNew
@@ -102,7 +99,6 @@ export default function BlogPostEditor() {
 
   if (loading) return <p className="admin-loading">Loading&hellip;</p>
 
-  const featuredUrl = blogImageUrl(form.featuredImageId)
   const isPublished = originalStatus === STATUS_PUBLISHED
 
   return (
@@ -129,19 +125,6 @@ export default function BlogPostEditor() {
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </label>
-
-        <div className="field">
-          <span className="field-label">Featured image</span>
-          {featuredUrl && <img src={featuredUrl} alt="" style={{ maxWidth: 240, display: 'block', marginBottom: 8 }} />}
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) handleFeaturedUpload(f)
-            }}
-          />
-        </div>
 
         <div className="field">
           <span className="field-label">Body</span>

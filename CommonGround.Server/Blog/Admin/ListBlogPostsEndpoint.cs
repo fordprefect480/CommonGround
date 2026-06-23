@@ -14,16 +14,28 @@ public sealed class ListBlogPostsEndpoint(AppDbContext db)
         Group<AdminBlogGroup>();
     }
 
+    private const int BodyHeadChars = 500;
+    private const int ExcerptChars = 90;
+
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var posts = await db.BlogPosts
+        var rows = await db.BlogPosts
             .AsNoTracking()
             .OrderByDescending(p => p.UpdatedAt)
-            .Select(p => new BlogPostAdminListItemDto(
+            .Select(p => new
+            {
                 p.Id, p.Slug, p.Title, p.AuthorName,
-                p.CategoryId, p.FeaturedImageId, (int)p.Status,
-                p.PublishedAt, p.CreatedAt, p.UpdatedAt))
+                p.CategoryId, p.FeaturedImageId, p.Status,
+                p.PublishedAt, p.CreatedAt, p.UpdatedAt,
+                BodyHead = p.BodyHtml.Length > BodyHeadChars ? p.BodyHtml.Substring(0, BodyHeadChars) : p.BodyHtml,
+            })
             .ToListAsync(ct);
+
+        var posts = rows.Select(p => new BlogPostAdminListItemDto(
+            p.Id, p.Slug, p.Title, p.AuthorName,
+            p.CategoryId, p.FeaturedImageId, (int)p.Status,
+            p.PublishedAt, p.CreatedAt, p.UpdatedAt,
+            BlogExcerpt.FromHtml(p.BodyHead, ExcerptChars))).ToList();
 
         await Send.OkAsync(posts, ct);
     }
