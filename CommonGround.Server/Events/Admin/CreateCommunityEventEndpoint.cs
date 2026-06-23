@@ -33,39 +33,88 @@ public sealed class CreateCommunityEventEndpoint(
             return;
         }
 
-        var displayOrder = req.DisplayOrder ?? ((await db.CommunityEvents.MaxAsync(e => (int?)e.DisplayOrder, ct) ?? -1) + 1);
+        var startUtc = DateTime.SpecifyKind(req.StartUtc, DateTimeKind.Utc);
+        var frequency = RecurrenceExpander.ParseFrequency(req.RepeatFrequency);
 
-        var imageId = await ResolveImageIdAsync(req.FeaturedImageId, ct);
-
-        var now = DateTime.UtcNow;
-        var ev = new CommunityEvent
+        IReadOnlyList<DateTime> starts;
+        if (frequency == RepeatFrequency.None)
         {
-            Title = req.Title.Trim(),
-            StartUtc = DateTime.SpecifyKind(req.StartUtc, DateTimeKind.Utc),
-            EndUtc = req.EndUtc is { } end ? DateTime.SpecifyKind(end, DateTimeKind.Utc) : null,
-            Body = req.Body.Trim(),
-            Url = string.IsNullOrWhiteSpace(req.Url) ? null : req.Url.Trim(),
-            Tone = EventsMapping.NormalizeTone(req.Tone),
-            DisplayOrder = displayOrder,
-            FeaturedImageId = imageId,
-            CreatedAt = now,
-            UpdatedAt = now,
-            CreatedByUserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
-        };
+            starts = [startUtc];
+        }
+        else
+        {
+            if (req.RepeatUntil is not { } until)
+            {
+                await Send.ResultAsync(Results.BadRequest(new { error = "A repeat-until date is required for a recurring event." }));
+                return;
+            }
+            if (until < RecurrenceExpander.GardenDate(startUtc))
+            {
+                await Send.ResultAsync(Results.BadRequest(new { error = "The repeat-until date must be on or after the start date." }));
+                return;
+            }
+            starts = RecurrenceExpander.Expand(startUtc, frequency, until);
+        }
 
-        db.CommunityEvents.Add(ev);
+        var duration = req.EndUtc is { } endRaw
+            ? DateTime.SpecifyKind(endRaw, DateTimeKind.Utc) - startUtc
+            : (TimeSpan?)null;
+
+        var baseOrder = req.DisplayOrder ?? ((await db.CommunityEvents.MaxAsync(e => (int?)e.DisplayOrder, ct) ?? -1) + 1);
+        var imageId = await ResolveImageIdAsync(req.FeaturedImageId, ct);
+        var tone = EventsMapping.NormalizeTone(req.Tone);
+        var url = string.IsNullOrWhiteSpace(req.Url) ? null : req.Url.Trim();
+        var title = req.Title.Trim();
+        var body = req.Body.Trim();
+        var createdBy = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var now = DateTime.UtcNow;
+
+        var created = new List<CommunityEvent>(starts.Count);
+        for (var i = 0; i < starts.Count; i++)
+        {
+            var occurrenceStart = starts[i];
+            created.Add(new CommunityEvent
+            {
+                Title = title,
+                StartUtc = occurrenceStart,
+                EndUtc = duration is { } d ? occurrenceStart + d : null,
+                Body = body,
+                Url = url,
+                Tone = tone,
+                DisplayOrder = baseOrder + i,
+                FeaturedImageId = imageId,
+                CreatedAt = now,
+                UpdatedAt = now,
+                CreatedByUserId = createdBy,
+            });
+        }
+
+        db.CommunityEvents.AddRange(created);
         await db.SaveChangesAsync(ct);
 
         EventsCache.InvalidateUpcoming(cache);
 
-        await activityLogger.LogAsync(
-            "event.created",
-            $"added a new event \"{ev.Title}\"",
-            targetType: "CommunityEvent",
-            targetId: ev.Id.ToString(),
-            ct: ct);
+        var first = created[0];
+        if (created.Count == 1)
+        {
+            await activityLogger.LogAsync(
+                "event.created",
+                $"added a new event \"{first.Title}\"",
+                targetType: "CommunityEvent",
+                targetId: first.Id.ToString(),
+                ct: ct);
+        }
+        else
+        {
+            await activityLogger.LogAsync(
+                "event.created",
+                $"added a recurring event \"{first.Title}\" ({created.Count} occurrences)",
+                targetType: "CommunityEvent",
+                targetId: first.Id.ToString(),
+                ct: ct);
+        }
 
-        await Send.ResultAsync(Results.Created($"/api/admin/events/{ev.Id}", EventsMapping.ToAdminDto(ev)));
+        await Send.ResultAsync(Results.Created($"/api/admin/events/{first.Id}", EventsMapping.ToAdminDto(first)));
     }
 
     private async Task<int?> ResolveImageIdAsync(int? requested, CancellationToken ct)
