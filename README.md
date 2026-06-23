@@ -286,6 +286,10 @@ dotnet publish CommonGround.AppHost -c Release
 
 Aspire generates a deployment manifest you can target at any container host.
 
+### Backup and restore
+
+The Container App is stateless - all durable data lives in the Azure SQL database. Backup retention (35-day point-in-time restore plus long-term weekly/monthly/yearly snapshots) is defined in `CommonGround.AppHost/AppHost.cs` and applied on every deploy. See [`BACKUP.md`](BACKUP.md) for the full strategy, the one-time SQL-server delete lock, and step-by-step restore procedures.
+
 ## Architecture notes
 
 - **Endpoint groups.** FastEndpoints' `Group<T>` and `SubGroup<T>` are used to compose route prefixes and auth requirements. `AdminGroup` enforces the `Admin` role on every nested endpoint - see [`Auth/EndpointGroups.cs`](CommonGround.Server/Auth/EndpointGroups.cs).
