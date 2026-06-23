@@ -179,11 +179,17 @@ export default function CommunityEventEditor() {
             : null,
       }
       if (isNew) {
-        await createCommunityEvent(payload)
+        const created = await createCommunityEvent(payload)
+        navigate('/admin/events', {
+          replace: true,
+          state: {
+            notice: `Created ${created.createdCount} ${created.createdCount === 1 ? 'event' : 'events'}.`,
+          },
+        })
       } else {
         await updateCommunityEvent(Number(id), payload)
+        navigate('/admin/events', { replace: true })
       }
-      navigate('/admin/events', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed')
     } finally {

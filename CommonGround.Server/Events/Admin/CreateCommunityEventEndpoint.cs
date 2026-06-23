@@ -12,7 +12,7 @@ public sealed class CreateCommunityEventEndpoint(
     AppDbContext db,
     IActivityLogger activityLogger,
     IMemoryCache cache)
-    : Endpoint<CommunityEventWriteDto, CommunityEventAdminDto>
+    : Endpoint<CommunityEventWriteDto, CommunityEventCreatedDto>
 {
     public override void Configure()
     {
@@ -114,7 +114,9 @@ public sealed class CreateCommunityEventEndpoint(
                 ct: ct);
         }
 
-        await Send.ResultAsync(Results.Created($"/api/admin/events/{first.Id}", EventsMapping.ToAdminDto(first)));
+        await Send.ResultAsync(Results.Created(
+            $"/api/admin/events/{first.Id}",
+            new CommunityEventCreatedDto(EventsMapping.ToAdminDto(first), created.Count)));
     }
 
     private async Task<int?> ResolveImageIdAsync(int? requested, CancellationToken ct)

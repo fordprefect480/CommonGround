@@ -29,6 +29,8 @@ public record CommunityEventAdminDto(
     DateTime CreatedAt,
     DateTime UpdatedAt);
 
+public record CommunityEventCreatedDto(CommunityEventAdminDto Event, int CreatedCount);
+
 public record CommunityEventWriteDto(
     string Title,
     DateTime StartUtc,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   deleteCommunityEvent,
   fetchAdminCommunityEvents,
@@ -24,6 +24,16 @@ const dateFmt = new Intl.DateTimeFormat('en-AU', {
 
 export default function CommunityEventList() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [notice, setNotice] = useState<string | null>(
+    (location.state as { notice?: string } | null)?.notice ?? null,
+  )
+
+  useEffect(() => {
+    // Clear router state so a refresh or back-nav doesn't resurface the notice.
+    if (window.history.state) window.history.replaceState({}, '')
+  }, [])
+
   const [state, setState] = useState<State>({ status: 'loading' })
 
   const reload = () => {
@@ -74,6 +84,20 @@ export default function CommunityEventList() {
           New event
         </button>
       </header>
+
+      {notice && (
+        <div className="form-success" role="status">
+          {notice}
+          <button
+            type="button"
+            className="footer-link"
+            style={{ marginLeft: 12 }}
+            onClick={() => setNotice(null)}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <p className="admin-empty">
         Add events that aren&rsquo;t on Eventbrite (working bees, social groups,
