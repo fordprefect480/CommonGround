@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="CommonGround.Server.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.5.1" />
     <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.4.6" />
     <!-- Registers the Azure AD auth providers (e.g. ActiveDirectoryDefault) that Microsoft.Data.SqlClient 6+ no longer bundles; required for managed-identity auth to Azure SQL in production. -->

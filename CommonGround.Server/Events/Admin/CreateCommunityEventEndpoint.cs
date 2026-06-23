@@ -64,6 +64,7 @@ public sealed class CreateCommunityEventEndpoint(
         var imageId = await ResolveImageIdAsync(req.FeaturedImageId, ct);
         var tone = EventsMapping.NormalizeTone(req.Tone);
         var url = string.IsNullOrWhiteSpace(req.Url) ? null : req.Url.Trim();
+        var location = string.IsNullOrWhiteSpace(req.Location) ? null : req.Location.Trim();
         var title = req.Title.Trim();
         var body = req.Body.Trim();
         var createdBy = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -80,6 +81,7 @@ public sealed class CreateCommunityEventEndpoint(
                 EndUtc = duration is { } d ? occurrenceStart + d : null,
                 Body = body,
                 Url = url,
+                Location = location,
                 Tone = tone,
                 DisplayOrder = baseOrder + i,
                 FeaturedImageId = imageId,

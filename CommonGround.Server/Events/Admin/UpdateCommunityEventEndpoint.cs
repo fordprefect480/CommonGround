@@ -21,6 +21,7 @@ public sealed class UpdateCommunityEventEndpoint(
         public DateTime? EndUtc { get; set; }
         public string Body { get; set; } = "";
         public string? Url { get; set; }
+        public string? Location { get; set; }
         public int? FeaturedImageId { get; set; }
         public string? Tone { get; set; }
         public int? DisplayOrder { get; set; }
@@ -59,6 +60,7 @@ public sealed class UpdateCommunityEventEndpoint(
         ev.EndUtc = req.EndUtc is { } end ? DateTime.SpecifyKind(end, DateTimeKind.Utc) : null;
         ev.Body = req.Body.Trim();
         ev.Url = string.IsNullOrWhiteSpace(req.Url) ? null : req.Url.Trim();
+        ev.Location = string.IsNullOrWhiteSpace(req.Location) ? null : req.Location.Trim();
         ev.Tone = EventsMapping.NormalizeTone(req.Tone);
         ev.FeaturedImageId = imageId;
         if (req.DisplayOrder is { } order) ev.DisplayOrder = order;

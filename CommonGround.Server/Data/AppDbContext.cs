@@ -134,6 +134,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             b.Property(x => x.Title).HasMaxLength(200).IsRequired();
             b.Property(x => x.Body).HasMaxLength(1000).IsRequired();
             b.Property(x => x.Url).HasMaxLength(500);
+            b.Property(x => x.Location).HasMaxLength(200);
             b.Property(x => x.Tone).HasMaxLength(16).IsRequired();
 
             b.Property(x => x.StartUtc).HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));

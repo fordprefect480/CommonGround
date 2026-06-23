@@ -14,6 +14,8 @@ public class CommunityEvent
 
     public string? Url { get; set; }
 
+    public string? Location { get; set; }
+
     /// <summary>
     /// Visual tone for the placeholder card image when no logo is provided.
     /// One of: leaf, apple, flesh.
