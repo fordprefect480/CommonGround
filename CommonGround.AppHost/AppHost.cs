@@ -52,15 +52,16 @@ if (builder.ExecutionContext.IsPublishMode)
 			RetentionDays = 35,
 		});
 
-		// Long-term retention: weekly/monthly/yearly snapshots that survive well beyond the
-		// PITR window. Values are ISO-8601 durations; WeekOfYear picks which weekly backup is
-		// promoted to the yearly snapshot (1 = first week of January).
+		// Long-term retention: a lean set of weekly/monthly/yearly snapshots that survive
+		// beyond the PITR window without accumulating much storage (LTR backups are always
+		// billed, unlike PITR). Values are ISO-8601 durations; WeekOfYear picks which weekly
+		// backup is promoted to the yearly snapshot (1 = first week of January).
 		infra.Add(new SqlServerDatabaseBackupLongTermRetentionPolicy("longTermRetention")
 		{
 			Parent = db,
 			WeeklyRetention = "P4W",
-			MonthlyRetention = "P12M",
-			YearlyRetention = "P5Y",
+			MonthlyRetention = "P6M",
+			YearlyRetention = "P1Y",
 			WeekOfYear = 1,
 		});
 	});
