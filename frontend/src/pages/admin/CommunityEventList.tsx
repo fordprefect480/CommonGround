@@ -30,8 +30,10 @@ export default function CommunityEventList() {
   )
 
   useEffect(() => {
-    // Clear router state so a refresh or back-nav doesn't resurface the notice.
-    if (window.history.state) window.history.replaceState({}, '')
+    // Drop the notice from history state so a refresh or back-nav doesn't
+    // resurface it. Going through the router (rather than window.history)
+    // keeps its own scroll-restoration bookkeeping intact.
+    if (location.state) navigate('.', { replace: true, state: null })
   }, [])
 
   const [state, setState] = useState<State>({ status: 'loading' })
