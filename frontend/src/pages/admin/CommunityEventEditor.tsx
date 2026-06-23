@@ -16,6 +16,7 @@ interface FormState {
   endLocal: string
   body: string
   url: string
+  location: string
   featuredImageId: number | null
   imageUrl: string | null
   repeatFrequency: RepeatFrequency
@@ -28,6 +29,7 @@ const EMPTY: FormState = {
   endLocal: '',
   body: '',
   url: '',
+  location: '',
   featuredImageId: null,
   imageUrl: null,
   repeatFrequency: 'none',
@@ -118,6 +120,7 @@ export default function CommunityEventEditor() {
           endLocal: toLocalInputValue(ev.endUtc),
           body: ev.body,
           url: ev.url ?? '',
+          location: ev.location ?? '',
           featuredImageId: ev.featuredImageId,
           imageUrl: ev.imageUrl,
           repeatFrequency: 'none',
@@ -171,6 +174,7 @@ export default function CommunityEventEditor() {
         endUtc: fromLocalInputValue(form.endLocal),
         body: form.body,
         url: form.url.trim() === '' ? null : form.url.trim(),
+        location: form.location.trim() === '' ? null : form.location.trim(),
         featuredImageId: form.featuredImageId,
         repeatFrequency: isNew ? form.repeatFrequency : 'none',
         repeatUntil:
@@ -297,6 +301,17 @@ export default function CommunityEventEditor() {
             rows={4}
             maxLength={1000}
             placeholder="Preparing native garden beds between the new pathways. Lend a hand if you can."
+          />
+        </label>
+
+        <label className="field">
+          <span className="field-label">Location (optional)</span>
+          <input
+            type="text"
+            value={form.location}
+            onChange={(e) => update({ location: e.target.value })}
+            maxLength={200}
+            placeholder="North beds, near the shed"
           />
         </label>
 

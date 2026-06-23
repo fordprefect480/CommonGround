@@ -182,6 +182,11 @@ export default function Events() {
                 >
                   {selected.title}
                 </h2>
+                {selected.location && (
+                  <span style={{ fontSize: 13, color: 'var(--fg-3)', fontFamily: 'var(--font-mono)' }}>
+                    📍 {selected.location}
+                  </span>
+                )}
                 <p
                   style={{
                     fontSize: 15,

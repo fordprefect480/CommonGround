@@ -12,6 +12,7 @@ export interface UpcomingEvent {
   url: string | null
   tone: EventTone
   imageUrl: string | null
+  location: string | null
 }
 
 export interface CommunityEventAdmin {
@@ -25,6 +26,7 @@ export interface CommunityEventAdmin {
   displayOrder: number
   featuredImageId: number | null
   imageUrl: string | null
+  location: string | null
   createdAt: string
   updatedAt: string
 }
@@ -41,6 +43,7 @@ export interface CommunityEventWrite {
   body: string
   url: string | null
   featuredImageId: number | null
+  location?: string | null
   tone?: EventTone
   displayOrder?: number | null
   repeatFrequency?: RepeatFrequency

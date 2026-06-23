@@ -566,6 +566,11 @@ export function HomeEvents({ onNav }: NavProps) {
                   >
                     {e.title}
                   </h3>
+                  {e.location && (
+                    <span style={{ fontSize: 12, color: 'var(--fg-4)', fontFamily: 'var(--font-mono)' }}>
+                      📍 {e.location}
+                    </span>
+                  )}
                   <p
                     style={{
                       fontSize: 14,
