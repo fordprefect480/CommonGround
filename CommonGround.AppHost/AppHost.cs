@@ -33,6 +33,36 @@ if (builder.ExecutionContext.IsPublishMode)
 		};
 		db.MinCapacity = 0.5;
 		db.AutoPauseDelay = 60;
+
+		// Backup retention. The SQL database is the only durable store for this app:
+		// members, memberships, Stripe payment records, bed leases, blog posts, blog
+		// images (stored as varbinary BLOBs), community events and audit logs all live
+		// here. The Container App itself is stateless, so the database is the thing that
+		// must survive an accidental delete. Azure SQL takes automated backups regardless,
+		// but the default point-in-time window is only 7 days and there is no long-term
+		// retention; we extend both here so they are infrastructure-as-code rather than a
+		// setting someone has to remember to click. See BACKUP.md (repo root) for the
+		// matching restore procedure and the resource lock (the lock is applied operationally
+		// because a CanNotDelete lock on the resource group would otherwise block azd deploys).
+
+		// Point-in-time restore: keep the maximum 35-day rolling window.
+		infra.Add(new SqlServerDatabaseBackupShortTermRetentionPolicy("shortTermRetention")
+		{
+			Parent = db,
+			RetentionDays = 35,
+		});
+
+		// Long-term retention: weekly/monthly/yearly snapshots that survive well beyond the
+		// PITR window. Values are ISO-8601 durations; WeekOfYear picks which weekly backup is
+		// promoted to the yearly snapshot (1 = first week of January).
+		infra.Add(new SqlServerDatabaseBackupLongTermRetentionPolicy("longTermRetention")
+		{
+			Parent = db,
+			WeeklyRetention = "P4W",
+			MonthlyRetention = "P12M",
+			YearlyRetention = "P5Y",
+			WeekOfYear = 1,
+		});
 	});
 }
 
