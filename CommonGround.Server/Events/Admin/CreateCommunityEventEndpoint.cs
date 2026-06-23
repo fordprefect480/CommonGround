@@ -97,24 +97,10 @@ public sealed class CreateCommunityEventEndpoint(
         EventsCache.InvalidateUpcoming(cache);
 
         var first = created[0];
-        if (created.Count == 1)
-        {
-            await activityLogger.LogAsync(
-                "event.created",
-                $"added a new event \"{first.Title}\"",
-                targetType: "CommunityEvent",
-                targetId: first.Id.ToString(),
-                ct: ct);
-        }
-        else
-        {
-            await activityLogger.LogAsync(
-                "event.created",
-                $"added a recurring event \"{first.Title}\" ({created.Count} occurrences)",
-                targetType: "CommunityEvent",
-                targetId: first.Id.ToString(),
-                ct: ct);
-        }
+        var summary = created.Count == 1
+            ? $"added a new event \"{first.Title}\""
+            : $"added a recurring event \"{first.Title}\" ({created.Count} occurrences)";
+        await activityLogger.LogAsync("event.created", summary, targetType: "CommunityEvent", targetId: first.Id.ToString(), ct: ct);
 
         await Send.ResultAsync(Results.Created(
             $"/api/admin/events/{first.Id}",

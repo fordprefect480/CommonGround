@@ -201,6 +201,10 @@ export default function CommunityEventEditor() {
     }
   }
 
+  const occurrenceCount = isNew
+    ? countOccurrences(form.startLocal, form.repeatFrequency, form.repeatUntil)
+    : null
+
   if (loading) return <p className="admin-loading">Loading&hellip;</p>
 
   return (
@@ -276,19 +280,11 @@ export default function CommunityEventEditor() {
               </label>
             )}
 
-            {(() => {
-              const count = countOccurrences(
-                form.startLocal,
-                form.repeatFrequency,
-                form.repeatUntil,
-              )
-              if (count === null) return null
-              return (
-                <p className="admin-loading" style={{ marginTop: 8 }}>
-                  This will create {count} {count === 1 ? 'event' : 'separate events'}.
-                </p>
-              )
-            })()}
+            {occurrenceCount !== null && (
+              <p className="admin-loading" style={{ marginTop: 8 }}>
+                This will create {occurrenceCount} {occurrenceCount === 1 ? 'event' : 'separate events'}.
+              </p>
+            )}
           </div>
         )}
 
