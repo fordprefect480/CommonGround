@@ -1,4 +1,4 @@
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper, type ReactNodeViewProps } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
@@ -16,13 +16,26 @@ type ImageSizeClass = typeof IMAGE_SIZE_CLASSES[number]
 const SIZE_LABELS: Record<ImageSizeClass, string> = {
   'blog-img-small': 'S',
   'blog-img-medium': 'M',
-  'blog-img-wide': 'W',
+  'blog-img-wide': 'L',
 }
 
 const SIZE_TITLES: Record<ImageSizeClass, string> = {
   'blog-img-small': 'Small image',
   'blog-img-medium': 'Medium image',
-  'blog-img-wide': 'Wide image',
+  'blog-img-wide': 'Large image',
+}
+
+const BLOCK_OPTIONS = [
+  { value: 'paragraph', label: 'Normal text' },
+  { value: 'title', label: 'Title' },
+  { value: 'heading', label: 'Heading' },
+  { value: 'subheading', label: 'Subheading' },
+] as const
+
+const BLOCK_LEVEL: Record<'title' | 'heading' | 'subheading', 1 | 2 | 3> = {
+  title: 1,
+  heading: 2,
+  subheading: 3,
 }
 
 const iconProps = {
@@ -83,6 +96,16 @@ const ImageIcon = () => (
   </svg>
 )
 
+const TrashIcon = () => (
+  <svg {...iconProps} aria-hidden="true">
+    <path d="M4 7h16" />
+    <path d="M10 11v6" />
+    <path d="M14 11v6" />
+    <path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" />
+    <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+  </svg>
+)
+
 function ToolbarButton({ label, onClick, pressed, disabled, children }: {
   label: string
   onClick: () => void
@@ -94,6 +117,35 @@ function ToolbarButton({ label, onClick, pressed, disabled, children }: {
     <button type="button" onClick={onClick} title={label} aria-label={label} aria-pressed={pressed} disabled={disabled}>
       {children}
     </button>
+  )
+}
+
+function ImageNodeView({ node, selected, updateAttributes, deleteNode }: ReactNodeViewProps) {
+  const sizeClass = (node.attrs.class as string | null) ?? 'blog-img-medium'
+  return (
+    <NodeViewWrapper className="tiptap-image-nodeview" data-selected={selected || undefined}>
+      <img src={node.attrs.src} alt={node.attrs.alt ?? ''} className={sizeClass} draggable={false} />
+      {selected && (
+        <div className="tiptap-image-menu" contentEditable={false} onMouseDown={(e) => e.preventDefault()}>
+          {IMAGE_SIZE_CLASSES.map((size) => (
+            <button
+              type="button"
+              key={size}
+              title={SIZE_TITLES[size]}
+              aria-label={SIZE_TITLES[size]}
+              aria-pressed={sizeClass === size}
+              onClick={() => updateAttributes({ class: size })}
+            >
+              {SIZE_LABELS[size]}
+            </button>
+          ))}
+          <span className="tiptap-image-menu-divider" aria-hidden="true" />
+          <button type="button" className="tiptap-image-delete" title="Delete image" aria-label="Delete image" onClick={() => deleteNode()}>
+            <TrashIcon />
+          </button>
+        </div>
+      )}
+    </NodeViewWrapper>
   )
 }
 
@@ -109,13 +161,16 @@ const SizedImage = Image.extend({
       },
     }
   },
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageNodeView)
+  },
 })
 
 export default function BlogEditor({ value, onChange }: BlogEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: { levels: [2, 3, 4] },
+        heading: { levels: [1, 2, 3, 4] },
       }),
       Link.configure({
         autolink: true,
@@ -164,21 +219,32 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
     editor.chain().focus().setLink({ href: url }).run()
   }
 
-  const setImageSize = (size: ImageSizeClass) =>
-    editor.chain().focus().updateAttributes('image', { class: size }).run()
+  const currentBlock = editor.isActive('heading', { level: 1 })
+    ? 'title'
+    : editor.isActive('heading', { level: 2 })
+      ? 'heading'
+      : editor.isActive('heading', { level: 3 })
+        ? 'subheading'
+        : 'paragraph'
 
-  const imageSelected = editor.isActive('image')
+  const applyBlock = (value: string) => {
+    if (value === 'paragraph') editor.chain().focus().setParagraph().run()
+    else editor.chain().focus().setHeading({ level: BLOCK_LEVEL[value as keyof typeof BLOCK_LEVEL] }).run()
+  }
 
   return (
     <div className="tiptap-wrapper">
       <div className="tiptap-toolbar" role="toolbar" aria-label="Editor formatting">
-        <ToolbarButton label="Bold" onClick={() => editor.chain().focus().toggleBold().run()} pressed={editor.isActive('bold')}><b>B</b></ToolbarButton>
-        <ToolbarButton label="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} pressed={editor.isActive('italic')}><i>I</i></ToolbarButton>
+        <select className="tiptap-style-select" aria-label="Text style" value={currentBlock} onChange={(e) => applyBlock(e.target.value)}>
+          {BLOCK_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
 
         <span className="tiptap-toolbar-divider" aria-hidden="true" />
 
-        <ToolbarButton label="Heading" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} pressed={editor.isActive('heading', { level: 2 })}>H2</ToolbarButton>
-        <ToolbarButton label="Subheading" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} pressed={editor.isActive('heading', { level: 3 })}>H3</ToolbarButton>
+        <ToolbarButton label="Bold" onClick={() => editor.chain().focus().toggleBold().run()} pressed={editor.isActive('bold')}><b>B</b></ToolbarButton>
+        <ToolbarButton label="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} pressed={editor.isActive('italic')}><i style={{ display: 'inline-block', transform: 'skewX(-12deg)' }}>I</i></ToolbarButton>
 
         <span className="tiptap-toolbar-divider" aria-hidden="true" />
 
@@ -205,20 +271,6 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
             }}
           />
         </label>
-
-        <span className="tiptap-toolbar-divider" aria-hidden="true" />
-
-        {IMAGE_SIZE_CLASSES.map((size) => (
-          <ToolbarButton
-            key={size}
-            label={SIZE_TITLES[size]}
-            onClick={() => setImageSize(size)}
-            pressed={editor.isActive('image', { class: size })}
-            disabled={!imageSelected}
-          >
-            {SIZE_LABELS[size]}
-          </ToolbarButton>
-        ))}
       </div>
       <EditorContent editor={editor} className="tiptap-content blog-post-body" />
     </div>

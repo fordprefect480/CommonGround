@@ -132,7 +132,6 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
   background: var(--paper);
   color: var(--fg);
   font-family: var(--font-sans);
@@ -1321,6 +1320,7 @@ button.footer-link:disabled {
   color: var(--ink-700);
 }
 
+.blog-post-body h1,
 .blog-post-body h2,
 .blog-post-body h3,
 .blog-post-body h4 {
@@ -1330,6 +1330,7 @@ button.footer-link:disabled {
   color: var(--ink-900);
   margin: 1.75em 0 0.5em;
 }
+.blog-post-body h1 { font-size: 1.875rem;  line-height: 1.2; }
 .blog-post-body h2 { font-size: 1.5rem;    line-height: 1.3; }
 .blog-post-body h3 { font-size: 1.1875rem; line-height: 1.35; }
 .blog-post-body h4 { font-size: 1rem;      line-height: 1.4; }
@@ -1533,8 +1534,8 @@ button.footer-link:disabled {
    TipTap WYSIWYG editor
    ===================================================================== */
 
-.tiptap-wrapper { border: 1px solid #d8d2c4; border-radius: 8px; overflow: hidden; }
-.tiptap-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px 8px; background: var(--paper); border-bottom: 1px solid #e2dccf; }
+.tiptap-wrapper { border: 1px solid #d8d2c4; border-radius: 8px; }
+.tiptap-toolbar { position: sticky; top: var(--admin-header-h, 81px); z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px 8px; background: var(--paper); border-bottom: 1px solid #e2dccf; border-radius: 7px 7px 0 0; }
 .tiptap-toolbar button, .tiptap-image-button {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 36px; height: 36px; padding: 0 9px;
@@ -1546,14 +1547,50 @@ button.footer-link:disabled {
 .tiptap-toolbar button[aria-pressed="true"] { background: var(--apple-600); color: var(--paper); }
 .tiptap-toolbar button:disabled { opacity: 0.4; cursor: not-allowed; }
 .tiptap-toolbar-divider { width: 1px; align-self: center; height: 22px; background: #ddd6c7; margin: 0 5px; }
+.tiptap-toolbar .tiptap-style-select {
+  height: 36px; min-width: 132px; padding: 0 30px 0 10px;
+  font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--ink-900);
+  background-color: transparent; border: 1px solid #d8d2c4; border-radius: 7px; cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%235b6770' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1.5l5 5 5-5'/></svg>");
+  background-repeat: no-repeat; background-position: right 10px center; background-size: 0.7rem;
+  transition: background-color 120ms var(--ease-out), border-color 120ms var(--ease-out);
+}
+.tiptap-toolbar .tiptap-style-select:hover { background-color: #ece5d6; }
+.tiptap-toolbar .tiptap-style-select:focus { outline: none; border-color: var(--apple-600); box-shadow: var(--ring-focus); }
 .tiptap-image-button { display: inline-flex; }
 .tiptap-content {
   padding: 1.25rem 1.5rem;
   min-height: 300px;
   background: var(--ivory);
+  border-radius: 0 0 7px 7px;
 }
 .tiptap-content :focus { outline: none; }
-.tiptap-content img.ProseMirror-selectednode { outline: 2px solid var(--apple-600); outline-offset: 2px; }
+
+/* Selected images render via a React NodeView that overlays a mini toolbar. */
+.tiptap-image-nodeview { position: relative; width: -moz-fit-content; width: fit-content; margin: 1.5rem auto; }
+.tiptap-image-nodeview img { margin: 0; }
+.tiptap-image-nodeview[data-selected] img { outline: 2px solid var(--apple-600); outline-offset: 2px; }
+
+.tiptap-image-menu {
+  position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 2px;
+  padding: 4px; border-radius: 9px; z-index: 5;
+  background: rgba(28, 30, 26, 0.86);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+}
+.tiptap-image-menu button {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 32px; height: 32px; padding: 0 8px;
+  font-size: 14px; font-weight: 600; line-height: 1; color: #fff;
+  background: transparent; border: 1px solid transparent; border-radius: 6px;
+  cursor: pointer; transition: background 120ms var(--ease-out);
+}
+.tiptap-image-menu button:hover { background: rgba(255, 255, 255, 0.16); }
+.tiptap-image-menu button[aria-pressed="true"] { background: var(--apple-600); color: var(--paper); }
+.tiptap-image-menu button.tiptap-image-delete:hover { background: #c0392b; }
+.tiptap-image-menu-divider { width: 1px; height: 20px; background: rgba(255, 255, 255, 0.25); margin: 0 4px; }
 
 .email-compose-preview {
   display: flex;
