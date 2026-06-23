@@ -148,6 +148,8 @@ export default function LeasedBedCard() {
   )
 }
 
+const leaseRowStyle = { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 } as const
+
 function RenewButton({ busy, onRenew }: { busy: boolean; onRenew: () => void }) {
   return (
     <div className="admin-actions">
@@ -173,13 +175,11 @@ function LeaseRow({
 }) {
   if (lease.status === 'AwaitingPayment') {
     return (
-      <div>
-        <p className="card-note" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span className="pill pill-warn" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>Awaiting payment</span>
-          <span>
-            You&rsquo;ve been assigned bed {lease.bedLabel}. Pay {formatPrice(lease.priceAtAllocationCents)} to confirm your
-            lease (expires {formatDate(lease.expiresOn)}).
-          </span>
+      <div style={leaseRowStyle}>
+        <span className="pill pill-warn">Awaiting payment</span>
+        <p className="card-note" style={{ margin: 0 }}>
+          You&rsquo;ve been assigned bed {lease.bedLabel}. Pay {formatPrice(lease.priceAtAllocationCents)} to confirm your
+          lease (expires {formatDate(lease.expiresOn)}).
         </p>
         {paymentsEnabled ? (
           <div className="admin-actions">
@@ -188,7 +188,7 @@ function LeaseRow({
             </button>
           </div>
         ) : (
-          <p className="card-note" style={{ margin: '4px 0 0' }}>
+          <p className="card-note" style={{ margin: 0 }}>
             Online payments are currently unavailable. Please check back soon.
           </p>
         )}
@@ -198,11 +198,9 @@ function LeaseRow({
 
   if (lease.status === 'Expired') {
     return (
-      <div>
-        <p className="card-note" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span className="pill pill-warn" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>Expired</span>
-          <span>Your lease for bed {lease.bedLabel} expired on {formatDate(lease.expiresOn)}.</span>
-        </p>
+      <div style={leaseRowStyle}>
+        <span className="pill pill-warn">Expired</span>
+        <p className="card-note" style={{ margin: 0 }}>Your lease for bed {lease.bedLabel} expired on {formatDate(lease.expiresOn)}.</p>
         {lease.canRenew && <RenewButton busy={busy} onRenew={onRenew} />}
       </div>
     )
@@ -210,13 +208,11 @@ function LeaseRow({
 
   // Active
   return (
-    <div>
-      <p className="card-note" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span className="pill pill-ok" style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>Bed {lease.bedLabel}</span>
-        <span>
-          {lease.isPaid ? (lease.paidOnUtc ? `Paid ${formatDate(lease.paidOnUtc)}` : 'No payment required') : 'Awaiting payment'}
-          {' · '}Lease expires {formatDate(lease.expiresOn)}.
-        </span>
+    <div style={leaseRowStyle}>
+      <span className="pill pill-ok">Bed {lease.bedLabel}</span>
+      <p className="card-note" style={{ margin: 0 }}>
+        {lease.isPaid ? (lease.paidOnUtc ? `Paid ${formatDate(lease.paidOnUtc)}` : 'No payment required') : 'Awaiting payment'}
+        {' · '}Lease expires {formatDate(lease.expiresOn)}.
       </p>
       {lease.canRenew && <RenewButton busy={busy} onRenew={onRenew} />}
     </div>
