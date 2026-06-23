@@ -139,7 +139,14 @@ export default function CommunityEventList() {
                 const past = (ev.endUtc ? new Date(ev.endUtc) : start).getTime() < now
                 return (
                   <tr key={`manual-${ev.id}`}>
-                    <td data-label="Title">{ev.title}</td>
+                    <td data-label="Title">
+                      {ev.title}
+                      {ev.location && (
+                        <span style={{ display: 'block', fontSize: 12, color: 'var(--fg-4)' }}>
+                          📍 {ev.location}
+                        </span>
+                      )}
+                    </td>
                     <td data-label="Starts">{dateFmt.format(start)}</td>
                     <td data-label="Status">
                       {past ? <span className="pill">Past</span> : <span className="pill pill-ok">Upcoming</span>}
@@ -170,6 +177,11 @@ export default function CommunityEventList() {
                     {ev.title}
                     {' '}
                     <span className="pill admin-source-badge">Eventbrite</span>
+                    {ev.location && (
+                      <span style={{ display: 'block', fontSize: 12, color: 'var(--fg-4)' }}>
+                        📍 {ev.location}
+                      </span>
+                    )}
                   </td>
                   <td data-label="Starts">{dateFmt.format(new Date(ev.startUtc))}</td>
                   <td data-label="Status">Upcoming</td>
