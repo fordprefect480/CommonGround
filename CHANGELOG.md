@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.9.0](https://github.com/fordprefect480/CommonGround/compare/v0.8.0...v0.9.0) (2026-06-23)
+
+
+### Features
+
+* add location to events and map eventbrite venue ([4fb2e7e](https://github.com/fordprefect480/CommonGround/commit/4fb2e7ebd9e488ffc37faeca1587a0c130bd4851))
+* add recurrence expander for community events ([407f180](https://github.com/fordprefect480/CommonGround/commit/407f18067e45073bc3d42dbe7d50dab557d38330))
+* add recurring event controls to the admin editor ([611ebdd](https://github.com/fordprefect480/CommonGround/commit/611ebdd78f0c35ae2168dd2e7d253054fe0248c9))
+* add reusable back arrow to admin detail and editor pages ([ca0cd37](https://github.com/fordprefect480/CommonGround/commit/ca0cd37b893152b06ba58f3cbab14e21a71662e6))
+* confirm how many events were created after saving ([e446334](https://github.com/fordprefect480/CommonGround/commit/e4463344329a3864af05ed31ebdd9ef90461b27f))
+* derive blog featured image from body and enrich post list ([0f5dbc8](https://github.com/fordprefect480/CommonGround/commit/0f5dbc807b7854452e68ec4f8e692af29124c934))
+* generate recurring event occurrences on create ([89f4203](https://github.com/fordprefect480/CommonGround/commit/89f420352567bbeef130d5765df91e2f9713bb1e))
+* improve blog editor toolbar with sticky bar, image overlay, and style dropdown ([75111a4](https://github.com/fordprefect480/CommonGround/commit/75111a4e2c18e9019951cd20b30f37b9988bce3f))
+* show and edit event location in the frontend ([b2c2f66](https://github.com/fordprefect480/CommonGround/commit/b2c2f6699b77de944b78a2c82139f6bf4b276129))
+* support configuring WixSiteRoot via deploy parameter ([e269961](https://github.com/fordprefect480/CommonGround/commit/e26996115f41588c8223c53d57b8f28825b58c36))
+
+
+### Bug Fixes
+
+* align recent activity feed into shared columns with subgrid ([0c03198](https://github.com/fordprefect480/CommonGround/commit/0c031987b33e1411ecd7f9d6fc4d9486a1c0c5ec))
+* carry late-year bed assignments to the following financial year ([4e55e62](https://github.com/fordprefect480/CommonGround/commit/4e55e628ad3f72940d9ef3c222d33b2b3c8f3e6e))
+* guard recurrence expander against DST spring-forward gap ([f5b9df0](https://github.com/fordprefect480/CommonGround/commit/f5b9df0f3083d310a547acdca293164048a88cf0))
+* preserve router scroll state when clearing events notice ([d717760](https://github.com/fordprefect480/CommonGround/commit/d717760316a5611681b58215087f0050a41cca2f))
+* repair blog editor crash and rework formatting toolbar ([20a7549](https://github.com/fordprefect480/CommonGround/commit/20a75494703d02855b6496ceb0920917d451747c))
+* stack leased bed status, text and action vertically for a tidier card ([55037dd](https://github.com/fordprefect480/CommonGround/commit/55037dd21076f0f4e37e9957b170544de414e24e))
+* style inline assign-member inputs on the all beds table ([ca47de2](https://github.com/fordprefect480/CommonGround/commit/ca47de2b7b83adcc022e9079b7b9cef189e7c7bc))
+
 ## [0.8.0](https://github.com/fordprefect480/CommonGround/compare/v0.7.0...v0.8.0) (2026-06-22)
 
 
