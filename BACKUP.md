@@ -25,7 +25,7 @@ the Container App / the database / a row, how do I get it back?"*
 | Layer | Mechanism | Defined in |
 |---|---|---|
 | Point-in-time restore (PITR), 35-day rolling window | Azure SQL automated backups + short-term retention policy | `CommonGround.AppHost/AppHost.cs` (`SqlServerDatabaseBackupShortTermRetentionPolicy`) |
-| Long-term retention (LTR): weekly 4 weeks, monthly 12 months, yearly 5 years | Azure SQL long-term retention policy | `CommonGround.AppHost/AppHost.cs` (`SqlServerDatabaseBackupLongTermRetentionPolicy`) |
+| Long-term retention (LTR): weekly 4 weeks, monthly 6 months, yearly 1 year | Azure SQL long-term retention policy | `CommonGround.AppHost/AppHost.cs` (`SqlServerDatabaseBackupLongTermRetentionPolicy`) |
 | Protection against deleting the SQL server itself | `CanNotDelete` management lock | **Manual** (this runbook) — a lock on the resource group would block `azd` deploys, so it is applied operationally, not in IaC |
 | Optional offsite copy (`.bacpac`) | `az sql db export` to Blob Storage | **Manual / scheduled** (this runbook) |
 
@@ -76,7 +76,7 @@ These should already be set by the AppHost deploy, but to confirm:
 # Short-term (PITR) — expect retentionDays: 35
 az sql db str-policy show -g "$RG" -s "$SQL_SERVER" -n commongroundDb -o jsonc
 
-# Long-term — expect P4W / P12M / P5Y
+# Long-term — expect P4W / P6M / P1Y
 az sql db ltr-policy show -g "$RG" -s "$SQL_SERVER" -n commongroundDb -o jsonc
 ```
 
@@ -86,8 +86,8 @@ If for any reason you need to set them by hand (e.g. before the next deploy):
 az sql db str-policy set -g "$RG" -s "$SQL_SERVER" -n commongroundDb --retention-days 35
 
 az sql db ltr-policy set -g "$RG" -s "$SQL_SERVER" -n commongroundDb \
-  --weekly-retention P4W --monthly-retention P12M \
-  --yearly-retention P5Y --week-of-year 1
+  --weekly-retention P4W --monthly-retention P6M \
+  --yearly-retention P1Y --week-of-year 1
 ```
 
 ## Restore procedures
@@ -148,7 +148,7 @@ az sql db restore \
 
 ### Scenario D — "Restore from a long-term (LTR) snapshot"
 
-For recovery older than the 35-day PITR window (up to 5 years here):
+For recovery older than the 35-day PITR window (up to 1 year here):
 
 ```bash
 # List available LTR backups and copy the one you want (its resource ID).
