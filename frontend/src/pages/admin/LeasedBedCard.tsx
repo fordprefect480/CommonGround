@@ -255,32 +255,12 @@ function RequestSection({
     )
   }
 
-  // No active request.
-  if (capacity.isFull) {
-    return (
-      <>
-        <p className="card-note" style={{ margin: 0 }}>
-          All {capacity.total} beds are allocated for the year. You can join the waiting list.
-        </p>
-        <div className="admin-actions">
-          <button type="button" className="primary-button" onClick={onApply} disabled={busy}>
-            Join the waiting list
-          </button>
-        </div>
-      </>
-    )
-  }
-
+  // No active request — show a single call to action.
   return (
-    <>
-      <p className="card-note" style={{ margin: 0 }}>
-        {capacity.remaining} of {capacity.total} beds available.
-      </p>
-      <div className="admin-actions">
-        <button type="button" className="primary-button" onClick={onApply} disabled={busy}>
-          Apply for a bed
-        </button>
-      </div>
-    </>
+    <div className="admin-actions">
+      <button type="button" className="primary-button" onClick={onApply} disabled={busy}>
+        {capacity.isFull ? 'Join waitlist' : 'Lease a bed'}
+      </button>
+    </div>
   )
 }
