@@ -46,7 +46,7 @@ if (builder.ExecutionContext.IsPublishMode)
 		// because a CanNotDelete lock on the resource group would otherwise block azd deploys).
 
 		// Point-in-time restore: keep the maximum 35-day rolling window.
-		infra.Add(new SqlServerDatabaseBackupShortTermRetentionPolicy("shortTermRetention")
+		infra.Add(new BackupShortTermRetentionPolicy("shortTermRetention")
 		{
 			Parent = db,
 			RetentionDays = 35,
@@ -56,7 +56,7 @@ if (builder.ExecutionContext.IsPublishMode)
 		// beyond the PITR window without accumulating much storage (LTR backups are always
 		// billed, unlike PITR). Values are ISO-8601 durations; WeekOfYear picks which weekly
 		// backup is promoted to the yearly snapshot (1 = first week of January).
-		infra.Add(new SqlServerDatabaseBackupLongTermRetentionPolicy("longTermRetention")
+		infra.Add(new LongTermRetentionPolicy("longTermRetention")
 		{
 			Parent = db,
 			WeeklyRetention = "P4W",
