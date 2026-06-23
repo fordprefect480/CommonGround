@@ -259,7 +259,7 @@ function RequestSection({
   return (
     <div className="admin-actions">
       <button type="button" className="primary-button" onClick={onApply} disabled={busy}>
-        {capacity.isFull ? 'Join waitlist' : 'Lease a bed'}
+        {capacity.isFull ? 'Join the waiting list' : 'Apply for a bed'}
       </button>
     </div>
   )
