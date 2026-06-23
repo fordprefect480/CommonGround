@@ -140,6 +140,12 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:garden-public-u
 	server.WithEnvironment("Garden__PublicUrl", gardenPublicUrl);
 }
 
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:wix-site-root"]))
+{
+	var wixSiteRoot = builder.AddParameter("wix-site-root");
+	server.WithEnvironment("WixSiteRoot", wixSiteRoot);
+}
+
 if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:stripe-secret-key"]))
 {
 	var stripeSecretKey = builder.AddParameter("stripe-secret-key", secret: true);
