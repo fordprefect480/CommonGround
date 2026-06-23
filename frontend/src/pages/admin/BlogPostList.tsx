@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { deleteBlogPost, fetchAdminBlogPosts, type BlogPostAdminListItem } from '../../api/blog'
+import { blogImageUrl, deleteBlogPost, fetchAdminBlogPosts, type BlogPostAdminListItem } from '../../api/blog'
 
 const STATUS_PUBLISHED = 1
 
@@ -51,6 +51,7 @@ export default function BlogPostList() {
           <table className="admin-table">
             <thead>
               <tr>
+                <th scope="col">Image</th>
                 <th scope="col">Title</th>
                 <th scope="col">Status</th>
                 <th scope="col">Author</th>
@@ -61,16 +62,25 @@ export default function BlogPostList() {
             <tbody>
               {state.posts.map((p) => {
                 const published = p.status === STATUS_PUBLISHED
+                const thumbUrl = blogImageUrl(p.featuredImageId)
                 return (
                   <tr key={p.id}>
-                    <td><Link to={`/admin/blog/${p.id}/edit`}>{p.title}</Link></td>
+                    <td>
+                      {thumbUrl
+                        ? <img className="blog-thumb" src={thumbUrl} alt="" />
+                        : <span className="blog-thumb blog-thumb-empty" aria-hidden="true" />}
+                    </td>
+                    <td>
+                      <Link to={`/admin/blog/${p.id}/edit`}>{p.title}</Link>
+                      {p.excerpt && <p className="blog-row-excerpt">{p.excerpt}</p>}
+                    </td>
                     <td>
                       <span className={published ? 'pill pill-ok' : 'pill pill-warn'}>
                         {published ? 'Published' : 'Draft'}
                       </span>
                     </td>
                     <td>{p.authorName}</td>
-                    <td>{new Date(p.updatedAt).toLocaleDateString()}</td>
+                    <td>{new Date(p.updatedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</td>
                     <td>
                       <Link className="footer-link" to={`/admin/blog/${p.id}/edit`}>Edit</Link>
                       {' · '}

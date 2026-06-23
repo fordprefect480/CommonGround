@@ -33,6 +33,7 @@ export interface BlogPostAdminListItem {
   publishedAt: string | null
   createdAt: string
   updatedAt: string
+  excerpt: string
 }
 
 export interface BlogPostAdmin {
