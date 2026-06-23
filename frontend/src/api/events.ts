@@ -1,5 +1,7 @@
 export type EventTone = 'leaf' | 'apple' | 'flesh'
 
+export type RepeatFrequency = 'none' | 'weekly' | 'fortnightly' | 'monthly'
+
 export interface UpcomingEvent {
   id: string
   source: 'manual' | 'eventbrite'
@@ -36,6 +38,8 @@ export interface CommunityEventWrite {
   featuredImageId: number | null
   tone?: EventTone
   displayOrder?: number | null
+  repeatFrequency?: RepeatFrequency
+  repeatUntil?: string | null
 }
 
 export interface UploadedImage {

@@ -7,6 +7,7 @@ import {
   updateCommunityEvent,
   uploadEventImage,
   type CommunityEventWrite,
+  type RepeatFrequency,
 } from '../../api/events'
 
 interface FormState {
@@ -17,6 +18,8 @@ interface FormState {
   url: string
   featuredImageId: number | null
   imageUrl: string | null
+  repeatFrequency: RepeatFrequency
+  repeatUntil: string
 }
 
 const EMPTY: FormState = {
@@ -27,6 +30,8 @@ const EMPTY: FormState = {
   url: '',
   featuredImageId: null,
   imageUrl: null,
+  repeatFrequency: 'none',
+  repeatUntil: '',
 }
 
 function toLocalInputValue(iso: string | null): string {
@@ -45,6 +50,50 @@ function fromLocalInputValue(value: string): string | null {
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return null
   return d.toISOString()
+}
+
+const MAX_OCCURRENCES = 104
+
+function countOccurrences(
+  startLocal: string,
+  frequency: RepeatFrequency,
+  untilDate: string,
+): number | null {
+  if (!startLocal || frequency === 'none' || !untilDate) return null
+  const start = new Date(startLocal)
+  const until = new Date(`${untilDate}T23:59:59`)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(until.getTime()) || until < start) {
+    return null
+  }
+
+  if (frequency === 'weekly' || frequency === 'fortnightly') {
+    const stepDays = frequency === 'weekly' ? 7 : 14
+    let count = 0
+    const cursor = new Date(start)
+    while (cursor <= until && count < MAX_OCCURRENCES) {
+      count++
+      cursor.setDate(cursor.getDate() + stepDays)
+    }
+    return count
+  }
+
+  // monthly: same weekday position (e.g. 3rd Saturday)
+  const weekday = start.getDay()
+  const ordinal = Math.floor((start.getDate() - 1) / 7) + 1
+  let count = 0
+  for (let monthOffset = 0; count < MAX_OCCURRENCES; monthOffset++) {
+    const probe = new Date(start.getFullYear(), start.getMonth() + monthOffset, 1)
+    if (probe > until) break
+    const offset = (weekday - probe.getDay() + 7) % 7
+    const day = 1 + offset + (ordinal - 1) * 7
+    const daysInMonth = new Date(probe.getFullYear(), probe.getMonth() + 1, 0).getDate()
+    if (day <= daysInMonth) {
+      const occ = new Date(probe.getFullYear(), probe.getMonth(), day, start.getHours(), start.getMinutes())
+      if (occ > until) break
+      if (occ >= start) count++
+    }
+  }
+  return count
 }
 
 export default function CommunityEventEditor() {
@@ -71,6 +120,8 @@ export default function CommunityEventEditor() {
           url: ev.url ?? '',
           featuredImageId: ev.featuredImageId,
           imageUrl: ev.imageUrl,
+          repeatFrequency: 'none',
+          repeatUntil: '',
         })
       })
       .catch((err: unknown) =>
@@ -107,6 +158,10 @@ export default function CommunityEventEditor() {
       setError('Start date and time is required.')
       return
     }
+    if (isNew && form.repeatFrequency !== 'none' && !form.repeatUntil) {
+      setError('Please choose a date to repeat until.')
+      return
+    }
     setSubmitting(true)
     setError(null)
     try {
@@ -117,6 +172,11 @@ export default function CommunityEventEditor() {
         body: form.body,
         url: form.url.trim() === '' ? null : form.url.trim(),
         featuredImageId: form.featuredImageId,
+        repeatFrequency: isNew ? form.repeatFrequency : 'none',
+        repeatUntil:
+          isNew && form.repeatFrequency !== 'none' && form.repeatUntil
+            ? form.repeatUntil
+            : null,
       }
       if (isNew) {
         await createCommunityEvent(payload)
@@ -178,6 +238,49 @@ export default function CommunityEventEditor() {
             />
           </label>
         </div>
+
+        {isNew && (
+          <div className="field">
+            <span className="field-label">Repeats</span>
+            <select
+              value={form.repeatFrequency}
+              onChange={(e) =>
+                update({ repeatFrequency: e.target.value as RepeatFrequency })
+              }
+            >
+              <option value="none">Does not repeat</option>
+              <option value="weekly">Weekly</option>
+              <option value="fortnightly">Every 2 weeks</option>
+              <option value="monthly">Monthly (same weekday)</option>
+            </select>
+
+            {form.repeatFrequency !== 'none' && (
+              <label className="field" style={{ marginTop: 12 }}>
+                <span className="field-label">Repeat until</span>
+                <input
+                  type="date"
+                  value={form.repeatUntil}
+                  onChange={(e) => update({ repeatUntil: e.target.value })}
+                  required
+                />
+              </label>
+            )}
+
+            {(() => {
+              const count = countOccurrences(
+                form.startLocal,
+                form.repeatFrequency,
+                form.repeatUntil,
+              )
+              if (count === null) return null
+              return (
+                <p className="admin-loading" style={{ marginTop: 8 }}>
+                  This will create {count} {count === 1 ? 'event' : 'separate events'}.
+                </p>
+              )
+            })()}
+          </div>
+        )}
 
         <label className="field">
           <span className="field-label">Description</span>
