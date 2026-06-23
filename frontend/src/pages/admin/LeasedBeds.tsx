@@ -2,9 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { getLeasedBedPrice } from '../../api/adminTools'
 import { fetchMembers, type Member } from '../../api/auth'
 import {
-  // addBed, // Hidden from the admin UI for now; backend endpoint kept in case we re-enable it later.
   assignBed,
-  // deleteBed, // Hidden from the admin UI for now; backend endpoint kept in case we re-enable it later.
   fetchBedRequests,
   fetchLeasedBeds,
   recordLeasePayment,
@@ -114,12 +112,6 @@ export default function LeasedBeds() {
     }
   }
 
-  // The "Add bed", "Take out of service / Return to service" and "Delete bed" actions are
-  // hidden from the admin UI for now; their handlers were removed (see git history to restore).
-  // The backend endpoints are still in place — POST /api/admin/leased-beds/beds,
-  // PATCH /api/admin/leased-beds/beds/{id} (isActive) and DELETE /api/admin/leased-beds/beds/{id}
-  // (see addBed/deleteBed/updateBed in api/leasedBeds.ts) — so the actions can be resurfaced later.
-
   const handleEditNote = async (bed: AdminBed) => {
     const next = window.prompt(`Note for bed ${bed.label} (leave blank to clear):`, bed.notes ?? '')
     if (next === null) return
@@ -183,7 +175,6 @@ export default function LeasedBeds() {
             />
 
             <h2 className="section-title">All beds</h2>
-            {/* "Add bed" control hidden for now (backend POST /api/admin/leased-beds/beds still supports it). */}
             <div className="admin-table-wrap">
               <table className="admin-table">
                 <thead>
@@ -239,8 +230,6 @@ export default function LeasedBeds() {
                               <button type="button" className="footer-link" onClick={() => handleRelease(bed)} disabled={busy}>Release</button>
                             </>
                           ) : (
-                            // "Take out of service / Return to service" and "Delete" actions hidden for now
-                            // (backend PATCH/DELETE /api/admin/leased-beds/beds/{id} still support them).
                             bed.isActive ? (
                               <BedAssignControls
                                 bed={bed}
