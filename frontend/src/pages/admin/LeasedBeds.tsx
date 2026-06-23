@@ -403,7 +403,7 @@ function BedAssignControls({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 220 }}>
+    <div className="field" style={{ gap: 6, minWidth: 220 }}>
       <input
         type="search"
         aria-label="Search members"
