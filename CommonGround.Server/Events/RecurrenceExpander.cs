@@ -88,6 +88,11 @@ public static class RecurrenceExpander
     private static DateTime ToLocal(DateTime utc) =>
         TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), GardenTimeZone);
 
-    private static DateTime ToUtc(DateTime local) =>
-        TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local, DateTimeKind.Unspecified), GardenTimeZone);
+    private static DateTime ToUtc(DateTime local)
+    {
+        local = DateTime.SpecifyKind(local, DateTimeKind.Unspecified);
+        if (GardenTimeZone.IsInvalidTime(local))
+            local = local.AddHours(1); // shift past the spring-forward gap onto a valid wall time
+        return TimeZoneInfo.ConvertTimeToUtc(local, GardenTimeZone);
+    }
 }
