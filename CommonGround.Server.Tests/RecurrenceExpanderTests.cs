@@ -23,6 +23,7 @@ public class RecurrenceExpanderTests
     public void ParseFrequency_is_case_insensitive_and_defaults_to_none()
     {
         Assert.Equal(RepeatFrequency.Weekly, RecurrenceExpander.ParseFrequency("Weekly"));
+        Assert.Equal(RepeatFrequency.Fortnightly, RecurrenceExpander.ParseFrequency("fortnightly"));
         Assert.Equal(RepeatFrequency.Monthly, RecurrenceExpander.ParseFrequency("monthly"));
         Assert.Equal(RepeatFrequency.None, RecurrenceExpander.ParseFrequency("nonsense"));
         Assert.Equal(RepeatFrequency.None, RecurrenceExpander.ParseFrequency(null));
@@ -109,5 +110,14 @@ public class RecurrenceExpanderTests
         var start = AdelaideToUtc(2026, 5, 2, 9, 0);
         var result = RecurrenceExpander.Expand(start, RepeatFrequency.Weekly, new DateOnly(2026, 5, 30));
         Assert.Equal(start, result[0]);
+    }
+
+    [Fact]
+    public void Monthly_occurrence_in_the_dst_gap_does_not_throw()
+    {
+        // 1st Sunday at 02:15, monthly. Oct 2025's 1st Sunday (5 Oct) 02:15 is in Adelaide's spring-forward gap.
+        var start = AdelaideToUtc(2025, 9, 7, 2, 15);
+        var result = RecurrenceExpander.Expand(start, RepeatFrequency.Monthly, new DateOnly(2025, 10, 31));
+        Assert.Equal(2, result.Count); // 7 Sep + 5 Oct, no exception
     }
 }
