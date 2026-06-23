@@ -1486,13 +1486,20 @@ button.footer-link:disabled {
    TipTap WYSIWYG editor
    ===================================================================== */
 
-.tiptap-wrapper { border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; }
-.tiptap-toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; background: #f3f4f6; border-bottom: 1px solid #d1d5db; }
-.tiptap-toolbar button, .tiptap-image-button { padding: 4px 8px; cursor: pointer; background: white; border: 1px solid #d1d5db; border-radius: 4px; }
-.tiptap-toolbar button[aria-pressed="true"] { background: #1f2937; color: white; }
-.tiptap-toolbar button:disabled { opacity: 0.45; cursor: not-allowed; }
-.tiptap-toolbar-divider { width: 1px; align-self: stretch; background: #d1d5db; margin: 0 4px; }
-.tiptap-image-button { display: inline-block; }
+.tiptap-wrapper { border: 1px solid #d8d2c4; border-radius: 8px; overflow: hidden; }
+.tiptap-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px 8px; background: var(--paper); border-bottom: 1px solid #e2dccf; }
+.tiptap-toolbar button, .tiptap-image-button {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 36px; height: 36px; padding: 0 9px;
+  font-size: 15px; font-weight: 600; line-height: 1; color: var(--ink-900);
+  background: transparent; border: 1px solid transparent; border-radius: 7px;
+  cursor: pointer; transition: background 120ms var(--ease-out), color 120ms var(--ease-out);
+}
+.tiptap-toolbar button:hover:not(:disabled), .tiptap-image-button:hover { background: #ece5d6; }
+.tiptap-toolbar button[aria-pressed="true"] { background: var(--apple-600); color: var(--paper); }
+.tiptap-toolbar button:disabled { opacity: 0.4; cursor: not-allowed; }
+.tiptap-toolbar-divider { width: 1px; align-self: center; height: 22px; background: #ddd6c7; margin: 0 5px; }
+.tiptap-image-button { display: inline-flex; }
 .tiptap-content {
   padding: 1.25rem 1.5rem;
   min-height: 300px;
