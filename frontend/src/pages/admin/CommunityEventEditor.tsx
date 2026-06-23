@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import AdminBackButton from './AdminBackButton'
 import {
   createCommunityEvent,
   fetchAdminCommunityEvent,
@@ -135,9 +136,12 @@ export default function CommunityEventEditor() {
   return (
     <section className="admin-page" aria-labelledby="event-editor-heading">
       <header className="admin-page-header">
-        <h1 id="event-editor-heading" className="admin-page-title">
-          {isNew ? 'New event' : 'Edit event'}
-        </h1>
+        <div className="admin-page-heading-group">
+          <AdminBackButton to="/admin/events" label="Back to events" />
+          <h1 id="event-editor-heading" className="admin-page-title">
+            {isNew ? 'New event' : 'Edit event'}
+          </h1>
+        </div>
       </header>
 
       {error && <div className="form-error" role="alert">{error}</div>}

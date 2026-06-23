@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import AdminBackButton from './AdminBackButton'
 import {
   createBlogPost,
   fetchAdminBlogPost,
@@ -104,7 +105,10 @@ export default function BlogPostEditor() {
   return (
     <section className="admin-page" aria-labelledby="editor-heading">
       <header className="admin-page-header">
-        <h1 id="editor-heading" className="admin-page-title">{isNew ? 'New post' : 'Edit post'}</h1>
+        <div className="admin-page-heading-group">
+          <AdminBackButton to="/admin/blog" label="Back to posts" />
+          <h1 id="editor-heading" className="admin-page-title">{isNew ? 'New post' : 'Edit post'}</h1>
+        </div>
       </header>
 
       {error && <div className="form-error" role="alert">{error}</div>}

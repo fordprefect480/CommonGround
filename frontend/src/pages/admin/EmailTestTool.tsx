@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import AdminBackButton from './AdminBackButton'
 import { sendTestEmail, type SendTestEmailResult } from '../../api/email'
 
 const BlogEditor = lazy(() => import('./BlogEditor'))
@@ -54,7 +55,10 @@ export default function EmailTestTool() {
   return (
     <section className="admin-page" aria-labelledby="email-test-heading">
       <header className="admin-page-header">
-        <h1 id="email-test-heading" className="admin-page-title">Send test email</h1>
+        <div className="admin-page-heading-group">
+          <AdminBackButton to="/admin/tools" label="Back to tools" />
+          <h1 id="email-test-heading" className="admin-page-title">Send test email</h1>
+        </div>
       </header>
 
       <div className="card">
