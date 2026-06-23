@@ -37,4 +37,6 @@ public record CommunityEventWriteDto(
     string? Url,
     int? FeaturedImageId,
     string? Tone,
-    int? DisplayOrder);
+    int? DisplayOrder,
+    string? RepeatFrequency,
+    DateOnly? RepeatUntil);
