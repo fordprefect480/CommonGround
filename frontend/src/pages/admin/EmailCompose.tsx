@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import AdminBackButton from './AdminBackButton'
 import { fetchEmailTemplate, fetchSubscriberCount, sendNewsletter, type NewsletterRecipients } from '../../api/email'
 import { fetchMembers, type Member } from '../../api/auth'
 
@@ -354,7 +355,10 @@ export default function EmailCompose() {
   return (
     <section className="admin-page" aria-labelledby="email-heading">
       <header className="admin-page-header">
-        <h1 id="email-heading" className="admin-page-title">New email</h1>
+        <div className="admin-page-heading-group">
+          <AdminBackButton to="/admin/email" label="Back to emails" />
+          <h1 id="email-heading" className="admin-page-title">New email</h1>
+        </div>
       </header>
 
       {subscriberCount.status === 'error' && mode === 'all_subscribers' && (

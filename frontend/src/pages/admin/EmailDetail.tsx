@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { fetchSentEmail, type SentEmailDetail } from '../../api/email'
 import { formatAbsolute } from './activityFormatting'
+import AdminBackButton from './AdminBackButton'
 
 type State =
   | { status: 'loading' }
@@ -31,8 +32,10 @@ export default function EmailDetailPage() {
   return (
     <section className="admin-page" aria-labelledby="email-heading">
       <header className="admin-page-header">
-        <h1 id="email-heading" className="admin-page-title">{email.subject}</h1>
-        <Link to="/admin/email" className="footer-link">&larr; All emails</Link>
+        <div className="admin-page-heading-group">
+          <AdminBackButton to="/admin/email" label="Back to emails" />
+          <h1 id="email-heading" className="admin-page-title">{email.subject}</h1>
+        </div>
       </header>
 
       <div className="card">

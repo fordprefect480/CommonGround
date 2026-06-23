@@ -6,6 +6,7 @@ import { useAppConfig } from '../../AppConfigContext'
 import { financialYearLabel, formatPrice, membershipPaidThroughFyLabel } from '../../format'
 import PaymentHistoryTable from './PaymentHistoryTable'
 import RecordPaymentModal from './RecordPaymentModal'
+import AdminBackButton from './AdminBackButton'
 
 const ADMIN_ROLE = 'Admin'
 
@@ -181,8 +182,10 @@ export default function MemberDetail() {
     return (
       <section className="admin-page" aria-labelledby="member-heading">
         <header className="admin-page-header">
-          <h1 id="member-heading" className="admin-page-title">Member</h1>
-          <Link to="/admin/members" className="footer-link">Back to members</Link>
+          <div className="admin-page-heading-group">
+            <AdminBackButton to="/admin/members" label="Back to members" />
+            <h1 id="member-heading" className="admin-page-title">Member</h1>
+          </div>
         </header>
         <div className="form-error" role="alert">{state.message}</div>
       </section>
@@ -224,8 +227,10 @@ export default function MemberDetail() {
   return (
     <section className="admin-page" aria-labelledby="member-heading">
       <header className="admin-page-header">
-        <h1 id="member-heading" className="admin-page-title">{heading}</h1>
-        <Link to="/admin/members" className="footer-link">Back to members</Link>
+        <div className="admin-page-heading-group">
+          <AdminBackButton to="/admin/members" label="Back to members" />
+          <h1 id="member-heading" className="admin-page-title">{heading}</h1>
+        </div>
       </header>
 
       <form className="card admin-form" onSubmit={submit}>

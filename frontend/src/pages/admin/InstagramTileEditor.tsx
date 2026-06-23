@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import AdminBackButton from './AdminBackButton'
 import {
   createInstagramPost,
   fetchAdminInstagramPosts,
@@ -68,9 +69,12 @@ export default function InstagramTileEditor() {
   return (
     <section className="admin-page" aria-labelledby="instagram-editor-heading">
       <header className="admin-page-header">
-        <h1 id="instagram-editor-heading" className="admin-page-title">
-          {isNew ? 'New Instagram tile' : 'Edit Instagram tile'}
-        </h1>
+        <div className="admin-page-heading-group">
+          <AdminBackButton to="/admin/instagram" label="Back to Instagram tiles" />
+          <h1 id="instagram-editor-heading" className="admin-page-title">
+            {isNew ? 'New Instagram tile' : 'Edit Instagram tile'}
+          </h1>
+        </div>
       </header>
 
       {error && <div className="form-error" role="alert">{error}</div>}

@@ -475,6 +475,33 @@ button.footer-link:disabled {
   gap: 1rem;
 }
 
+.admin-page-heading-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.admin-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  color: var(--ink-700);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+
+.admin-back-button:hover {
+  background: var(--paper-deep);
+  color: var(--ink-900);
+}
+
 .admin-page-title {
   font-family: var(--font-display);
   font-weight: 700;
