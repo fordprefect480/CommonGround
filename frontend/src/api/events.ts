@@ -29,6 +29,11 @@ export interface CommunityEventAdmin {
   updatedAt: string
 }
 
+export interface CommunityEventCreated {
+  event: CommunityEventAdmin
+  createdCount: number
+}
+
 export interface CommunityEventWrite {
   title: string
   startUtc: string
@@ -94,7 +99,7 @@ export async function fetchAdminCommunityEvent(id: number): Promise<CommunityEve
   return getJson(`/api/admin/events/${id}`)
 }
 
-export async function createCommunityEvent(input: CommunityEventWrite): Promise<CommunityEventAdmin> {
+export async function createCommunityEvent(input: CommunityEventWrite): Promise<CommunityEventCreated> {
   return sendJson('/api/admin/events', 'POST', input)
 }
 
