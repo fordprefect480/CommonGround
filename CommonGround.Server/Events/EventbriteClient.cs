@@ -55,7 +55,8 @@ public sealed record EventbriteEvent(
     [property: JsonPropertyName("url")] string? Url,
     [property: JsonPropertyName("start")] EventbriteDateTime? Start,
     [property: JsonPropertyName("end")] EventbriteDateTime? End,
-    [property: JsonPropertyName("logo")] EventbriteLogo? Logo);
+    [property: JsonPropertyName("logo")] EventbriteLogo? Logo,
+    [property: JsonPropertyName("venue")] EventbriteVenue? Venue);
 
 public sealed record EventbriteText([property: JsonPropertyName("text")] string? Text);
 
@@ -66,3 +67,10 @@ public sealed record EventbriteLogo(
     [property: JsonPropertyName("original")] EventbriteLogoOriginal? Original);
 
 public sealed record EventbriteLogoOriginal([property: JsonPropertyName("url")] string? Url);
+
+public sealed record EventbriteVenue(
+    [property: JsonPropertyName("name")] string? Name,
+    [property: JsonPropertyName("address")] EventbriteAddress? Address);
+
+public sealed record EventbriteAddress(
+    [property: JsonPropertyName("localized_address_display")] string? LocalizedAddressDisplay);

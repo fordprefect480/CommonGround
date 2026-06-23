@@ -13,7 +13,8 @@ public record UpcomingEventDto(
     DateTime? EndUtc,
     string? Url,
     string Tone,
-    string? ImageUrl);
+    string? ImageUrl,
+    string? Location);
 
 public record CommunityEventAdminDto(
     int Id,
@@ -27,7 +28,8 @@ public record CommunityEventAdminDto(
     int? FeaturedImageId,
     string? ImageUrl,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    string? Location);
 
 public record CommunityEventCreatedDto(CommunityEventAdminDto Event, int CreatedCount);
 
@@ -41,4 +43,5 @@ public record CommunityEventWriteDto(
     string? Tone,
     int? DisplayOrder,
     string? RepeatFrequency,
-    DateOnly? RepeatUntil);
+    DateOnly? RepeatUntil,
+    string? Location);

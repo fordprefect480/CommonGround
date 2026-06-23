@@ -20,7 +20,7 @@ internal static class EventsMapping
     public static CommunityEventAdminDto ToAdminDto(CommunityEvent e) => new(
         e.Id, e.Title, e.StartUtc, e.EndUtc, e.Body, e.Url, e.Tone, e.DisplayOrder,
         e.FeaturedImageId, BuildImageUrl(e.FeaturedImageId),
-        e.CreatedAt, e.UpdatedAt);
+        e.CreatedAt, e.UpdatedAt, e.Location);
 
     public static UpcomingEventDto ToUpcomingDto(CommunityEvent e) => new(
         Id: $"manual-{e.Id}",
@@ -31,7 +31,8 @@ internal static class EventsMapping
         EndUtc: e.EndUtc,
         Url: e.Url,
         Tone: e.Tone,
-        ImageUrl: BuildImageUrl(e.FeaturedImageId));
+        ImageUrl: BuildImageUrl(e.FeaturedImageId),
+        Location: e.Location);
 
     public static UpcomingEventDto? ToUpcomingDto(EventbriteEvent e, int orderIndex)
     {
@@ -51,7 +52,16 @@ internal static class EventsMapping
             EndUtc: e.End?.Utc is { } endUtc ? DateTime.SpecifyKind(endUtc, DateTimeKind.Utc) : null,
             Url: e.Url,
             Tone: tone,
-            ImageUrl: e.Logo?.Original?.Url ?? e.Logo?.Url);
+            ImageUrl: e.Logo?.Original?.Url ?? e.Logo?.Url,
+            Location: ResolveVenueLocation(e.Venue));
+    }
+
+    private static string? ResolveVenueLocation(EventbriteVenue? venue)
+    {
+        if (venue is null) return null;
+        if (!string.IsNullOrWhiteSpace(venue.Name)) return venue.Name.Trim();
+        var address = venue.Address?.LocalizedAddressDisplay;
+        return string.IsNullOrWhiteSpace(address) ? null : address.Trim();
     }
 
     private static string TrimBody(string text)
