@@ -127,7 +127,7 @@ public sealed class AssignBedEndpoint(
             BedId = bed.Id,
             UserId = targetUserId,
             StartDate = today,
-            ExpiresOn = FinancialYear.GetFinancialYearEnd(today),
+            ExpiresOn = FinancialYear.GetNewLeaseTermEnd(today),
             Status = price == 0 ? BedLeaseStatus.Active : BedLeaseStatus.AwaitingPayment,
             PriceAtAllocationCents = price,
             CreatedAtUtc = now,

@@ -51,6 +51,27 @@ public class FinancialYearTests
     }
 
     [Fact]
+    public void New_lease_within_8_weeks_of_June30_carries_to_the_following_year()
+    {
+        // Assigning on 23 June 2026 is only days from EOFY, so the term runs to 30 June 2027.
+        Assert.Equal(new DateOnly(2027, 6, 30), FinancialYear.GetNewLeaseTermEnd(new DateOnly(2026, 6, 23)));
+    }
+
+    [Fact]
+    public void New_lease_exactly_56_days_before_June30_still_carries_over()
+    {
+        // 5 May 2026 is 56 days before 30 June 2026 (the carry-over boundary, inclusive).
+        Assert.Equal(new DateOnly(2027, 6, 30), FinancialYear.GetNewLeaseTermEnd(new DateOnly(2026, 5, 5)));
+    }
+
+    [Fact]
+    public void New_lease_more_than_8_weeks_before_June30_expires_that_same_year()
+    {
+        // 4 May 2026 is 57 days before 30 June 2026 - just outside the window, so a partial year.
+        Assert.Equal(new DateOnly(2026, 6, 30), FinancialYear.GetNewLeaseTermEnd(new DateOnly(2026, 5, 4)));
+    }
+
+    [Fact]
     public void Today_uses_Adelaide_local_date_late_on_June30()
     {
         // 30 June 2026 23:00 Adelaide (UTC+9:30) == 30 June 2026 13:30 UTC.
