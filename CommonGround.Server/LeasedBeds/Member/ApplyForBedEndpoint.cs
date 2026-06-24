@@ -8,8 +8,8 @@ namespace CommonGround.Server.LeasedBeds.Member;
 
 /// <summary>
 /// Single apply / join-waiting-list action. The server re-checks availability and
-/// routes to Pending (beds free) or Waitlisted (full), enforcing active membership
-/// and one in-flight request per member.
+/// routes to Pending (beds free) or Waitlisted (full), enforcing active membership,
+/// one in-flight request per member, and no lease still awaiting payment.
 /// </summary>
 public sealed class ApplyForBedEndpoint(
     UserManager<ApplicationUser> userManager,
@@ -42,6 +42,12 @@ public sealed class ApplyForBedEndpoint(
         if (await beds.GetActiveRequestAsync(user.Id, ct) is not null)
         {
             await Send.ResultAsync(Results.BadRequest(new { error = "You already have a bed request in progress." }));
+            return;
+        }
+
+        if (await db.BedLeases.AnyAsync(l => l.UserId == user.Id && l.Status == BedLeaseStatus.AwaitingPayment, ct))
+        {
+            await Send.ResultAsync(Results.BadRequest(new { error = "Please pay for your assigned bed before applying for another." }));
             return;
         }
 
