@@ -60,6 +60,11 @@ builder.Services
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
 
+// Override Identity's no-op email sender so the /forgotPassword flow emails a
+// real reset link via Resend. Registered after AddIdentityApiEndpoints so this
+// wins over the default registration.
+builder.Services.AddTransient<IEmailSender<ApplicationUser>, IdentityEmailSender>();
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddHttpClient<WixBlogClient>(c =>

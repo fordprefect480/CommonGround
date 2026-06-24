@@ -13,6 +13,8 @@ import Home from './pages/Home'
 // demand when the user navigates to it.
 const LeaseAPlot = lazy(() => import('./pages/LeaseAPlot'))
 const Login = lazy(() => import('./pages/Login'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const Membership = lazy(() => import('./pages/Membership'))
 const MembershipWelcome = lazy(() => import('./pages/MembershipWelcome'))
 const Profile = lazy(() => import('./pages/Profile'))
@@ -66,6 +68,8 @@ export default function App() {
               <Route path="/blog" element={<BlogIndex />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
               <Route
                 path="/admin"
