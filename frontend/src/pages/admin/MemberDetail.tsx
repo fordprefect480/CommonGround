@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { fetchMember, recordMembershipPayment, updateMember, type Member } from '../../api/auth'
-import { fetchLeasedBeds, type AdminBed, type BedLeaseStatus } from '../../api/leasedBeds'
+import { fetchLeasedBeds, recordLeasePayment, type AdminBed, type BedLeaseStatus } from '../../api/leasedBeds'
 import { useAppConfig } from '../../AppConfigContext'
 import { financialYearLabel, formatPrice, membershipPaidThroughFyLabel } from '../../format'
 import PaymentHistoryTable from './PaymentHistoryTable'
@@ -100,6 +100,12 @@ function leaseStatusLabel(status: BedLeaseStatus): string {
 function LeasedBedsCard({ memberId }: { memberId: string }) {
   const [beds, setBeds] = useState<AdminBed[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [paymentBed, setPaymentBed] = useState<AdminBed | null>(null)
+
+  const reload = async () => {
+    const overview = await fetchLeasedBeds()
+    setBeds(overview.beds.filter((b) => b.currentLease?.memberId === memberId))
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -135,9 +141,28 @@ function LeasedBedsCard({ memberId }: { memberId: string }) {
         )
       })}
 
-      <div className="admin-actions">
-        <Link to="/admin/leased-beds" className="footer-link">Manage leased beds</Link>
-      </div>
+      {beds && beds.length > 0 && (
+        <div className="admin-actions">
+          {beds.map((bed) => (
+            <button key={bed.id} type="button" className="secondary-button" onClick={() => setPaymentBed(bed)}>
+              Record a manual payment{beds.length > 1 ? ` (bed ${bed.label})` : ''}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <RecordPaymentModal
+        open={paymentBed !== null}
+        title="Record a manual payment"
+        description={paymentBed ? `Record a cash or bank-transfer payment for bed ${paymentBed.label}.` : undefined}
+        initialAmountCents={paymentBed?.currentLease?.priceAtAllocationCents ?? 0}
+        onClose={() => setPaymentBed(null)}
+        onConfirm={async (amountCents) => {
+          if (!paymentBed?.currentLease) return
+          await recordLeasePayment(paymentBed.currentLease.leaseId, amountCents)
+          await reload()
+        }}
+      />
     </section>
   )
 }
