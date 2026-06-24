@@ -135,6 +135,8 @@ export default function LeasedBedCard() {
 
             <RequestSection
               data={state.data}
+              hasActiveLease={state.data.leases.some((l) => l.status === 'Active')}
+              awaitingPayment={state.data.leases.some((l) => l.status === 'AwaitingPayment')}
               busy={busy}
               onApply={() => run(applyForBed)}
               onWithdraw={() => run(withdrawBedRequest)}
@@ -221,11 +223,15 @@ function LeaseRow({
 
 function RequestSection({
   data,
+  hasActiveLease,
+  awaitingPayment,
   busy,
   onApply,
   onWithdraw,
 }: {
   data: MyLeasedBedStatus
+  hasActiveLease: boolean
+  awaitingPayment: boolean
   busy: boolean
   onApply: () => void
   onWithdraw: () => void
@@ -255,11 +261,14 @@ function RequestSection({
     )
   }
 
+  // A bed is assigned but not yet paid for — no apply CTA until that's settled.
+  if (awaitingPayment) return null
+
   // No active request — show a single call to action.
   return (
     <div className="admin-actions">
       <button type="button" className="primary-button" onClick={onApply} disabled={busy}>
-        {capacity.isFull ? 'Join the waiting list' : 'Apply for a bed'}
+        {capacity.isFull ? 'Join the waiting list' : hasActiveLease ? 'Apply for another bed' : 'Apply for a bed'}
       </button>
     </div>
   )
