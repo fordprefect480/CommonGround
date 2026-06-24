@@ -34,36 +34,11 @@ if (builder.ExecutionContext.IsPublishMode)
 		db.MinCapacity = 0.5;
 		db.AutoPauseDelay = 60;
 
-		// Backup retention. The SQL database is the only durable store for this app:
-		// members, memberships, Stripe payment records, bed leases, blog posts, blog
-		// images (stored as varbinary BLOBs), community events and audit logs all live
-		// here. The Container App itself is stateless, so the database is the thing that
-		// must survive an accidental delete. Azure SQL takes automated backups regardless,
-		// but the default point-in-time window is only 7 days and there is no long-term
-		// retention; we extend both here so they are infrastructure-as-code rather than a
-		// setting someone has to remember to click. See BACKUP.md (repo root) for the
-		// matching restore procedure and the resource lock (the lock is applied operationally
-		// because a CanNotDelete lock on the resource group would otherwise block azd deploys).
-
-		// Point-in-time restore: keep the maximum 35-day rolling window.
-		infra.Add(new BackupShortTermRetentionPolicy("shortTermRetention")
-		{
-			Parent = db,
-			RetentionDays = 35,
-		});
-
-		// Long-term retention: a lean set of weekly/monthly/yearly snapshots that survive
-		// beyond the PITR window without accumulating much storage (LTR backups are always
-		// billed, unlike PITR). Values are ISO-8601 durations; WeekOfYear picks which weekly
-		// backup is promoted to the yearly snapshot (1 = first week of January).
-		infra.Add(new LongTermRetentionPolicy("longTermRetention")
-		{
-			Parent = db,
-			WeeklyRetention = "P4W",
-			MonthlyRetention = "P6M",
-			YearlyRetention = "P1Y",
-			WeekOfYear = 1,
-		});
+		// Backup retention (35-day PITR window + long-term snapshots) is NOT codified here.
+		// Azure.Provisioning.Sql 1.1.0 models the *RetentionPolicy resources' ARM name
+		// (always "default") as an output-only property, so the generated bicep omits
+		// `name:` and `bicep build` fails with BCP035. Retention is instead applied
+		// operationally, like the CanNotDelete server lock. See BACKUP.md (repo root).
 	});
 }
 
