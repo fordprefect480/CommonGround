@@ -48,7 +48,6 @@ export default function Login() {
           alt=""
           className="admin-login-logo"
         />
-        <h1 className="section-title">Sign in</h1>
         <p className="card-note">Sign in to {gardenName}.</p>
 
         <label className="field">
