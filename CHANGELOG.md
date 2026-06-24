@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.10.0](https://github.com/fordprefect480/CommonGround/compare/v0.9.0...v0.10.0) (2026-06-24)
+
+
+### Features
+
+* add forgot password flow ([50559d7](https://github.com/fordprefect480/CommonGround/commit/50559d7bbdc24cf4a1ca9be49b27c650340e3404))
+* add forgot password flow ([8331658](https://github.com/fordprefect480/CommonGround/commit/8331658d440e210148965cd26091960cba41c10c))
+
+
+### Bug Fixes
+
+* retention policy configuration ([e6b5e9d](https://github.com/fordprefect480/CommonGround/commit/e6b5e9d2bd8f428c91f5b15a97f28d7951465853))
+
 ## [0.9.0](https://github.com/fordprefect480/CommonGround/compare/v0.8.0...v0.9.0) (2026-06-23)
 
 
