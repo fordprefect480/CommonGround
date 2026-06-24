@@ -17,6 +17,7 @@
     "@microsoft/applicationinsights-web": "^3.4.1",
     "@tiptap/extension-image": "^3.26.1",
     "@tiptap/extension-link": "^3.26.1",
+    "@tiptap/extension-text-align": "^3.26.1",
     "@tiptap/react": "^3.26.1",
     "@tiptap/starter-kit": "^3.26.1",
     "leaflet": "^1.9.4",
