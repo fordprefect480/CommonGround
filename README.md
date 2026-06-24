@@ -288,7 +288,7 @@ Aspire generates a deployment manifest you can target at any container host.
 
 ### Backup and restore
 
-The Container App is stateless - all durable data lives in the Azure SQL database. Backup retention (35-day point-in-time restore plus long-term weekly/monthly/yearly snapshots) is configured manually per environment (the policies survive redeploys). See [`BACKUP.md`](BACKUP.md) for the full strategy, the one-time retention and SQL-server delete-lock setup, and step-by-step restore procedures.
+The Container App is stateless - all durable data lives in the Azure SQL database. A 35-day point-in-time restore window is configured manually per environment (it survives redeploys); coverage beyond 35 days comes from scheduled `.bacpac` exports, since native long-term retention isn't available on this serverless + auto-pause database. See [`BACKUP.md`](BACKUP.md) for the full strategy, the one-time retention and SQL-server delete-lock setup, and step-by-step restore procedures.
 
 ## Architecture notes
 

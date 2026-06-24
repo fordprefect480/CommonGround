@@ -34,11 +34,12 @@ if (builder.ExecutionContext.IsPublishMode)
 		db.MinCapacity = 0.5;
 		db.AutoPauseDelay = 60;
 
-		// Backup retention (35-day PITR window + long-term snapshots) is NOT codified here.
-		// Azure.Provisioning.Sql 1.1.0 models the *RetentionPolicy resources' ARM name
-		// (always "default") as an output-only property, so the generated bicep omits
-		// `name:` and `bicep build` fails with BCP035. Retention is instead applied
-		// operationally, like the CanNotDelete server lock. See BACKUP.md (repo root).
+		// Backup retention is NOT codified here. The 35-day PITR window is set manually
+		// (Azure.Provisioning.Sql 1.1.0 emits invalid bicep for the retention-policy
+		// resources — it omits the required `name`, failing `bicep build` with BCP035),
+		// and native long-term retention is unavailable anyway because Azure forbids LTR
+		// on a serverless database with auto-pause enabled (the AutoPauseDelay above).
+		// Long-term coverage is via scheduled .bacpac exports. See BACKUP.md (repo root).
 	});
 }
 
