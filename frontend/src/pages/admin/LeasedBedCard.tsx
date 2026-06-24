@@ -261,14 +261,8 @@ function RequestSection({
     )
   }
 
-  // A bed is assigned but not yet paid for — finish that before applying for another.
-  if (awaitingPayment) {
-    return (
-      <p className="card-note" style={{ margin: 0 }}>
-        Once you&rsquo;ve paid for your assigned bed you can apply for another.
-      </p>
-    )
-  }
+  // A bed is assigned but not yet paid for — no apply CTA until that's settled.
+  if (awaitingPayment) return null
 
   // No active request — show a single call to action.
   return (
