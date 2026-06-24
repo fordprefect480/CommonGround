@@ -23,6 +23,7 @@ builder.AddServiceDefaults();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<BlogHtmlSanitizer>();
+builder.Services.AddSingleton<CommonGround.Server.Blog.BlogImport.BlogImportHtmlNormalizer>();
 builder.Services.AddOpenApi();
 builder.Services.AddFastEndpoints();
 builder.Services.AddHttpContextAccessor();
