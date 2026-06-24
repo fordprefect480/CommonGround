@@ -70,7 +70,7 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
             var qIdx = path.IndexOf('?');
             if (qIdx >= 0) path = path[..qIdx];
 
-            if (!path.StartsWith("/post/", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!path.Contains("/post/", StringComparison.OrdinalIgnoreCase)) continue;
 
             var slug = ExtractSlug(path);
             if (slug is not null && seen.Add(slug))
