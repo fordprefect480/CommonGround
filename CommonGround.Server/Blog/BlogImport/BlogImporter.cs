@@ -7,6 +7,7 @@ namespace CommonGround.Server.Blog.BlogImport;
 public partial class BlogImporter(
     WixBlogClient client,
     AppDbContext db,
+    BlogImportHtmlNormalizer normalizer,
     BlogHtmlSanitizer sanitizer)
 {
     [GeneratedRegex(@"<img\s+src=""([^""]+)""")]
@@ -101,7 +102,8 @@ public partial class BlogImporter(
                 : match.Value);
 
         var featuredImageId = ResolveFeaturedImageId(remote, urlToImageId);
-        var sanitizedBody = sanitizer.Sanitize(rewrittenBody);
+        var normalizedBody = normalizer.Normalize(rewrittenBody);
+        var sanitizedBody = sanitizer.Sanitize(normalizedBody);
 
         var excerpt = !string.IsNullOrWhiteSpace(remote.Description)
             ? BlogExcerpt.Truncate(remote.Description)
