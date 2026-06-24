@@ -2,6 +2,7 @@ using CommonGround.Server.Configuration;
 using CommonGround.Server.Data;
 using CommonGround.Server.Email;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Resend;
 
@@ -13,8 +14,14 @@ namespace CommonGround.Server.Auth;
 /// endpoint generates a reset code and calls <see cref="SendPasswordResetCodeAsync"/>;
 /// we turn that code into a link back to the SPA's reset page and email it.
 /// </summary>
+/// <remarks>
+/// <c>MapIdentityApi</c> resolves this sender from the root service provider, so its
+/// constructor dependencies must all be root-safe (singletons). <see cref="IResend"/>
+/// pulls in a scoped <c>IOptionsSnapshot&lt;ResendClientOptions&gt;</c>, so it can't be
+/// injected directly; we resolve it from a per-send scope instead.
+/// </remarks>
 public sealed class IdentityEmailSender(
-    IResend resend,
+    IServiceScopeFactory scopeFactory,
     IOptions<EmailOptions> emailOptions,
     IOptions<GardenOptions> gardenOptions,
     IHttpContextAccessor httpContextAccessor,
@@ -49,6 +56,8 @@ public sealed class IdentityEmailSender(
 
         try
         {
+            using var scope = scopeFactory.CreateScope();
+            var resend = scope.ServiceProvider.GetRequiredService<IResend>();
             await resend.EmailSendAsync(message, CancellationToken.None);
         }
         catch (Exception ex)
