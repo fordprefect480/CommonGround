@@ -15,23 +15,25 @@ the Container App / the database / a row, how do I get it back?"*
   Stripe payment records, bed leases, blog posts, **blog images** (stored as
   `varbinary` BLOBs, not on disk), community events, sent-email records and the
   audit log all live in SQL. This is the thing to protect.
-- **Backups are automatic.** Azure SQL continuously backs the database up. The
-  retention windows are now defined in infrastructure-as-code (see below), so they
-  survive re-provisioning. The one manual safety net is a **delete lock** on the SQL
-  server (instructions below) — apply it once.
+- **Backups are automatic.** Azure SQL continuously backs the database up. Two
+  things are configured manually, once per environment (see below): the **retention
+  windows** (35-day PITR + long-term snapshots) and a **delete lock** on the SQL
+  server.
 
 ## What is backed up, and where it's configured
 
 | Layer | Mechanism | Defined in |
 |---|---|---|
-| Point-in-time restore (PITR), 35-day rolling window | Azure SQL automated backups + short-term retention policy | `CommonGround.AppHost/AppHost.cs` (`SqlServerDatabaseBackupShortTermRetentionPolicy`) |
-| Long-term retention (LTR): weekly 4 weeks, monthly 6 months, yearly 1 year | Azure SQL long-term retention policy | `CommonGround.AppHost/AppHost.cs` (`SqlServerDatabaseBackupLongTermRetentionPolicy`) |
+| Point-in-time restore (PITR), 35-day rolling window | Azure SQL automated backups + short-term retention policy | **Manual** (this runbook) — see below |
+| Long-term retention (LTR): weekly 4 weeks, monthly 6 months, yearly 1 year | Azure SQL long-term retention policy | **Manual** (this runbook) — see below |
 | Protection against deleting the SQL server itself | `CanNotDelete` management lock | **Manual** (this runbook) — a lock on the resource group would block `azd` deploys, so it is applied operationally, not in IaC |
 | Optional offsite copy (`.bacpac`) | `az sql db export` to Blob Storage | **Manual / scheduled** (this runbook) |
 
-> The retention policies are applied automatically on every `azd up` /
-> `aspire deploy` because they're part of the AppHost. You don't need to run
-> anything for them.
+> Retention is **not** codified in the AppHost. `Azure.Provisioning.Sql` 1.1.0
+> generates invalid bicep for the retention-policy resources (it omits the required
+> `name`, failing `bicep build` with BCP035), so the policies are set by hand with
+> the `az sql db str-policy set` / `ltr-policy set` commands below. They are sticky —
+> set them once per environment and they survive redeploys.
 
 ## One-time setup: lock the SQL server against deletion
 
@@ -68,9 +70,22 @@ az sql server list -g "$RG" -o table
 az sql db list -g "$RG" -s "$SQL_SERVER" -o table   # the app DB is "commongroundDb"
 ```
 
-## Verifying the retention policies are live
+## One-time setup: configure backup retention
 
-These should already be set by the AppHost deploy, but to confirm:
+Run these once per environment. They are not in the AppHost (see the note above), so
+they must be applied by hand; once set they persist across redeploys.
+
+```bash
+# Short-term (PITR): 35-day rolling window.
+az sql db str-policy set -g "$RG" -s "$SQL_SERVER" -n commongroundDb --retention-days 35
+
+# Long-term (LTR): weekly 4 weeks, monthly 6 months, yearly 1 year (first week).
+az sql db ltr-policy set -g "$RG" -s "$SQL_SERVER" -n commongroundDb \
+  --weekly-retention P4W --monthly-retention P6M \
+  --yearly-retention P1Y --week-of-year 1
+```
+
+Verify:
 
 ```bash
 # Short-term (PITR) — expect retentionDays: 35
@@ -78,16 +93,6 @@ az sql db str-policy show -g "$RG" -s "$SQL_SERVER" -n commongroundDb -o jsonc
 
 # Long-term — expect P4W / P6M / P1Y
 az sql db ltr-policy show -g "$RG" -s "$SQL_SERVER" -n commongroundDb -o jsonc
-```
-
-If for any reason you need to set them by hand (e.g. before the next deploy):
-
-```bash
-az sql db str-policy set -g "$RG" -s "$SQL_SERVER" -n commongroundDb --retention-days 35
-
-az sql db ltr-policy set -g "$RG" -s "$SQL_SERVER" -n commongroundDb \
-  --weekly-retention P4W --monthly-retention P6M \
-  --yearly-retention P1Y --week-of-year 1
 ```
 
 ## Restore procedures
@@ -199,9 +204,9 @@ blob container to age old exports out.
 
 1. **Apply the `CanNotDelete` lock on the SQL server** — one-time, above. This is the
    real guard against "I blew the whole thing away."
-2. **Retention is already codified** in `AppHost.cs` (35-day PITR + 12-month LTR) and
-   re-applied on every deploy — confirm it occasionally with the `str-policy show` /
-   `ltr-policy show` commands.
+2. **Set the retention policies by hand** (35-day PITR + 12-month LTR) — one-time,
+   above — and confirm occasionally with the `str-policy show` / `ltr-policy show`
+   commands. They survive redeploys, so this is a per-environment setup step.
 3. **Optionally schedule a weekly `.bacpac` export** for an independent offsite copy.
 4. **Test a restore once** (Scenario B into a throwaway DB name) so the procedure is
    familiar before you ever need it under pressure.
