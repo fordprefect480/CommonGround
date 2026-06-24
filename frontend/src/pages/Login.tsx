@@ -80,6 +80,10 @@ export default function Login() {
         </button>
 
         <p className="card-note">
+          <Link to="/forgot-password" className="footer-link">Forgot your password?</Link>
+        </p>
+
+        <p className="card-note">
           <Link to="/" className="footer-link">Back to homepage</Link>
         </p>
       </form>
