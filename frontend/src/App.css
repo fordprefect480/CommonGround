@@ -1000,6 +1000,12 @@ button.footer-link:disabled {
   animation: fadeInUp 0.5s ease-out;
 }
 
+.admin-login-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .admin-login-logo {
   align-self: center;
   object-fit: contain;
