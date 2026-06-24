@@ -15,33 +15,40 @@ the Container App / the database / a row, how do I get it back?"*
   Stripe payment records, bed leases, blog posts, **blog images** (stored as
   `varbinary` BLOBs, not on disk), community events, sent-email records and the
   audit log all live in SQL. This is the thing to protect.
-- **Backups are automatic.** Azure SQL continuously backs the database up. Two
-  things are configured manually, once per environment (see below): the **retention
-  windows** (35-day PITR + long-term snapshots) and a **delete lock** on the SQL
-  server.
+- **Backups are automatic.** Azure SQL continuously backs the database up, giving a
+  **35-day point-in-time restore (PITR)** window. Two things are configured manually,
+  once per environment (see below): the **PITR retention** and a **delete lock** on
+  the SQL server. For protection older than 35 days, take periodic **`.bacpac`
+  exports** — native long-term retention (LTR) is *not* available here (it is
+  incompatible with the serverless auto-pause this database uses to save cost).
 
 ## What is backed up, and where it's configured
 
 | Layer | Mechanism | Defined in |
 |---|---|---|
 | Point-in-time restore (PITR), 35-day rolling window | Azure SQL automated backups + short-term retention policy | **Manual** (this runbook) — see below |
-| Long-term retention (LTR): weekly 4 weeks, monthly 6 months, yearly 1 year | Azure SQL long-term retention policy | **Manual** (this runbook) — see below |
+| Long-term retention (LTR): weekly/monthly/yearly snapshots | *Not used* — Azure blocks LTR on a serverless DB with auto-pause enabled | — (use `.bacpac` exports instead) |
 | Protection against deleting the SQL server itself | `CanNotDelete` management lock | **Manual** (this runbook) — a lock on the resource group would block `azd` deploys, so it is applied operationally, not in IaC |
-| Optional offsite copy (`.bacpac`) | `az sql db export` to Blob Storage | **Manual / scheduled** (this runbook) |
+| Long-term / offsite copy (`.bacpac`) | `az sql db export` to Blob Storage | **Manual / scheduled** (this runbook) |
 
-> Retention is **not** codified in the AppHost. `Azure.Provisioning.Sql` 1.1.0
+> PITR retention is **not** codified in the AppHost. `Azure.Provisioning.Sql` 1.1.0
 > generates invalid bicep for the retention-policy resources (it omits the required
-> `name`, failing `bicep build` with BCP035), so the policies are set by hand with
-> the `az sql db str-policy set` / `ltr-policy set` commands below. They are sticky —
-> set them once per environment and they survive redeploys.
+> `name`, failing `bicep build` with BCP035), so the policy is set by hand with the
+> `az sql db str-policy set` command below. It is sticky — set it once per environment
+> and it survives redeploys.
+>
+> **Native LTR is unavailable here.** `az sql db ltr-policy set` fails with
+> `LtrConfigPolicyUnsupportedIfAutoPauseEnabled` because the database is serverless
+> with auto-pause (`AutoPauseDelay` in `AppHost.cs`), which we keep for cost. For
+> retention beyond the 35-day PITR window, use the scheduled `.bacpac` export below.
 
 ## One-time setup: lock the SQL server against deletion
 
 This is the single most important manual step. PITR backups are tied to the logical
 SQL **server** — if the *server* resource is deleted, its PITR backups go with it
-(LTR backups survive, and a deleted *database* can be restored for a while, but a
-deleted *server* is the real danger). A `CanNotDelete` lock prevents that while
-still allowing normal deploys/modifications.
+(a deleted *database* can be restored for a while, but a deleted *server* is the real
+danger, and `.bacpac` exports are your only off-server copy). A `CanNotDelete` lock
+prevents that while still allowing normal deploys/modifications.
 
 ```bash
 # Fill these in for your environment.
@@ -70,30 +77,26 @@ az sql server list -g "$RG" -o table
 az sql db list -g "$RG" -s "$SQL_SERVER" -o table   # the app DB is "commongroundDb"
 ```
 
-## One-time setup: configure backup retention
+## One-time setup: configure PITR retention
 
-Run these once per environment. They are not in the AppHost (see the note above), so
-they must be applied by hand; once set they persist across redeploys.
+Run this once per environment. It is not in the AppHost (see the note above), so it
+must be applied by hand; once set it persists across redeploys.
 
 ```bash
-# Short-term (PITR): 35-day rolling window.
+# Point-in-time restore (PITR): 35-day rolling window.
 az sql db str-policy set -g "$RG" -s "$SQL_SERVER" -n commongroundDb --retention-days 35
-
-# Long-term (LTR): weekly 4 weeks, monthly 6 months, yearly 1 year (first week).
-az sql db ltr-policy set -g "$RG" -s "$SQL_SERVER" -n commongroundDb \
-  --weekly-retention P4W --monthly-retention P6M \
-  --yearly-retention P1Y --week-of-year 1
 ```
 
 Verify:
 
 ```bash
-# Short-term (PITR) — expect retentionDays: 35
+# Expect retentionDays: 35
 az sql db str-policy show -g "$RG" -s "$SQL_SERVER" -n commongroundDb -o jsonc
-
-# Long-term — expect P4W / P6M / P1Y
-az sql db ltr-policy show -g "$RG" -s "$SQL_SERVER" -n commongroundDb -o jsonc
 ```
+
+> Don't bother with `az sql db ltr-policy set` — it fails with
+> `LtrConfigPolicyUnsupportedIfAutoPauseEnabled` on this serverless + auto-pause
+> database. Long-term coverage comes from the `.bacpac` export below instead.
 
 ## Restore procedures
 
@@ -151,23 +154,11 @@ az sql db restore \
   --deleted-time "2026-06-23T09:00:00Z"
 ```
 
-### Scenario D — "Restore from a long-term (LTR) snapshot"
+### Scenario D — "Recovery older than the 35-day PITR window"
 
-For recovery older than the 35-day PITR window (up to 1 year here):
-
-```bash
-# List available LTR backups and copy the one you want (its resource ID).
-az sql db ltr-backup list \
-  -l <region> -g "$RG" -s "$SQL_SERVER" -d commongroundDb -o table
-
-az sql db ltr-backup restore \
-  --backup-id "<ltr-backup-resource-id>" \
-  --dest-database commongroundDb-ltr-restore \
-  --dest-server "$SQL_SERVER" \
-  --dest-resource-group "$RG"
-```
-
-Then verify and promote as in Scenario B.
+There are **no native LTR snapshots** for this database (LTR is incompatible with the
+serverless auto-pause it uses — see the note near the top). Recovery beyond 35 days
+relies on the `.bacpac` exports — restore one as in **Scenario E** below.
 
 ### Scenario E — "Total loss / restore outside Azure SQL" (from a .bacpac)
 
@@ -182,11 +173,12 @@ az sql db import \
   --storage-uri "https://<account>.blob.core.windows.net/backups/<file>.bacpac"
 ```
 
-## Optional: scheduled offsite .bacpac export
+## Scheduled offsite .bacpac export (the long-term backup)
 
-Azure SQL's own backups are robust, but a periodic `.bacpac` in your own storage
-account gives an independent copy (useful for the "what if the whole subscription is
-compromised" tail risk) and a portable artifact you can restore anywhere.
+Because native LTR is unavailable here, a periodic `.bacpac` in your own storage
+account **is** the long-term retention story (plus the "what if the whole subscription
+is compromised" tail risk, and a portable artifact you can restore anywhere). Schedule
+this if you need to recover anything older than the 35-day PITR window.
 
 ```bash
 az sql db export \
@@ -204,9 +196,10 @@ blob container to age old exports out.
 
 1. **Apply the `CanNotDelete` lock on the SQL server** — one-time, above. This is the
    real guard against "I blew the whole thing away."
-2. **Set the retention policies by hand** (35-day PITR + 12-month LTR) — one-time,
-   above — and confirm occasionally with the `str-policy show` / `ltr-policy show`
-   commands. They survive redeploys, so this is a per-environment setup step.
-3. **Optionally schedule a weekly `.bacpac` export** for an independent offsite copy.
+2. **Set the PITR retention by hand** (35-day window) — one-time, above — and confirm
+   occasionally with the `str-policy show` command. It survives redeploys, so this is
+   a per-environment setup step.
+3. **Schedule a weekly `.bacpac` export** — this is your only coverage beyond the
+   35-day PITR window (native LTR is unavailable on this serverless + auto-pause DB).
 4. **Test a restore once** (Scenario B into a throwaway DB name) so the procedure is
    familiar before you ever need it under pressure.
