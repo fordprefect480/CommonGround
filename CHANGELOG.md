@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.11.0](https://github.com/fordprefect480/CommonGround/compare/v0.10.1...v0.11.0) (2026-06-24)
+
+
+### Features
+
+* improve blog editor and tidy public post layout ([9d94456](https://github.com/fordprefect480/CommonGround/commit/9d94456999119760f3c223679691f25831d4c033))
+* tidy imported blog HTML with a normalization pass ([1f72323](https://github.com/fordprefect480/CommonGround/commit/1f72323b1d6c50724d8bcd464c968625a6776d3a))
+* tidy imported blog HTML with a normalization pass ([ac1d2c2](https://github.com/fordprefect480/CommonGround/commit/ac1d2c23580fdab0037f251b56246dab70a66fd5))
+
+
+### Bug Fixes
+
+* drop awaiting-payment note, just hide the apply CTA ([0e4302d](https://github.com/fordprefect480/CommonGround/commit/0e4302d8d4304619540c39b704b5abf94302f5c3))
+* prevent bed application while a lease awaits payment ([8c223d3](https://github.com/fordprefect480/CommonGround/commit/8c223d3ce21667a65adb8c24a5de2f8eb8bde674))
+* prevent bed application while a lease awaits payment ([ee1973f](https://github.com/fordprefect480/CommonGround/commit/ee1973f8135196c5dfc0396017bdbc901317419c))
+* resolve IResend per-send scope in password reset email sender ([3f96cd2](https://github.com/fordprefect480/CommonGround/commit/3f96cd24c50f9b3dd533e77060461c972b49974c))
+* space login/reset form fields and remove redundant sign-in heading ([1058288](https://github.com/fordprefect480/CommonGround/commit/1058288066ff680afad0d0a69c7c0452cc8b71fe))
+
 ## [0.10.1](https://github.com/fordprefect480/CommonGround/compare/v0.10.0...v0.10.1) (2026-06-24)
 
 
