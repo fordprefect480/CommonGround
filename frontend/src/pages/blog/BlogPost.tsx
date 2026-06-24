@@ -84,7 +84,6 @@ function PostBody({ state }: { state: State }) {
 }
 
 function PostArticle({ post }: { post: BlogPostT }) {
-  const heroUrl = blogImageUrl(post.featuredImageId)
   const date = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
     : null
@@ -92,7 +91,6 @@ function PostArticle({ post }: { post: BlogPostT }) {
   return (
     <>
       <article className="blog-post">
-        {heroUrl && <img src={heroUrl} alt={post.title} className="blog-post-hero" />}
         <header className="blog-post-header">
           {post.categoryName && <span className="pill">{post.categoryName}</span>}
           <h1 className="blog-post-title">{post.title}</h1>
