@@ -1296,15 +1296,6 @@ button.footer-link:disabled {
   padding: 3rem 2rem 5rem;
 }
 
-.blog-post-hero {
-  width: 100%;
-  max-height: 480px;
-  object-fit: cover;
-  border-radius: var(--r-lg);
-  display: block;
-  margin-bottom: 2rem;
-}
-
 .blog-post-header {
   margin-bottom: 2rem;
   display: flex;

@@ -2,6 +2,7 @@ import { useEditor, EditorContent, ReactNodeViewRenderer, NodeViewWrapper, type 
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import TextAlign from '@tiptap/extension-text-align'
 import { useEffect, type ReactNode } from 'react'
 import { uploadBlogImage } from '../../api/blog'
 
@@ -32,10 +33,10 @@ const BLOCK_OPTIONS = [
   { value: 'subheading', label: 'Subheading' },
 ] as const
 
-const BLOCK_LEVEL: Record<'title' | 'heading' | 'subheading', 1 | 2 | 3> = {
-  title: 1,
-  heading: 2,
-  subheading: 3,
+const BLOCK_LEVEL: Record<'title' | 'heading' | 'subheading', 2 | 3 | 4> = {
+  title: 2,
+  heading: 3,
+  subheading: 4,
 }
 
 const iconProps = {
@@ -77,6 +78,30 @@ const QuoteIcon = () => (
     <line x1="11" y1="7" x2="20" y2="7" />
     <line x1="11" y1="12" x2="20" y2="12" />
     <line x1="11" y1="17" x2="20" y2="17" />
+  </svg>
+)
+
+const AlignLeftIcon = () => (
+  <svg {...iconProps} aria-hidden="true">
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <line x1="3" y1="12" x2="15" y2="12" />
+    <line x1="3" y1="18" x2="18" y2="18" />
+  </svg>
+)
+
+const AlignCenterIcon = () => (
+  <svg {...iconProps} aria-hidden="true">
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <line x1="6" y1="12" x2="18" y2="12" />
+    <line x1="5" y1="18" x2="19" y2="18" />
+  </svg>
+)
+
+const AlignRightIcon = () => (
+  <svg {...iconProps} aria-hidden="true">
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <line x1="9" y1="12" x2="21" y2="12" />
+    <line x1="6" y1="18" x2="21" y2="18" />
   </svg>
 )
 
@@ -177,6 +202,7 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
         openOnClick: false,
         HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' },
       }),
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
       SizedImage,
     ],
     content: value,
@@ -219,11 +245,11 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
     editor.chain().focus().setLink({ href: url }).run()
   }
 
-  const currentBlock = editor.isActive('heading', { level: 1 })
+  const currentBlock = editor.isActive('heading', { level: 2 })
     ? 'title'
-    : editor.isActive('heading', { level: 2 })
+    : editor.isActive('heading', { level: 3 })
       ? 'heading'
-      : editor.isActive('heading', { level: 3 })
+      : editor.isActive('heading', { level: 4 })
         ? 'subheading'
         : 'paragraph'
 
@@ -251,6 +277,12 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
         <ToolbarButton label="Bullet list" onClick={() => editor.chain().focus().toggleBulletList().run()} pressed={editor.isActive('bulletList')}><BulletListIcon /></ToolbarButton>
         <ToolbarButton label="Numbered list" onClick={() => editor.chain().focus().toggleOrderedList().run()} pressed={editor.isActive('orderedList')}><OrderedListIcon /></ToolbarButton>
         <ToolbarButton label="Quote" onClick={() => editor.chain().focus().toggleBlockquote().run()} pressed={editor.isActive('blockquote')}><QuoteIcon /></ToolbarButton>
+
+        <span className="tiptap-toolbar-divider" aria-hidden="true" />
+
+        <ToolbarButton label="Align left" onClick={() => editor.chain().focus().setTextAlign('left').run()} pressed={editor.isActive({ textAlign: 'left' })}><AlignLeftIcon /></ToolbarButton>
+        <ToolbarButton label="Align center" onClick={() => editor.chain().focus().setTextAlign('center').run()} pressed={editor.isActive({ textAlign: 'center' })}><AlignCenterIcon /></ToolbarButton>
+        <ToolbarButton label="Align right" onClick={() => editor.chain().focus().setTextAlign('right').run()} pressed={editor.isActive({ textAlign: 'right' })}><AlignRightIcon /></ToolbarButton>
 
         <span className="tiptap-toolbar-divider" aria-hidden="true" />
 
