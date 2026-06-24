@@ -49,6 +49,7 @@ export default function BlogPostEditor() {
   const [loading, setLoading] = useState(!isNew)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [originalStatus, setOriginalStatus] = useState(STATUS_DRAFT)
 
   useEffect(() => {
@@ -72,11 +73,15 @@ export default function BlogPostEditor() {
       .finally(() => setLoading(false))
   }, [id, isNew])
 
-  const update = (patch: Partial<FormState>) => setForm((prev) => ({ ...prev, ...patch }))
+  const update = (patch: Partial<FormState>) => {
+    setNotice(null)
+    setForm((prev) => ({ ...prev, ...patch }))
+  }
 
   const submit = async (status: number) => {
     setSubmitting(true)
     setError(null)
+    setNotice(null)
     try {
       const payload = {
         title: form.title,
@@ -91,6 +96,7 @@ export default function BlogPostEditor() {
         : await updateBlogPost(Number(id), payload)
       navigate(`/admin/blog/${result.id}/edit`, { replace: true })
       setOriginalStatus(result.status)
+      setNotice(result.status === STATUS_PUBLISHED ? 'Post published.' : 'Draft saved.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed')
     } finally {
@@ -112,6 +118,7 @@ export default function BlogPostEditor() {
       </header>
 
       {error && <div className="form-error" role="alert">{error}</div>}
+      {notice && <div className="form-success" role="status">{notice}</div>}
 
       <form className="card admin-form" onSubmit={(e) => e.preventDefault()}>
         <label className="field">
