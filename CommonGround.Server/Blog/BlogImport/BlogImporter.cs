@@ -13,12 +13,15 @@ public partial class BlogImporter(
     [GeneratedRegex(@"<img\s+src=""([^""]+)""")]
     private static partial Regex ImgSrcPattern();
 
-    public async Task<ImportBlogResultDto> ImportAsync(int? limit, CancellationToken ct)
+    public async Task<ImportBlogResultDto> ImportAsync(
+        int? limit,
+        Action<ImportBlogProgressDto>? onProgress,
+        CancellationToken ct)
     {
-        IReadOnlyList<string> slugs;
+        IReadOnlyList<RemotePostRef> refs;
         try
         {
-            slugs = await client.EnumeratePostSlugsAsync(ct);
+            refs = await client.EnumeratePostRefsAsync(ct);
         }
         catch (Exception ex)
         {
@@ -28,60 +31,66 @@ public partial class BlogImporter(
             ]);
         }
 
-        var fetched = new List<RemotePost>(slugs.Count);
-        var fetchErrors = new List<ImportBlogErrorDto>();
+        // Posts we already have: keep their stored publish date so they can be ranked for
+        // recency without re-fetching them over the network.
+        var existing = await db.BlogPosts
+            .AsNoTracking()
+            .Select(p => new { p.Slug, p.PublishedAt })
+            .ToDictionaryAsync(p => p.Slug, p => p.PublishedAt, ct);
 
-        foreach (var slug in slugs)
+        // Rank every post before fetching - posts we already have by their stored publish date,
+        // new ones by the sitemap's lastmod - so "import the N most recent" picks the right
+        // window and we only pay to fetch the new posts that actually fall inside it.
+        IEnumerable<RemotePostRef> ranked = refs
+            .OrderByDescending(r => existing.TryGetValue(r.Slug, out var published) ? published : r.LastModified);
+        if (limit is int n && n > 0) ranked = ranked.Take(n);
+        var window = ranked.ToList();
+
+        var toFetch = window.Where(r => !existing.ContainsKey(r.Slug)).ToList();
+        var skipped = window.Count - toFetch.Count;
+
+        var fetched = new List<RemotePost>(toFetch.Count);
+        var errors = new List<ImportBlogErrorDto>();
+
+        for (var i = 0; i < toFetch.Count; i++)
         {
+            var slug = toFetch[i].Slug;
             try
             {
                 var post = await client.FetchPostAsync(slug, ct);
                 if (post is null)
-                    fetchErrors.Add(new ImportBlogErrorDto(slug, "No <article> element found in post page"));
+                    errors.Add(new ImportBlogErrorDto(slug, "No <article> element found in post page"));
                 else
                     fetched.Add(post);
             }
             catch (Exception ex)
             {
-                fetchErrors.Add(new ImportBlogErrorDto(slug, $"Failed to fetch post: {ex.Message}"));
+                errors.Add(new ImportBlogErrorDto(slug, $"Failed to fetch post: {ex.Message}"));
             }
+
+            onProgress?.Invoke(new ImportBlogProgressDto("fetching", i + 1, toFetch.Count, slug));
         }
-
-        IEnumerable<RemotePost> ordered = fetched.OrderByDescending(p => p.PublishedAt);
-        if (limit is int n && n > 0) ordered = ordered.Take(n);
-        var toImport = ordered.ToList();
-
-        var existingSlugs = await db.BlogPosts
-            .AsNoTracking()
-            .Select(p => p.Slug)
-            .ToHashSetAsync(ct);
 
         var newslettersCategory = await db.BlogCategories
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Slug == "newsletters", ct);
 
         var imported = 0;
-        var skipped = 0;
-        var errors = new List<ImportBlogErrorDto>(fetchErrors);
 
-        foreach (var remote in toImport)
+        for (var i = 0; i < fetched.Count; i++)
         {
-            if (existingSlugs.Contains(remote.Slug))
-            {
-                skipped++;
-                continue;
-            }
-
+            var post = fetched[i];
             try
             {
-                await ImportSinglePostAsync(remote, newslettersCategory?.Id, errors, ct);
-                existingSlugs.Add(remote.Slug);
+                await ImportSinglePostAsync(post, newslettersCategory?.Id, errors, ct);
                 imported++;
             }
             catch (Exception ex)
             {
-                errors.Add(new ImportBlogErrorDto(remote.Slug, $"Post failed: {ex.Message}"));
+                errors.Add(new ImportBlogErrorDto(post.Slug, $"Post failed: {ex.Message}"));
             }
+
+            onProgress?.Invoke(new ImportBlogProgressDto("importing", i + 1, fetched.Count, post.Slug));
         }
 
         return new ImportBlogResultDto(imported, skipped, errors.Count, errors);
