@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.12.0](https://github.com/fordprefect480/CommonGround/compare/v0.11.0...v0.12.0) (2026-06-25)
+
+
+### Features
+
+* show leased-bed payments in member payment history ([92ba2f1](https://github.com/fordprefect480/CommonGround/commit/92ba2f113bf917f0d7f10dd64337042b70731115))
+* show leased-bed payments in member payment history ([7755f6b](https://github.com/fordprefect480/CommonGround/commit/7755f6b27768a24b4e4af0236837727bc926f5af))
+* stream blog import progress and import the full post archive ([fbf7d47](https://github.com/fordprefect480/CommonGround/commit/fbf7d471da8d74980d5fbeea998ab273376bf1f3))
+* stream blog import progress and import the full post archive ([abb4d75](https://github.com/fordprefect480/CommonGround/commit/abb4d75ed65e47f7db34bbb66885fb0f8627d32c))
+
+
+### Bug Fixes
+
+* link "please sign in" in the membership signup error ([ca70537](https://github.com/fordprefect480/CommonGround/commit/ca705375267299217713470e47e9a01234e26aca))
+* link "please sign in" in the membership signup error ([5d2dafc](https://github.com/fordprefect480/CommonGround/commit/5d2dafcae9e14fc7e9bf21db54f85d801e41eeb4))
+
 ## [0.11.0](https://github.com/fordprefect480/CommonGround/compare/v0.10.1...v0.11.0) (2026-06-24)
 
 
