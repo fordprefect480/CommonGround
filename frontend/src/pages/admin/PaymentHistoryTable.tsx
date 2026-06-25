@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import {
   fetchMemberPayments,
   fetchMyPayments,
-  type MembershipPaymentRecord,
+  type PaymentRecord,
 } from '../../api/auth'
 
 type State =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; payments: MembershipPaymentRecord[] }
+  | { status: 'ready'; payments: PaymentRecord[] }
 
 const dateFormatter = new Intl.DateTimeFormat('en-AU', {
   day: 'numeric',
@@ -49,6 +49,13 @@ function formatAmount(cents: number, currency: string): string {
 function formatPeriod(start: string | null, end: string | null): string {
   if (!start || !end) return '—'
   return `${formatDate(start)} – ${formatDate(end)}`
+}
+
+// What the payment was for: a membership (with its period, if known) or a leased bed.
+function describePayment(p: PaymentRecord): string {
+  if (p.kind === 'LeasedBed') return p.bedLabel ? `Leased bed ${p.bedLabel}` : 'Leased bed'
+  const period = formatPeriod(p.periodStartUtc, p.periodEndUtc)
+  return period === '—' ? 'Membership' : `Membership · ${period}`
 }
 
 const STATUS_PILL: Record<string, string> = {
@@ -102,17 +109,17 @@ export default function PaymentHistoryTable({ memberId, refreshToken }: { member
             <th scope="col">Date</th>
             <th scope="col">Amount</th>
             <th scope="col">Method</th>
-            <th scope="col">Membership period</th>
+            <th scope="col">For</th>
             {showStatus && <th scope="col">Status</th>}
           </tr>
         </thead>
         <tbody>
           {state.payments.map((p) => (
-            <tr key={p.id}>
+            <tr key={`${p.kind}-${p.id}`}>
               <td data-label="Date">{formatDateTime(p.paidAtUtc ?? p.createdAtUtc)}</td>
               <td data-label="Amount">{formatAmount(p.amountCents, p.currency)}</td>
               <td data-label="Method">{p.method === 'Manual' ? 'Manual' : 'Stripe'}</td>
-              <td data-label="Membership period">{formatPeriod(p.periodStartUtc, p.periodEndUtc)}</td>
+              <td data-label="For">{describePayment(p)}</td>
               {showStatus && (
                 <td data-label="Status">
                   <span className={STATUS_PILL[p.status] ?? 'pill'}>{p.status}</span>

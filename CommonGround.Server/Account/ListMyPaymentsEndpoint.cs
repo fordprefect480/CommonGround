@@ -2,12 +2,11 @@ using CommonGround.Server.Data;
 using CommonGround.Server.Members;
 using FastEndpoints;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace CommonGround.Server.Account;
 
 public sealed class ListMyPaymentsEndpoint(AppDbContext db, UserManager<ApplicationUser> userManager)
-    : EndpointWithoutRequest<List<MembershipPaymentDto>>
+    : EndpointWithoutRequest<List<PaymentDto>>
 {
     public override void Configure()
     {
@@ -23,13 +22,9 @@ public sealed class ListMyPaymentsEndpoint(AppDbContext db, UserManager<Applicat
             return;
         }
 
-        // Members see only their own successful payments — a clean receipts history.
-        var payments = (await db.MembershipPayments
-            .Where(p => p.UserId == current.Id && p.Status == MembershipPaymentStatus.Paid)
-            .OrderByDescending(p => p.CreatedAtUtc)
-            .ToListAsync(ct))
-            .Select(p => p.ToDto())
-            .ToList();
+        // Members see only their own successful payments — a clean receipts history, covering
+        // both membership and leased-bed payments.
+        var payments = await PaymentHistory.LoadAsync(db, current.Id, includeFailed: false, ct);
 
         await Send.OkAsync(payments, ct);
     }
