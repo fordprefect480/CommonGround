@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { MSButton } from './Primitives'
 import { useAppConfig } from '../../AppConfigContext'
 import { formatMembershipPrice } from '../../format'
@@ -290,7 +290,7 @@ export function MembershipSignupModal({ open, onClose }: MembershipSignupModalPr
                 padding: '10px 12px',
               }}
             >
-              {error}
+              {renderSignupError(error, onClose)}
             </div>
           )}
 
@@ -301,6 +301,23 @@ export function MembershipSignupModal({ open, onClose }: MembershipSignupModalPr
       </div>
     </div>,
     document.body,
+  )
+}
+
+// Render the signup error, turning a trailing "please sign in" into a link to the login page
+// (e.g. the "You already have a membership - please sign in." conflict from the server).
+function renderSignupError(message: string, onClose: () => void): React.ReactNode {
+  const marker = 'please sign in'
+  const idx = message.toLowerCase().indexOf(marker)
+  if (idx === -1) return message
+  return (
+    <>
+      {message.slice(0, idx)}
+      <Link to="/login" onClick={onClose} style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>
+        {message.slice(idx, idx + marker.length)}
+      </Link>
+      {message.slice(idx + marker.length)}
+    </>
   )
 }
 
