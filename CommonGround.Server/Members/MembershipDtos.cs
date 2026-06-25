@@ -19,8 +19,11 @@ public sealed record CompleteRequest(string SessionId);
 
 public sealed record CompleteResult(bool Ok);
 
-public sealed record MembershipPaymentDto(
+// A single payment row in a member's history. Covers both membership payments (which carry a
+// period) and leased-bed payments (which carry the bed label); Kind tells them apart.
+public sealed record PaymentDto(
     int Id,
+    string Kind,
     int AmountCents,
     string Currency,
     string Status,
@@ -28,11 +31,16 @@ public sealed record MembershipPaymentDto(
     DateTime? PaidAtUtc,
     DateTime? PeriodStartUtc,
     DateTime? PeriodEndUtc,
+    string? BedLabel,
     DateTime CreatedAtUtc);
 
-internal static class MembershipPaymentMapping
+internal static class PaymentMapping
 {
-    public static MembershipPaymentDto ToDto(this MembershipPayment p) =>
-        new(p.Id, p.AmountCents, p.Currency, p.Status.ToString(), p.Method.ToString(),
-            p.PaidAtUtc, p.PeriodStartUtc, p.PeriodEndUtc, p.CreatedAtUtc);
+    public static PaymentDto ToDto(this MembershipPayment p) =>
+        new(p.Id, "Membership", p.AmountCents, p.Currency, p.Status.ToString(), p.Method.ToString(),
+            p.PaidAtUtc, p.PeriodStartUtc, p.PeriodEndUtc, null, p.CreatedAtUtc);
+
+    public static PaymentDto ToDto(this BedLeasePayment p, string? bedLabel) =>
+        new(p.Id, "LeasedBed", p.AmountCents, p.Currency, p.Status.ToString(), p.Method.ToString(),
+            p.PaidAtUtc, null, null, bedLabel, p.CreatedAtUtc);
 }

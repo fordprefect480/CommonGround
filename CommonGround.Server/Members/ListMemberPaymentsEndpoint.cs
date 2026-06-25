@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CommonGround.Server.Members;
 
 public sealed class ListMemberPaymentsEndpoint(AppDbContext db)
-    : Endpoint<ListMemberPaymentsEndpoint.Request, List<MembershipPaymentDto>>
+    : Endpoint<ListMemberPaymentsEndpoint.Request, List<PaymentDto>>
 {
     public sealed class Request
     {
@@ -23,13 +23,22 @@ public sealed class ListMemberPaymentsEndpoint(AppDbContext db)
     {
         // Admins see successful and failed payments (failures help with "I paid
         // but it didn't work" support); abandoned/expired checkouts (Pending) are
-        // excluded as noise.
-        var payments = (await db.MembershipPayments
+        // excluded as noise. Membership and leased-bed payments are merged, newest first.
+        var membership = (await db.MembershipPayments
             .Where(p => p.UserId == req.Id
                 && (p.Status == MembershipPaymentStatus.Paid || p.Status == MembershipPaymentStatus.Failed))
-            .OrderByDescending(p => p.CreatedAtUtc)
             .ToListAsync(ct))
-            .Select(p => p.ToDto())
+            .Select(p => p.ToDto());
+
+        var beds = (await db.BedLeasePayments
+            .Where(p => p.UserId == req.Id
+                && (p.Status == BedLeasePaymentStatus.Paid || p.Status == BedLeasePaymentStatus.Failed))
+            .Select(p => new { Payment = p, BedLabel = p.BedLease!.Bed!.Label })
+            .ToListAsync(ct))
+            .Select(x => x.Payment.ToDto(x.BedLabel));
+
+        var payments = membership.Concat(beds)
+            .OrderByDescending(p => p.CreatedAtUtc)
             .ToList();
 
         await Send.OkAsync(payments, ct);
