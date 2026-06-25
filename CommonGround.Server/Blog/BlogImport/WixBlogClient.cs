@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using AngleSharp;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
@@ -17,6 +18,8 @@ public record RemotePost(
     string? CoverImageUrl,
     string CleanBodyHtml,
     IReadOnlyList<string> ImageUrls);
+
+public record RemotePostRef(string Slug, DateTime? LastModified);
 
 public partial class WixBlogClient(HttpClient http, IConfiguration config)
 {
@@ -43,41 +46,39 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
         "P", "H2", "H3", "H4", "UL", "OL", "LI", "BLOCKQUOTE", "STRONG", "EM", "CODE", "PRE", "BR",
     };
 
-    public async Task<IReadOnlyList<string>> EnumeratePostSlugsAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<RemotePostRef>> EnumeratePostRefsAsync(CancellationToken ct)
     {
-        var url = $"{SiteRoot.TrimEnd('/')}/blog";
-        using var document = await LoadDocumentAsync(url, ct);
+        // Wix only server-renders the most recent handful of posts on /blog and lazy-loads the
+        // rest, so the blog sitemap is the only complete listing of every post on the site. Each
+        // entry carries a <lastmod> date, letting callers rank posts before fetching them.
+        var url = $"{SiteRoot.TrimEnd('/')}/blog-posts-sitemap.xml";
+        using var response = await http.GetAsync(url, ct);
+        response.EnsureSuccessStatusCode();
+        var xml = await response.Content.ReadAsStringAsync(ct);
+
+        var document = XDocument.Parse(xml);
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var slugs = new List<string>();
+        var refs = new List<RemotePostRef>();
 
-        foreach (var anchor in document.QuerySelectorAll("a[href]"))
+        foreach (var entry in document.Descendants().Where(e => e.Name.LocalName == "url"))
         {
-            var href = anchor.GetAttribute("href") ?? "";
+            var loc = entry.Elements().FirstOrDefault(e => e.Name.LocalName == "loc")?.Value.Trim();
+            if (loc is null || !Uri.TryCreate(loc, UriKind.Absolute, out var uri)) continue;
 
-            string path;
-            if (href.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                href.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            {
-                if (!Uri.TryCreate(href, UriKind.Absolute, out var uri)) continue;
-                path = uri.AbsolutePath;
-            }
-            else
-            {
-                path = href;
-            }
-
-            var qIdx = path.IndexOf('?');
-            if (qIdx >= 0) path = path[..qIdx];
-
+            var path = uri.AbsolutePath;
             if (!path.Contains("/post/", StringComparison.OrdinalIgnoreCase)) continue;
 
             var slug = ExtractSlug(path);
-            if (slug is not null && seen.Add(slug))
-                slugs.Add(slug);
+            if (slug is null || !seen.Add(slug)) continue;
+
+            var lastModText = entry.Elements().FirstOrDefault(e => e.Name.LocalName == "lastmod")?.Value;
+            DateTime? lastModified = DateTimeOffset.TryParse(lastModText, out var dto) ? dto.UtcDateTime : null;
+
+            refs.Add(new RemotePostRef(slug, lastModified));
         }
 
-        return slugs;
+        return refs;
     }
 
     public async Task<RemotePost?> FetchPostAsync(string slug, CancellationToken ct)

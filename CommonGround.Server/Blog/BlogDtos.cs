@@ -70,6 +70,8 @@ public record ImportBlogResultDto(
 
 public record ImportBlogErrorDto(string? Slug, string Message);
 
+public record ImportBlogProgressDto(string Phase, int Current, int Total, string? Slug);
+
 public record BlogPostListDto(
     IReadOnlyList<BlogPostSummaryDto> Posts,
     int Page,

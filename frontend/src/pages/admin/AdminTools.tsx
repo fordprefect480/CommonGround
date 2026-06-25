@@ -7,12 +7,13 @@ import {
   importBlog,
   updateLeasedBedPrice,
   updateMembershipPrice,
+  type ImportBlogProgress,
   type ImportBlogResult,
 } from '../../api/adminTools'
 
 type ImportState =
   | { status: 'idle' }
-  | { status: 'running' }
+  | { status: 'running'; progress: ImportBlogProgress | null }
   | { status: 'done'; result: ImportBlogResult }
   | { status: 'error'; message: string }
 
@@ -40,9 +41,9 @@ export default function AdminTools() {
       }
       limit = parsed
     }
-    setImportState({ status: 'running' })
+    setImportState({ status: 'running', progress: null })
     try {
-      const result = await importBlog(limit)
+      const result = await importBlog(limit, (progress) => setImportState({ status: 'running', progress }))
       setImportState({ status: 'done', result })
     } catch (err) {
       setImportState({ status: 'error', message: err instanceof Error ? err.message : 'Import failed' })
@@ -99,9 +100,13 @@ export default function AdminTools() {
           <div className="card">
             <h2 className="section-title">Import historical blog posts</h2>
             <p className="card-note">Pulls newsletters from the existing reference site. Idempotent - already-imported posts are skipped.</p>
-            <button type="button" className="primary-button" onClick={runImport} disabled={importState.status === 'running'}>
-              {importState.status === 'running' ? 'Importing… (can take up to a minute)' : 'Run import'}
-            </button>
+            {importState.status === 'running' ? (
+              <ImportProgressBar progress={importState.progress} />
+            ) : (
+              <button type="button" className="primary-button" onClick={runImport}>
+                Run import
+              </button>
+            )}
             {importState.status === 'done' && (
               <div className="card-note" role="status">
                 Imported {importState.result.imported}, skipped {importState.result.skipped}, failed {importState.result.failed}.
@@ -125,6 +130,32 @@ export default function AdminTools() {
         </div>
       </details>
     </section>
+  )
+}
+
+function ImportProgressBar({ progress }: { progress: ImportBlogProgress | null }) {
+  const pct = progress && progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
+  const label = progress
+    ? `${progress.phase === 'fetching' ? 'Reading posts' : 'Importing posts'} ${progress.current} of ${progress.total}`
+    : 'Starting…'
+
+  return (
+    <div className="import-progress" role="status">
+      <div className="import-progress-label">
+        {label}
+        {progress?.slug && <span className="import-progress-slug"> — {progress.slug}</span>}
+      </div>
+      <div
+        className="progress-track"
+        role="progressbar"
+        aria-label="Import progress"
+        aria-valuemin={0}
+        aria-valuemax={progress?.total ?? 0}
+        aria-valuenow={progress?.current ?? 0}
+      >
+        <div className="progress-fill" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
   )
 }
 
