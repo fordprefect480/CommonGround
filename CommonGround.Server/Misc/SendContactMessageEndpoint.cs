@@ -4,18 +4,16 @@ using CommonGround.Server.Configuration;
 using CommonGround.Server.Email;
 using FastEndpoints;
 using Microsoft.Extensions.Options;
-using Resend;
 
 namespace CommonGround.Server.Misc;
 
 public sealed class SendContactMessageEndpoint(
-    IResend resend,
+    TransactionalEmailSender emailSender,
     IOptions<EmailOptions> emailOptions,
     IOptions<ContactOptions> contactOptions,
     TurnstileVerifier turnstile,
     IHttpContextAccessor httpContextAccessor,
-    IActivityLogger activityLogger,
-    ILogger<SendContactMessageEndpoint> logger)
+    IActivityLogger activityLogger)
     : Endpoint<SendContactMessageEndpoint.Request, SendContactMessageEndpoint.Result>
 {
     public sealed record Request(string Name, string Email, string Subject, string Message, string? CaptchaToken);
@@ -82,23 +80,16 @@ public sealed class SendContactMessageEndpoint(
         var html = BuildHtml(name, email, subject, message);
         var text = BuildText(name, email, subject, message);
 
-        var emailMessage = new EmailMessage
-        {
-            From = emailOptions.Value.From,
-            Subject = $"[Contact form] {subject}",
-            HtmlBody = html,
-            TextBody = text,
-            ReplyTo = email,
-        };
-        emailMessage.To.Add(contact.RecipientAddress);
+        var delivered = await emailSender.SendAsync(
+            $"[Contact form] {subject}",
+            html,
+            text,
+            new TransactionalEmailSender.Recipient(contact.RecipientAddress),
+            replyTo: email,
+            ct: ct);
 
-        try
+        if (!delivered)
         {
-            await resend.EmailSendAsync(emailMessage, ct);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to deliver contact form submission to {Recipient}", contact.RecipientAddress);
             await Send.ResultAsync(Results.Problem(
                 title: "Could not send message",
                 detail: "Sorry - something went wrong sending your message. Please try again later.",
