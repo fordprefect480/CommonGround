@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { fetchMember, recordMembershipPayment, updateMember, type Member } from '../../api/auth'
+import { fetchMemberEmails, type MemberEmailListItem } from '../../api/email'
 import { fetchLeasedBeds, recordLeasePayment, type AdminBed, type BedLeaseStatus } from '../../api/leasedBeds'
 import { useAppConfig } from '../../AppConfigContext'
 import { financialYearLabel, formatPrice, membershipPaidThroughFyLabel } from '../../format'
+import { formatAbsolute, formatRelative } from './activityFormatting'
 import PaymentHistoryTable from './PaymentHistoryTable'
 import RecordPaymentModal from './RecordPaymentModal'
 import AdminBackButton from './AdminBackButton'
@@ -163,6 +165,64 @@ function LeasedBedsCard({ memberId }: { memberId: string }) {
           await reload()
         }}
       />
+    </section>
+  )
+}
+
+function EmailHistoryCard({ memberId }: { memberId: string }) {
+  const [emails, setEmails] = useState<MemberEmailListItem[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchMemberEmails(memberId)
+      .then((items) => { if (!cancelled) setEmails(items) })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load email history.')
+      })
+    return () => { cancelled = true }
+  }, [memberId])
+
+  return (
+    <section className="card admin-form">
+      <h2 className="section-title">Email history</h2>
+
+      {error && <div className="form-error" role="alert">{error}</div>}
+      {!error && emails === null && <p className="card-note" style={{ margin: 0 }}>Loading&hellip;</p>}
+      {emails !== null && emails.length === 0 && (
+        <p className="card-note" style={{ margin: 0 }}>No emails have been sent to this member.</p>
+      )}
+
+      {emails !== null && emails.length > 0 && (
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th scope="col">Sent</th>
+                <th scope="col">Subject</th>
+                <th scope="col">From</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {emails.map((email) => (
+                <tr key={email.id}>
+                  <td data-label="Sent" title={formatAbsolute(email.sentAt)}>{formatRelative(email.sentAt)}</td>
+                  <td data-label="Subject"><Link to={`/admin/email/${email.id}`}>{email.subject}</Link></td>
+                  <td data-label="From">{email.senderEmail ?? '-'}</td>
+                  <td data-label="Status">
+                    {email.status === 'failed' ? (
+                      <span className="pill pill-warn" title={email.errorMessage ?? undefined}>Failed</span>
+                    ) : (
+                      <span className="pill pill-ok">Delivered</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   )
 }
@@ -338,6 +398,8 @@ export default function MemberDetail() {
         <h2 className="section-title">Payment history</h2>
         <PaymentHistoryTable memberId={member.id} refreshToken={paymentsRefresh} />
       </section>
+
+      <EmailHistoryCard memberId={member.id} />
     </section>
   )
 }
