@@ -108,3 +108,22 @@ export async function fetchSentEmail(id: number): Promise<SentEmailDetail> {
   if (!res.ok) throw new Error(await res.text())
   return res.json()
 }
+
+export interface MemberEmailListItem {
+  id: number
+  sentAt: string
+  subject: string
+  senderEmail: string | null
+  email: string
+  status: 'sent' | 'failed'
+  errorMessage: string | null
+}
+
+export async function fetchMemberEmails(memberId: string): Promise<MemberEmailListItem[]> {
+  const res = await fetch(`/api/admin/members/${encodeURIComponent(memberId)}/emails`, {
+    credentials: 'include',
+  })
+  if (!res.ok) throw new Error(await res.text())
+  const body = (await res.json()) as { items: MemberEmailListItem[] }
+  return body.items
+}
