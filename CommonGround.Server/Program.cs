@@ -36,6 +36,7 @@ builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedService>();
 builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedCheckoutService>();
 builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedActivationService>();
 builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedNotifications>();
+builder.Services.AddScoped<TransactionalEmailSender>();
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<AppDbContext>()
     .SetApplicationName("CommonGround");
