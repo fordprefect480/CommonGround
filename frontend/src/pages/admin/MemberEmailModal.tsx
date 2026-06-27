@@ -3,37 +3,28 @@ import { createPortal } from 'react-dom'
 import type { Member } from '../../api/auth'
 import type { SendNewsletterResult } from '../../api/email'
 import { ComposeForm, memberLabel, pluralize, useEmailTemplate } from './emailComposer'
-import { buildReminderDraft } from './paymentReminder'
 
 interface MemberEmailModalProps {
   /** The members selected in the table. Those without an email are skipped. */
   members: Member[]
-  gardenName: string
-  membershipPriceCents: number
-  paymentsEnabled: boolean
-  fyLabel: string
-  membershipUrl: string
   onClose: () => void
   onSent: (result: SendNewsletterResult) => void
 }
+
+// Starter greeting the admin writes the rest of their message after.
+const BODY_PLACEHOLDER = '<p>Hi,</p><p></p>'
 
 function hasEmail(m: Member): boolean {
   return !!(m.email && m.email.trim().length > 0)
 }
 
 /**
- * Modal composer for emailing the members selected on the Members page. Starts
- * blank so the admin can send anything; a one-click button drops in a
- * membership-renewal reminder for that common case. Rendered only while open
- * (the parent conditionally mounts it).
+ * Modal composer for emailing the members selected on the Members page. The
+ * admin can send anything; the body starts with a greeting they continue from.
+ * Rendered only while open (the parent conditionally mounts it).
  */
 export default function MemberEmailModal({
   members,
-  gardenName,
-  membershipPriceCents,
-  paymentsEnabled,
-  fyLabel,
-  membershipUrl,
   onClose,
   onSent,
 }: MemberEmailModalProps) {
@@ -44,7 +35,7 @@ export default function MemberEmailModal({
 
   const [recipientIds, setRecipientIds] = useState<Set<string>>(() => new Set(eligible.map((m) => m.id)))
   const [subject, setSubject] = useState('')
-  const [body, setBody] = useState('')
+  const [body, setBody] = useState(BODY_PLACEHOLDER)
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
@@ -64,18 +55,6 @@ export default function MemberEmailModal({
       next.delete(id)
       return next
     })
-  }
-
-  const insertReminderTemplate = () => {
-    const draft = buildReminderDraft({
-      gardenName,
-      fyLabel,
-      priceCents: membershipPriceCents,
-      paymentsEnabled,
-      membershipUrl,
-    })
-    setSubject(draft.subject)
-    setBody(draft.bodyHtml)
   }
 
   return createPortal(
@@ -116,12 +95,6 @@ export default function MemberEmailModal({
             {pluralize(recipients.length, 'recipient')}
             {skipped > 0 && <> &middot; {pluralize(skipped, 'selected member')} skipped (no email address)</>}
           </span>
-        </div>
-
-        <div className="admin-actions" style={{ marginTop: '-0.25rem' }}>
-          <button type="button" className="footer-link" onClick={insertReminderTemplate} disabled={sending}>
-            Insert membership-reminder template
-          </button>
         </div>
 
         <ComposeForm
