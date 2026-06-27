@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createMember, fetchMembers, type Member } from '../../api/auth'
+import { createMember, fetchMembers, fetchMembershipRenewalTarget, type Member } from '../../api/auth'
+import { useAppConfig } from '../../AppConfigContext'
+import { membershipPaidThroughFyLabel } from '../../format'
+import {
+  buildReminderPreset,
+  membersLapsed,
+  membersNotRenewed,
+  type ReminderGroup,
+} from './paymentReminder'
 
 const ADMIN_ROLE = 'Admin'
 
 type State =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; members: Member[] }
+  | { status: 'ready'; members: Member[]; renewalTargetUtc: string }
 
 interface FormState {
   email: string
@@ -53,9 +61,12 @@ function membershipStatus(member: Member, now: number): MembershipStatus {
 type MemberFilter = 'all' | 'paid' | 'notPaid'
 
 export default function Members() {
+  const navigate = useNavigate()
+  const { gardenName, membershipPriceCents, paymentsEnabled } = useAppConfig()
   const [state, setState] = useState<State>({ status: 'loading' })
   const [filter, setFilter] = useState<MemberFilter>('all')
   const [showForm, setShowForm] = useState(false)
+  const [showReminder, setShowReminder] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -63,11 +74,35 @@ export default function Members() {
   const reload = async () => {
     setState({ status: 'loading' })
     try {
-      const members = await fetchMembers()
-      setState({ status: 'ready', members })
+      const [members, renewalTargetUtc] = await Promise.all([
+        fetchMembers(),
+        fetchMembershipRenewalTarget(),
+      ])
+      setState({ status: 'ready', members, renewalTargetUtc })
     } catch (err) {
       setState({ status: 'error', message: err instanceof Error ? err.message : 'Failed to load members' })
     }
+  }
+
+  const startReminder = (group: ReminderGroup) => {
+    if (state.status !== 'ready') return
+    const renewalMs = new Date(state.renewalTargetUtc).getTime()
+    const recipients =
+      group === 'lapsed'
+        ? membersLapsed(state.members, Date.now())
+        : membersNotRenewed(state.members, renewalMs)
+    const preset = buildReminderPreset({
+      group,
+      members: recipients,
+      gardenName,
+      fyLabel: membershipPaidThroughFyLabel(state.renewalTargetUtc),
+      priceCents: membershipPriceCents,
+      paymentsEnabled,
+      membershipUrl: `${window.location.origin}/membership`,
+    })
+    navigate('/admin/email/new', {
+      state: { memberIds: preset.memberIds, subject: preset.subject, bodyHtml: preset.bodyHtml, note: preset.note },
+    })
   }
 
   useEffect(() => {
@@ -109,8 +144,13 @@ export default function Members() {
     <section className="admin-page" aria-labelledby="members-heading">
       <header className="admin-page-header">
         <h1 id="members-heading" className="admin-page-title">Members</h1>
-        {!showForm && (
+        {!showForm && !showReminder && (
           <div className="admin-actions">
+            {state.status === 'ready' && state.members.length > 0 && (
+              <button type="button" className="primary-button" onClick={() => setShowReminder(true)}>
+                Send payment reminder
+              </button>
+            )}
             <button
               type="button"
               className="primary-button"
@@ -125,6 +165,18 @@ export default function Members() {
           </div>
         )}
       </header>
+
+      {showReminder && state.status === 'ready' && (
+        <ReminderPanel
+          members={state.members}
+          renewalTargetUtc={state.renewalTargetUtc}
+          onPick={(group) => {
+            setShowReminder(false)
+            startReminder(group)
+          }}
+          onCancel={() => setShowReminder(false)}
+        />
+      )}
 
       {showForm && (
         <form className="card admin-form" onSubmit={submitAdd}>
@@ -221,6 +273,54 @@ export default function Members() {
         <MembersList members={state.members} filter={filter} onFilterChange={setFilter} />
       )}
     </section>
+  )
+}
+
+function ReminderPanel({
+  members,
+  renewalTargetUtc,
+  onPick,
+  onCancel,
+}: {
+  members: Member[]
+  renewalTargetUtc: string
+  onPick: (group: ReminderGroup) => void
+  onCancel: () => void
+}) {
+  const fyLabel = membershipPaidThroughFyLabel(renewalTargetUtc)
+  const notRenewedCount = membersNotRenewed(members, new Date(renewalTargetUtc).getTime()).length
+  const lapsedCount = membersLapsed(members, Date.now()).length
+
+  return (
+    <div className="card admin-form">
+      <h2 className="section-title">Send a payment reminder</h2>
+      <p className="card-note" style={{ margin: 0 }}>
+        Choose who to remind. You'll be taken to a pre-filled email with these members selected, where
+        you can edit it before sending. Members without an email address are skipped.
+      </p>
+
+      <div className="admin-actions" style={{ flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          className="primary-button"
+          onClick={() => onPick('not_renewed')}
+          disabled={notRenewedCount === 0}
+        >
+          Not yet paid for {fyLabel} ({notRenewedCount})
+        </button>
+        <button
+          type="button"
+          className="primary-button"
+          onClick={() => onPick('lapsed')}
+          disabled={lapsedCount === 0}
+        >
+          Membership lapsed ({lapsedCount})
+        </button>
+        <button type="button" className="footer-link" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </div>
   )
 }
 
