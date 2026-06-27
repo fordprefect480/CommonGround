@@ -167,6 +167,17 @@ export async function fetchMemberStats(): Promise<MemberStats> {
   return res.json()
 }
 
+// The paid-through date a membership payment made now would reach (the next
+// 1 July renewal boundary, in the garden's local time). A member whose
+// membershipPaidThroughUtc is null or earlier than this hasn't paid for the
+// upcoming year.
+export async function fetchMembershipRenewalTarget(): Promise<string> {
+  const res = await fetch('/api/admin/members/membership-renewal', { credentials: 'include' })
+  if (!res.ok) throw new Error(`Failed to load renewal date (${res.status})`)
+  const body = (await res.json()) as { renewalTargetUtc: string }
+  return body.renewalTargetUtc
+}
+
 export interface CreateMemberInput {
   email: string
   firstName: string | null
