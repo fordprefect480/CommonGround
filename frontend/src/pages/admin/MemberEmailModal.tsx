@@ -5,7 +5,7 @@ import type { SendNewsletterResult } from '../../api/email'
 import { ComposeForm, memberLabel, pluralize, useEmailTemplate } from './emailComposer'
 import { buildReminderDraft } from './paymentReminder'
 
-interface PaymentReminderModalProps {
+interface MemberEmailModalProps {
   /** The members selected in the table. Those without an email are skipped. */
   members: Member[]
   gardenName: string
@@ -22,11 +22,12 @@ function hasEmail(m: Member): boolean {
 }
 
 /**
- * Modal composer for a membership payment reminder. Rendered only while open
- * (the parent conditionally mounts it), pre-filled with a renewal draft the
- * admin edits before sending to the selected members.
+ * Modal composer for emailing the members selected on the Members page. Starts
+ * blank so the admin can send anything; a one-click button drops in a
+ * membership-renewal reminder for that common case. Rendered only while open
+ * (the parent conditionally mounts it).
  */
-export default function PaymentReminderModal({
+export default function MemberEmailModal({
   members,
   gardenName,
   membershipPriceCents,
@@ -35,18 +36,15 @@ export default function PaymentReminderModal({
   membershipUrl,
   onClose,
   onSent,
-}: PaymentReminderModalProps) {
+}: MemberEmailModalProps) {
   const template = useEmailTemplate()
 
   const eligible = members.filter(hasEmail)
   const skipped = members.length - eligible.length
 
   const [recipientIds, setRecipientIds] = useState<Set<string>>(() => new Set(eligible.map((m) => m.id)))
-  const [draft] = useState(() =>
-    buildReminderDraft({ gardenName, fyLabel, priceCents: membershipPriceCents, paymentsEnabled, membershipUrl }),
-  )
-  const [subject, setSubject] = useState(draft.subject)
-  const [body, setBody] = useState(draft.bodyHtml)
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
@@ -68,17 +66,29 @@ export default function PaymentReminderModal({
     })
   }
 
+  const insertReminderTemplate = () => {
+    const draft = buildReminderDraft({
+      gardenName,
+      fyLabel,
+      priceCents: membershipPriceCents,
+      paymentsEnabled,
+      membershipUrl,
+    })
+    setSubject(draft.subject)
+    setBody(draft.bodyHtml)
+  }
+
   return createPortal(
     <div role="presentation" onClick={() => { if (!sending) onClose() }} style={overlayStyle}>
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Send payment reminder"
+        aria-label="Email selected members"
         className="card admin-form"
         onClick={(e) => e.stopPropagation()}
         style={{ width: '100%', maxWidth: 680, margin: 0, maxHeight: '90vh', overflowY: 'auto' }}
       >
-        <h2 className="section-title">Send payment reminder</h2>
+        <h2 className="section-title">Email selected members</h2>
 
         <div className="field">
           <span className="field-label">To</span>
@@ -106,6 +116,12 @@ export default function PaymentReminderModal({
             {pluralize(recipients.length, 'recipient')}
             {skipped > 0 && <> &middot; {pluralize(skipped, 'selected member')} skipped (no email address)</>}
           </span>
+        </div>
+
+        <div className="admin-actions" style={{ marginTop: '-0.25rem' }}>
+          <button type="button" className="footer-link" onClick={insertReminderTemplate} disabled={sending}>
+            Insert membership-reminder template
+          </button>
         </div>
 
         <ComposeForm
