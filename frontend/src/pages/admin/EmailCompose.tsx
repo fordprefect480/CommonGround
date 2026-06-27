@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import AdminBackButton from './AdminBackButton'
 import { fetchEmailTemplate, fetchSubscriberCount, sendNewsletter, type NewsletterRecipients } from '../../api/email'
 import { fetchMembers, type Member } from '../../api/auth'
@@ -149,15 +149,28 @@ function memberLabel(m: Member): string {
   return m.displayName ?? m.email ?? '(no name)'
 }
 
+interface ComposePreset {
+  memberIds?: string[]
+  subject?: string
+  bodyHtml?: string
+  note?: string
+}
+
 export default function EmailCompose() {
   const navigate = useNavigate()
-  const [subject, setSubject] = useState('')
-  const [body, setBody] = useState('')
+  // The Members page can deep-link here to send a payment reminder, passing the
+  // recipients and a pre-filled draft through router state for the admin to edit.
+  const preset = useLocation().state as ComposePreset | null
+  const presetMemberIds = preset?.memberIds ?? []
+  const [subject, setSubject] = useState(preset?.subject ?? '')
+  const [body, setBody] = useState(preset?.bodyHtml ?? '')
   const [template, setTemplate] = useState<TemplateState>({ status: 'loading' })
-  const [mode, setMode] = useState<RecipientMode>('all_subscribers')
+  const [mode, setMode] = useState<RecipientMode>(
+    presetMemberIds.length > 0 ? 'specific_members' : 'all_subscribers',
+  )
   const [subscriberCount, setSubscriberCount] = useState<SubscriberCountState>({ status: 'loading' })
   const [members, setMembers] = useState<MembersState>({ status: 'idle' })
-  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set())
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set(presetMemberIds))
   const [memberQuery, setMemberQuery] = useState('')
   const [comboOpen, setComboOpen] = useState(false)
   const [comboHighlight, setComboHighlight] = useState(0)
@@ -410,6 +423,11 @@ export default function EmailCompose() {
 
           {mode === 'specific_members' && (
             <div className="recipient-mode-detail">
+              {preset?.note && (
+                <p className="card-note" style={{ marginTop: 0 }}>
+                  Pre-selected {preset.note}. Review the list below before sending &mdash; remove anyone you don't want to email.
+                </p>
+              )}
               {members.status === 'loading' && <p className="admin-loading">Loading members&hellip;</p>}
               {members.status === 'error' && (
                 <div className="form-error" role="alert">{members.message}</div>
