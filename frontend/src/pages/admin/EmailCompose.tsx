@@ -1,39 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import AdminBackButton from './AdminBackButton'
-import { fetchEmailTemplate, fetchSubscriberCount, sendNewsletter, type NewsletterRecipients } from '../../api/email'
+import { fetchSubscriberCount, type NewsletterRecipients } from '../../api/email'
 import { fetchMembers, type Member } from '../../api/auth'
-
-interface HtmlEditorProps {
-  value: string
-  onChange: (html: string) => void
-  disabled: boolean
-}
-
-function HtmlEditor({ value, onChange, disabled }: HtmlEditorProps) {
-  const ref = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    const el = ref.current
-    if (el && el.innerHTML !== value) {
-      el.innerHTML = value
-    }
-  }, [value])
-
-  return (
-    <div
-      ref={ref}
-      id="email-html-body"
-      className="email-html-editor"
-      contentEditable={!disabled}
-      role="textbox"
-      aria-multiline="true"
-      aria-disabled={disabled}
-      suppressContentEditableWarning
-      onInput={(e) => onChange((e.currentTarget as HTMLDivElement).innerHTML)}
-    />
-  )
-}
+import { ComposeForm, memberLabel, pluralize, useEmailTemplate } from './emailComposer'
 
 type SubscriberCountState =
   | { status: 'loading' }
@@ -48,96 +18,6 @@ type MembersState =
 
 type RecipientMode = 'all_subscribers' | 'specific_members' | 'custom_emails'
 
-type SendState =
-  | { status: 'idle' }
-  | { status: 'confirming' }
-  | { status: 'sending' }
-  | { status: 'error'; message: string }
-
-type TemplateState =
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
-  | { status: 'ready'; header: string; footer: string }
-
-const BODY_SLOT_ATTR = 'data-cg-body-slot'
-
-function splitTemplate(html: string): { header: string; footer: string } {
-  const doc = new DOMParser().parseFromString(html, 'text/html')
-
-  const variableSpan = Array.from(doc.querySelectorAll('span[data-type="variable"]'))
-    .find((s) => s.textContent?.includes('{{{BODY}}}'))
-
-  let anchor: Element | null = null
-  if (variableSpan) {
-    let walker: Element | null = variableSpan
-    while (walker && walker.tagName !== 'TR') walker = walker.parentElement
-    anchor = walker ?? variableSpan
-  } else {
-    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT)
-    let node = walker.nextNode()
-    while (node && !node.nodeValue?.includes('{{{BODY}}}')) node = walker.nextNode()
-    if (node?.parentElement) anchor = node.parentElement
-  }
-
-  if (!anchor) return { header: html, footer: '' }
-
-  anchor.setAttribute(BODY_SLOT_ATTR, '')
-
-  const headerDoc = doc.cloneNode(true) as Document
-  const headerAnchor = headerDoc.querySelector(`[${BODY_SLOT_ATTR}]`)
-  if (headerAnchor) {
-    trimFollowing(headerAnchor)
-    headerAnchor.remove()
-  }
-
-  const footerDoc = doc.cloneNode(true) as Document
-  const footerAnchor = footerDoc.querySelector(`[${BODY_SLOT_ATTR}]`)
-  if (footerAnchor) {
-    trimPreceding(footerAnchor)
-    footerAnchor.remove()
-  }
-
-  return {
-    header: headerDoc.body.innerHTML,
-    footer: footerDoc.body.innerHTML,
-  }
-}
-
-function trimFollowing(start: Element) {
-  let current: Node = start
-  while (current.parentNode) {
-    let next = current.nextSibling
-    while (next) {
-      const after = next.nextSibling
-      current.parentNode.removeChild(next)
-      next = after
-    }
-    if (current.parentNode.nodeName === 'BODY') break
-    current = current.parentNode
-  }
-}
-
-function trimPreceding(start: Element) {
-  let current: Node = start
-  while (current.parentNode) {
-    let prev = current.previousSibling
-    while (prev) {
-      const before = prev.previousSibling
-      current.parentNode.removeChild(prev)
-      prev = before
-    }
-    if (current.parentNode.nodeName === 'BODY') break
-    current = current.parentNode
-  }
-}
-
-const EMPTY_BODY_HTML_PATTERNS = [/^\s*$/, /^<p>\s*<\/p>$/i]
-
-function isBodyEmpty(html: string): boolean {
-  const stripped = html.replace(/<br\s*\/?>(\s|&nbsp;)*/gi, '').trim()
-  return EMPTY_BODY_HTML_PATTERNS.some((re) => re.test(stripped))
-}
-
 function parseEmails(raw: string): string[] {
   return raw
     .split(/[\s,;]+/)
@@ -145,39 +25,22 @@ function parseEmails(raw: string): string[] {
     .filter((part) => part.length > 0)
 }
 
-function memberLabel(m: Member): string {
-  return m.displayName ?? m.email ?? '(no name)'
-}
-
-interface ComposePreset {
-  memberIds?: string[]
-  subject?: string
-  bodyHtml?: string
-  note?: string
-}
-
 export default function EmailCompose() {
   const navigate = useNavigate()
-  // The Members page can deep-link here to send a payment reminder, passing the
-  // recipients and a pre-filled draft through router state for the admin to edit.
-  const preset = useLocation().state as ComposePreset | null
-  const presetMemberIds = preset?.memberIds ?? []
-  const [subject, setSubject] = useState(preset?.subject ?? '')
-  const [body, setBody] = useState(preset?.bodyHtml ?? '')
-  const [template, setTemplate] = useState<TemplateState>({ status: 'loading' })
-  const [mode, setMode] = useState<RecipientMode>(
-    presetMemberIds.length > 0 ? 'specific_members' : 'all_subscribers',
-  )
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
+  const template = useEmailTemplate()
+  const [mode, setMode] = useState<RecipientMode>('all_subscribers')
   const [subscriberCount, setSubscriberCount] = useState<SubscriberCountState>({ status: 'loading' })
   const [members, setMembers] = useState<MembersState>({ status: 'idle' })
-  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set(presetMemberIds))
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set())
   const [memberQuery, setMemberQuery] = useState('')
   const [comboOpen, setComboOpen] = useState(false)
   const [comboHighlight, setComboHighlight] = useState(0)
   const comboRef = useRef<HTMLDivElement | null>(null)
   const comboInputRef = useRef<HTMLInputElement | null>(null)
   const [customEmailsText, setCustomEmailsText] = useState('')
-  const [send, setSend] = useState<SendState>({ status: 'idle' })
+  const [sending, setSending] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -192,22 +55,6 @@ export default function EmailCompose() {
       }
     }
     load()
-    return () => { cancelled = true }
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const html = await fetchEmailTemplate()
-        if (cancelled) return
-        const { header, footer } = splitTemplate(html)
-        setTemplate({ status: 'ready', header, footer })
-      } catch (err) {
-        if (cancelled) return
-        setTemplate({ status: 'error', message: err instanceof Error ? err.message : 'Failed to load template' })
-      }
-    })()
     return () => { cancelled = true }
   }, [])
 
@@ -280,11 +127,6 @@ export default function EmailCompose() {
     }
   })()
 
-  const subjectTrimmed = subject.trim()
-  const bodyEmpty = isBodyEmpty(body)
-  const canCompose = subjectTrimmed.length > 0 && !bodyEmpty
-  const canSend = canCompose && recipientCount > 0 && send.status === 'idle'
-
   const addMember = (id: string) => {
     setSelectedMemberIds((prev) => {
       if (prev.has(id)) return prev
@@ -344,26 +186,7 @@ export default function EmailCompose() {
     }
   }
 
-  const confirmSend = () => {
-    if (!canSend) return
-    setSend({ status: 'confirming' })
-  }
-
-  const performSend = async () => {
-    setSend({ status: 'sending' })
-    try {
-      const fullHtml = template.status === 'ready'
-        ? template.header + body + template.footer
-        : body
-      const result = await sendNewsletter(subjectTrimmed, fullHtml, buildRecipients())
-      navigate(`/admin/email/${result.id}`, { replace: true })
-    } catch (err) {
-      setSend({ status: 'error', message: err instanceof Error ? err.message : 'Send failed' })
-    }
-  }
-
   const recipientNoun = mode === 'custom_emails' ? 'address' : 'recipient'
-  const pluralize = (n: number, singular: string) => `${n} ${singular}${n === 1 ? '' : 's'}`
 
   return (
     <section className="admin-page" aria-labelledby="email-heading">
@@ -379,7 +202,7 @@ export default function EmailCompose() {
       )}
 
       <div className="card">
-        <fieldset className="field" disabled={send.status === 'sending'}>
+        <fieldset className="field" disabled={sending}>
           <legend className="field-label">Recipients</legend>
           <div className="recipient-mode-options">
             <label className="checkbox-field">
@@ -423,11 +246,6 @@ export default function EmailCompose() {
 
           {mode === 'specific_members' && (
             <div className="recipient-mode-detail">
-              {preset?.note && (
-                <p className="card-note" style={{ marginTop: 0 }}>
-                  Pre-selected {preset.note}. Review the list below before sending &mdash; remove anyone you don't want to email.
-                </p>
-              )}
               {members.status === 'loading' && <p className="admin-loading">Loading members&hellip;</p>}
               {members.status === 'error' && (
                 <div className="form-error" role="alert">{members.message}</div>
@@ -453,7 +271,7 @@ export default function EmailCompose() {
                           e.stopPropagation()
                           removeMember(m.id)
                         }}
-                        disabled={send.status === 'sending'}
+                        disabled={sending}
                       >
                         ×
                       </button>
@@ -471,7 +289,7 @@ export default function EmailCompose() {
                     onKeyDown={onComboKeyDown}
                     placeholder={selectedMembers.length === 0 ? 'Type a name or email…' : ''}
                     autoComplete="off"
-                    disabled={send.status === 'sending'}
+                    disabled={sending}
                     role="combobox"
                     aria-expanded={comboOpen}
                     aria-autocomplete="list"
@@ -503,7 +321,7 @@ export default function EmailCompose() {
                 {selectedMembers.length > 0 && (
                   <div className="admin-actions" style={{ marginTop: '0.5rem' }}>
                     <span className="card-note">{pluralize(selectedMembers.length, 'member')} selected</span>
-                    <button type="button" className="footer-link" onClick={clearSelection} disabled={send.status === 'sending'}>
+                    <button type="button" className="footer-link" onClick={clearSelection} disabled={sending}>
                       Clear
                     </button>
                   </div>
@@ -519,7 +337,7 @@ export default function EmailCompose() {
                 id="email-custom-recipients"
                 value={customEmailsText}
                 onChange={(e) => setCustomEmailsText(e.target.value)}
-                disabled={send.status === 'sending'}
+                disabled={sending}
                 rows={3}
                 placeholder="alice@example.com, bob@example.com"
                 autoComplete="off"
@@ -535,101 +353,28 @@ export default function EmailCompose() {
           )}
         </fieldset>
 
-        <div className="field">
-          <label className="field-label" htmlFor="email-subject">Subject</label>
-          <input
-            id="email-subject"
-            type="text"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            disabled={send.status === 'sending'}
-            maxLength={200}
-            autoComplete="off"
-          />
-        </div>
-
-        <div className="field">
-          <label className="field-label" htmlFor="email-html-body">Body</label>
-          {template.status === 'error' && (
-            <div className="form-error" role="alert">Couldn't load template from Resend: {template.message}</div>
-          )}
-          {template.status === 'loading' ? (
-            <p className="admin-loading">Loading template from Resend&hellip;</p>
-          ) : (
-            <div className="email-compose-preview">
-              {template.status === 'ready' && (
-                <div
-                  className="email-compose-chrome"
-                  aria-hidden="true"
-                  dangerouslySetInnerHTML={{ __html: template.header }}
-                />
-              )}
-              <HtmlEditor
-                value={body}
-                onChange={setBody}
-                disabled={send.status === 'sending'}
-              />
-              {template.status === 'ready' && (
-                <div
-                  className="email-compose-chrome"
-                  aria-hidden="true"
-                  dangerouslySetInnerHTML={{ __html: template.footer }}
-                />
-              )}
-            </div>
-          )}
-        </div>
-
-        {send.status === 'idle' && (
-          <div className="admin-actions">
-            <button
-              type="button"
-              className="primary-button"
-              onClick={confirmSend}
-              disabled={!canSend}
-            >
-              {recipientCount > 0 ? `Send to ${pluralize(recipientCount, recipientNoun)}` : 'Send'}
-            </button>
+        <ComposeForm
+          subject={subject}
+          onSubjectChange={setSubject}
+          body={body}
+          onBodyChange={setBody}
+          template={template}
+          recipientCount={recipientCount}
+          recipientNoun={recipientNoun}
+          buildRecipients={buildRecipients}
+          onSent={(result) => navigate(`/admin/email/${result.id}`, { replace: true })}
+          onSendingChange={setSending}
+          secondaryAction={
             <button type="button" className="footer-link" onClick={() => navigate('/admin/email')}>
               Cancel
             </button>
-            {mode === 'all_subscribers' && subscriberCount.status === 'ready' && subscriberCount.count === 0 && (
+          }
+          footerNote={
+            mode === 'all_subscribers' && subscriberCount.status === 'ready' && subscriberCount.count === 0 ? (
               <span className="card-note">There are no subscribed members to send to.</span>
-            )}
-          </div>
-        )}
-
-        {send.status === 'confirming' && (
-          <div className="form-error" role="alertdialog" aria-labelledby="email-confirm-heading">
-            <p id="email-confirm-heading">
-              <strong>Send &ldquo;{subjectTrimmed}&rdquo; to {pluralize(recipientCount, recipientNoun)}?</strong>
-            </p>
-            <p>This cannot be undone.</p>
-            <div className="admin-actions" style={{ marginTop: '0.75rem' }}>
-              <button type="button" className="primary-button" onClick={performSend}>
-                Yes, send now
-              </button>
-              <button type="button" className="footer-link" onClick={() => setSend({ status: 'idle' })}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {send.status === 'sending' && (
-          <p className="admin-loading">Sending&hellip; this may take a moment.</p>
-        )}
-
-        {send.status === 'error' && (
-          <>
-            <div className="form-error" role="alert">{send.message}</div>
-            <div className="admin-actions" style={{ marginTop: '0.75rem' }}>
-              <button type="button" className="footer-link" onClick={() => setSend({ status: 'idle' })}>
-                Dismiss
-              </button>
-            </div>
-          </>
-        )}
+            ) : undefined
+          }
+        />
       </div>
     </section>
   )

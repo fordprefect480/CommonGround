@@ -774,6 +774,16 @@ button.footer-link:disabled {
 .admin-table tbody tr:last-child td { border-bottom: none; }
 .admin-table tbody tr:hover         { background: var(--table-row-hover); }
 
+.admin-table th.admin-table-checkbox { width: 2.5rem; }
+.admin-table-checkbox { text-align: center; }
+.admin-table-checkbox input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
 .blog-thumb {
   display: block;
   width: 4rem;

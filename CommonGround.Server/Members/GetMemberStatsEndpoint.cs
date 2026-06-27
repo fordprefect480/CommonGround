@@ -21,14 +21,18 @@ public sealed class GetMemberStatsEndpoint(AppDbContext db)
         var now = DateTime.UtcNow;
         var thirtyDaysAgo = now.AddDays(-30);
 
-        // "Paid" means the membership fee is covered for the current financial
-        // year; membership always runs to a 1 July boundary, so a paid-through
-        // date in the future is exactly that. Everyone else — never paid, or
-        // paid only through a past year — is "not yet paid".
+        // "Paid" means the membership fee is covered through the upcoming
+        // renewal boundary - the paid-through date a payment made now would
+        // reach (the next 1 July, with the late-join carry-over). Everyone else
+        // - never paid, lapsed, or covered only for the current year but not yet
+        // renewed for the year ahead - is "not yet paid". This matches the admin
+        // Members page so the Dashboard count and the page's chips agree.
+        var renewalTarget = MembershipPeriod.ComputePaidThrough(now);
+
         var totalMembers = await db.Users.CountAsync(ct);
 
         var paidMembers = await db.Users
-            .Where(u => u.MembershipPaidThroughUtc >= now)
+            .Where(u => u.MembershipPaidThroughUtc >= renewalTarget)
             .CountAsync(ct);
 
         var notYetPaidMembers = totalMembers - paidMembers;
