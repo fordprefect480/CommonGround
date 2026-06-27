@@ -3,12 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { createMember, fetchMembers, fetchMembershipRenewalTarget, type Member } from '../../api/auth'
 import { useAppConfig } from '../../AppConfigContext'
 import { membershipPaidThroughFyLabel } from '../../format'
-import {
-  buildReminderPreset,
-  membersLapsed,
-  membersNotRenewed,
-  type ReminderGroup,
-} from './paymentReminder'
+import PaymentReminderModal from './PaymentReminderModal'
 
 const ADMIN_ROLE = 'Admin'
 
@@ -44,29 +39,31 @@ function formatJoinedAt(iso: string): string {
   return Number.isNaN(d.getTime()) ? '-' : dateFormatter.format(d)
 }
 
+function pluralize(n: number, singular: string): string {
+  return `${n} ${singular}${n === 1 ? '' : 's'}`
+}
+
 type MembershipStatus = 'paid' | 'notPaid'
 
-// "Paid" means the member has paid their membership fee for the current
-// financial year. Membership always runs to a 1 July boundary (see the
-// server's MembershipPeriod), so a paid-through date in the future
-// necessarily covers the current financial year. Everything else — never
-// paid, or paid only through a past financial year — is "not yet paid".
-function membershipStatus(member: Member, now: number): MembershipStatus {
+// "Paid" means the member has paid through the upcoming renewal boundary
+// (the next 1 July, with the late-join carry-over - see the server's
+// MembershipPeriod, surfaced as renewalTargetUtc). For most of the year that
+// boundary is the current financial year's, so this matches the obvious
+// reading; within the 8-week renewal window it additionally flags members who
+// are still covered this year but haven't renewed for the year ahead.
+function membershipStatus(member: Member, renewalTargetMs: number): MembershipStatus {
   if (!member.membershipPaidThroughUtc) return 'notPaid'
   const paidThrough = new Date(member.membershipPaidThroughUtc).getTime()
   if (Number.isNaN(paidThrough)) return 'notPaid'
-  return paidThrough >= now ? 'paid' : 'notPaid'
+  return paidThrough >= renewalTargetMs ? 'paid' : 'notPaid'
 }
 
 type MemberFilter = 'all' | 'paid' | 'notPaid'
 
 export default function Members() {
-  const navigate = useNavigate()
-  const { gardenName, membershipPriceCents, paymentsEnabled } = useAppConfig()
   const [state, setState] = useState<State>({ status: 'loading' })
   const [filter, setFilter] = useState<MemberFilter>('all')
   const [showForm, setShowForm] = useState(false)
-  const [showReminder, setShowReminder] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -82,27 +79,6 @@ export default function Members() {
     } catch (err) {
       setState({ status: 'error', message: err instanceof Error ? err.message : 'Failed to load members' })
     }
-  }
-
-  const startReminder = (group: ReminderGroup) => {
-    if (state.status !== 'ready') return
-    const renewalMs = new Date(state.renewalTargetUtc).getTime()
-    const recipients =
-      group === 'lapsed'
-        ? membersLapsed(state.members, Date.now())
-        : membersNotRenewed(state.members, renewalMs)
-    const preset = buildReminderPreset({
-      group,
-      members: recipients,
-      gardenName,
-      fyLabel: membershipPaidThroughFyLabel(state.renewalTargetUtc),
-      priceCents: membershipPriceCents,
-      paymentsEnabled,
-      membershipUrl: `${window.location.origin}/membership`,
-    })
-    navigate('/admin/email/new', {
-      state: { memberIds: preset.memberIds, subject: preset.subject, bodyHtml: preset.bodyHtml, note: preset.note },
-    })
   }
 
   useEffect(() => {
@@ -144,13 +120,8 @@ export default function Members() {
     <section className="admin-page" aria-labelledby="members-heading">
       <header className="admin-page-header">
         <h1 id="members-heading" className="admin-page-title">Members</h1>
-        {!showForm && !showReminder && (
+        {!showForm && (
           <div className="admin-actions">
-            {state.status === 'ready' && state.members.length > 0 && (
-              <button type="button" className="primary-button" onClick={() => setShowReminder(true)}>
-                Send payment reminder
-              </button>
-            )}
             <button
               type="button"
               className="primary-button"
@@ -165,18 +136,6 @@ export default function Members() {
           </div>
         )}
       </header>
-
-      {showReminder && state.status === 'ready' && (
-        <ReminderPanel
-          members={state.members}
-          renewalTargetUtc={state.renewalTargetUtc}
-          onPick={(group) => {
-            setShowReminder(false)
-            startReminder(group)
-          }}
-          onCancel={() => setShowReminder(false)}
-        />
-      )}
 
       {showForm && (
         <form className="card admin-form" onSubmit={submitAdd}>
@@ -270,87 +229,72 @@ export default function Members() {
       )}
 
       {state.status === 'ready' && (
-        <MembersList members={state.members} filter={filter} onFilterChange={setFilter} />
+        <MembersList
+          members={state.members}
+          renewalTargetUtc={state.renewalTargetUtc}
+          filter={filter}
+          onFilterChange={setFilter}
+        />
       )}
     </section>
   )
 }
 
-function ReminderPanel({
-  members,
-  renewalTargetUtc,
-  onPick,
-  onCancel,
-}: {
-  members: Member[]
-  renewalTargetUtc: string
-  onPick: (group: ReminderGroup) => void
-  onCancel: () => void
-}) {
-  const fyLabel = membershipPaidThroughFyLabel(renewalTargetUtc)
-  const notRenewedCount = membersNotRenewed(members, new Date(renewalTargetUtc).getTime()).length
-  const lapsedCount = membersLapsed(members, Date.now()).length
-
-  return (
-    <div className="card admin-form">
-      <h2 className="section-title">Send a payment reminder</h2>
-      <p className="card-note" style={{ margin: 0 }}>
-        Choose who to remind. You'll be taken to a pre-filled email with these members selected, where
-        you can edit it before sending. Members without an email address are skipped.
-      </p>
-
-      <div className="admin-actions" style={{ flexWrap: 'wrap' }}>
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => onPick('not_renewed')}
-          disabled={notRenewedCount === 0}
-        >
-          Not yet paid for {fyLabel} ({notRenewedCount})
-        </button>
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => onPick('lapsed')}
-          disabled={lapsedCount === 0}
-        >
-          Membership lapsed ({lapsedCount})
-        </button>
-        <button type="button" className="footer-link" onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
-    </div>
-  )
-}
-
 function MembersList({
   members,
+  renewalTargetUtc,
   filter,
   onFilterChange,
 }: {
   members: Member[]
+  renewalTargetUtc: string
   filter: MemberFilter
   onFilterChange: (filter: MemberFilter) => void
 }) {
+  const navigate = useNavigate()
+  const { gardenName, membershipPriceCents, paymentsEnabled } = useAppConfig()
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [reminderOpen, setReminderOpen] = useState(false)
+
   if (members.length === 0) {
     return <p className="admin-empty">No users registered yet.</p>
   }
 
-  const now = Date.now()
-  const statuses = members.map((m) => membershipStatus(m, now))
+  const renewalMs = new Date(renewalTargetUtc).getTime()
+  const statuses = members.map((m) => membershipStatus(m, renewalMs))
   const paidCount = statuses.filter((s) => s === 'paid').length
   const notPaidCount = statuses.filter((s) => s === 'notPaid').length
 
   const visible = members.filter((_, i) => filter === 'all' || statuses[i] === filter)
 
-  const toggle = (value: Exclude<MemberFilter, 'all'>) =>
+  const toggleFilter = (value: Exclude<MemberFilter, 'all'>) =>
     onFilterChange(filter === value ? 'all' : value)
 
   const chips: { value: Exclude<MemberFilter, 'all'>; label: string; count: number }[] = [
     { value: 'paid', label: 'Paid', count: paidCount },
     { value: 'notPaid', label: 'Not Yet Paid', count: notPaidCount },
   ]
+
+  const toggleOne = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  const allVisibleSelected = visible.length > 0 && visible.every((m) => selectedIds.has(m.id))
+  const someVisibleSelected = visible.some((m) => selectedIds.has(m.id))
+
+  const toggleAllVisible = () =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (allVisibleSelected) visible.forEach((m) => next.delete(m.id))
+      else visible.forEach((m) => next.add(m.id))
+      return next
+    })
+
+  const selectedMembers = members.filter((m) => selectedIds.has(m.id))
 
   return (
     <>
@@ -361,14 +305,51 @@ function MembersList({
             type="button"
             className={`filter-chip${filter === chip.value ? ' filter-chip-selected' : ''}`}
             aria-pressed={filter === chip.value}
-            onClick={() => toggle(chip.value)}
+            onClick={() => toggleFilter(chip.value)}
           >
             {chip.label} <span className="filter-chip-count">{chip.count}</span>
           </button>
         ))}
       </div>
 
-      <MembersTable members={visible} now={now} />
+      {selectedIds.size > 0 && (
+        <div className="admin-actions" style={{ marginBottom: '1rem' }}>
+          <span className="card-note">{pluralize(selectedIds.size, 'member')} selected</span>
+          <button type="button" className="primary-button" onClick={() => setReminderOpen(true)}>
+            Email selected
+          </button>
+          <button type="button" className="footer-link" onClick={() => setSelectedIds(new Set())}>
+            Clear
+          </button>
+        </div>
+      )}
+
+      <MembersTable
+        members={visible}
+        renewalMs={renewalMs}
+        selectedIds={selectedIds}
+        onToggleOne={toggleOne}
+        allVisibleSelected={allVisibleSelected}
+        someVisibleSelected={someVisibleSelected}
+        onToggleAllVisible={toggleAllVisible}
+      />
+
+      {reminderOpen && (
+        <PaymentReminderModal
+          members={selectedMembers}
+          gardenName={gardenName}
+          membershipPriceCents={membershipPriceCents}
+          paymentsEnabled={paymentsEnabled}
+          fyLabel={membershipPaidThroughFyLabel(renewalTargetUtc)}
+          membershipUrl={`${window.location.origin}/membership`}
+          onClose={() => setReminderOpen(false)}
+          onSent={(result) => {
+            setReminderOpen(false)
+            setSelectedIds(new Set())
+            navigate(`/admin/email/${result.id}`)
+          }}
+        />
+      )}
     </>
   )
 }
@@ -378,7 +359,23 @@ const MEMBERSHIP_PILL: Record<MembershipStatus, { className: string; label: stri
   notPaid: { className: 'pill pill-warn', label: 'Not Yet Paid' },
 }
 
-function MembersTable({ members, now }: { members: Member[]; now: number }) {
+function MembersTable({
+  members,
+  renewalMs,
+  selectedIds,
+  onToggleOne,
+  allVisibleSelected,
+  someVisibleSelected,
+  onToggleAllVisible,
+}: {
+  members: Member[]
+  renewalMs: number
+  selectedIds: Set<string>
+  onToggleOne: (id: string) => void
+  allVisibleSelected: boolean
+  someVisibleSelected: boolean
+  onToggleAllVisible: () => void
+}) {
   const navigate = useNavigate()
 
   if (members.length === 0) {
@@ -390,6 +387,17 @@ function MembersTable({ members, now }: { members: Member[]; now: number }) {
       <table className="admin-table">
         <thead>
           <tr>
+            <th scope="col" className="admin-table-checkbox">
+              <input
+                type="checkbox"
+                aria-label="Select all members shown"
+                checked={allVisibleSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = someVisibleSelected && !allVisibleSelected
+                }}
+                onChange={onToggleAllVisible}
+              />
+            </th>
             <th scope="col">Name</th>
             <th scope="col">Email</th>
             <th scope="col">Phone</th>
@@ -401,8 +409,10 @@ function MembersTable({ members, now }: { members: Member[]; now: number }) {
         <tbody>
           {members.map((member) => {
             const isAdmin = member.roles.includes(ADMIN_ROLE)
-            const pill = MEMBERSHIP_PILL[membershipStatus(member, now)]
+            const pill = MEMBERSHIP_PILL[membershipStatus(member, renewalMs)]
+            const name = member.displayName ?? member.email ?? '(no name)'
             const open = () => navigate(`/admin/members/${member.id}`)
+            const stop = (e: React.SyntheticEvent) => e.stopPropagation()
             return (
               <tr
                 key={member.id}
@@ -416,12 +426,23 @@ function MembersTable({ members, now }: { members: Member[]; now: number }) {
                 }}
                 tabIndex={0}
                 role="link"
-                aria-label={`View membership details for ${member.displayName ?? member.email ?? 'member'}`}
+                aria-label={`View membership details for ${name}`}
               >
+                <td
+                  className="admin-table-checkbox"
+                  data-label="Select"
+                  onClick={stop}
+                  onKeyDown={stop}
+                >
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${name}`}
+                    checked={selectedIds.has(member.id)}
+                    onChange={() => onToggleOne(member.id)}
+                  />
+                </td>
                 <td className="admin-card-title" data-label="Name">
-                  <span className="admin-table-link">
-                    {member.displayName ?? member.email ?? '(no name)'}
-                  </span>
+                  <span className="admin-table-link">{name}</span>
                   {isAdmin && <span className="pill pill-ok admin-name-badge">Admin</span>}
                 </td>
                 <td data-label="Email">{member.email ?? '-'}</td>
