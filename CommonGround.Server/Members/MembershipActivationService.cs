@@ -4,7 +4,6 @@ using CommonGround.Server.Data;
 using CommonGround.Server.Email;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Resend;
 
 namespace CommonGround.Server.Members;
 
@@ -15,7 +14,7 @@ namespace CommonGround.Server.Members;
 /// </summary>
 public sealed class MembershipActivationService(
     AppDbContext db,
-    IResend resend,
+    TransactionalEmailSender emailSender,
     IOptions<EmailOptions> emailOptions,
     IOptions<GardenOptions> gardenOptions,
     IActivityLogger activityLogger,
@@ -96,22 +95,11 @@ public sealed class MembershipActivationService(
             ? null
             : $"{gardenOptions.Value.PublicUrl.TrimEnd('/')}/login";
 
-        var message = new EmailMessage
-        {
-            From = emailOptions.Value.From,
-            Subject = MembershipWelcomeEmail.Subject,
-            HtmlBody = MembershipWelcomeEmail.BuildHtml(user.DisplayName, signInUrl),
-            TextBody = MembershipWelcomeEmail.BuildText(user.DisplayName, signInUrl),
-        };
-        message.To.Add(user.Email);
-
-        try
-        {
-            await resend.EmailSendAsync(message, ct);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to send membership welcome email to {Email}", user.Email);
-        }
+        await emailSender.SendAsync(
+            MembershipWelcomeEmail.Subject,
+            MembershipWelcomeEmail.BuildHtml(user.DisplayName, signInUrl),
+            MembershipWelcomeEmail.BuildText(user.DisplayName, signInUrl),
+            new TransactionalEmailSender.Recipient(user.Email, user.Id),
+            ct: ct);
     }
 }

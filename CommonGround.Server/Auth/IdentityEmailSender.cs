@@ -4,7 +4,6 @@ using CommonGround.Server.Email;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Resend;
 
 namespace CommonGround.Server.Auth;
 
@@ -16,9 +15,10 @@ namespace CommonGround.Server.Auth;
 /// </summary>
 /// <remarks>
 /// <c>MapIdentityApi</c> resolves this sender from the root service provider, so its
-/// constructor dependencies must all be root-safe (singletons). <see cref="IResend"/>
-/// pulls in a scoped <c>IOptionsSnapshot&lt;ResendClientOptions&gt;</c>, so it can't be
-/// injected directly; we resolve it from a per-send scope instead.
+/// constructor dependencies must all be root-safe (singletons). The scoped
+/// <see cref="TransactionalEmailSender"/> (which sends the mail and records it in the
+/// sent-email history) therefore can't be injected directly; we resolve it from a
+/// per-send scope instead.
 /// </remarks>
 public sealed class IdentityEmailSender(
     IServiceScopeFactory scopeFactory,
@@ -45,20 +45,16 @@ public sealed class IdentityEmailSender(
             return;
         }
 
-        var message = new EmailMessage
-        {
-            From = emailOptions.Value.From,
-            Subject = PasswordResetEmail.Subject(gardenName),
-            HtmlBody = PasswordResetEmail.BuildHtml(user.DisplayName, resetUrl),
-            TextBody = PasswordResetEmail.BuildText(user.DisplayName, resetUrl),
-        };
-        message.To.Add(email);
-
         try
         {
             using var scope = scopeFactory.CreateScope();
-            var resend = scope.ServiceProvider.GetRequiredService<IResend>();
-            await resend.EmailSendAsync(message, CancellationToken.None);
+            var emailSender = scope.ServiceProvider.GetRequiredService<TransactionalEmailSender>();
+            await emailSender.SendAsync(
+                PasswordResetEmail.Subject(gardenName),
+                PasswordResetEmail.BuildHtml(user.DisplayName, resetUrl),
+                PasswordResetEmail.BuildText(user.DisplayName, resetUrl),
+                new TransactionalEmailSender.Recipient(email, user.Id),
+                ct: CancellationToken.None);
         }
         catch (Exception ex)
         {

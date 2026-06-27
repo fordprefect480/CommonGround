@@ -2,7 +2,6 @@ using CommonGround.Server.Configuration;
 using CommonGround.Server.Data;
 using CommonGround.Server.Email;
 using Microsoft.Extensions.Options;
-using Resend;
 
 namespace CommonGround.Server.LeasedBeds;
 
@@ -11,11 +10,10 @@ namespace CommonGround.Server.LeasedBeds;
 /// the caller's action has already been persisted.
 /// </summary>
 public sealed class LeasedBedNotifications(
-    IResend resend,
+    TransactionalEmailSender emailSender,
     IOptions<EmailOptions> emailOptions,
     IOptions<GardenOptions> gardenOptions,
-    IOptions<LeasedBedsOptions> bedOptions,
-    ILogger<LeasedBedNotifications> logger)
+    IOptions<LeasedBedsOptions> bedOptions)
 {
     /// <summary>Notifies the admin that a member applied (beds available) or joined the waiting list (full).</summary>
     public async Task SendApplicationReceivedAsync(string memberName, BedRequestStatus status, int remaining, int waitlistTotal, CancellationToken ct)
@@ -34,7 +32,8 @@ public sealed class LeasedBedNotifications(
                 LeasedBedEmails.BuildAppliedHtml(memberName, remaining),
                 LeasedBedEmails.BuildAppliedText(memberName, remaining));
 
-        await SendAsync(recipient, subject, html, text, ct);
+        // Sent to the admin notification address, so no member is attached.
+        await emailSender.SendAsync(subject, html, text, new TransactionalEmailSender.Recipient(recipient), ct: ct);
     }
 
     /// <summary>Notifies the member they've been assigned a bed - payment-required or confirmed-free variant.</summary>
@@ -55,27 +54,9 @@ public sealed class LeasedBedNotifications(
         var html = LeasedBedEmails.BuildAssignmentHtml(name, bedLabel, fyLabel, expiresOn, amount, profileUrl);
         var text = LeasedBedEmails.BuildAssignmentText(name, bedLabel, fyLabel, expiresOn, amount, profileUrl);
 
-        await SendAsync(member.Email, LeasedBedEmails.AssignedSubject, html, text, ct);
-    }
-
-    private async Task SendAsync(string to, string subject, string html, string text, CancellationToken ct)
-    {
-        var message = new EmailMessage
-        {
-            From = emailOptions.Value.From,
-            Subject = subject,
-            HtmlBody = html,
-            TextBody = text,
-        };
-        message.To.Add(to);
-
-        try
-        {
-            await resend.EmailSendAsync(message, ct);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to send leased-bed email to {Recipient}", to);
-        }
+        await emailSender.SendAsync(
+            LeasedBedEmails.AssignedSubject, html, text,
+            new TransactionalEmailSender.Recipient(member.Email, member.Id),
+            ct: ct);
     }
 }
