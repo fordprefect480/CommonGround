@@ -30,4 +30,24 @@ public static class MembershipPeriod
         var endLocal = DateTime.SpecifyKind(nextJuly1, DateTimeKind.Unspecified);
         return TimeZoneInfo.ConvertTimeToUtc(endLocal, GardenTimeZone);
     }
+
+    /// <summary>
+    /// The start (1 July) of the financial year that the next renewal covers,
+    /// evaluated at <paramref name="nowUtc"/>. This is exactly one year before
+    /// <see cref="ComputePaidThrough"/>, since membership years are a year long.
+    /// </summary>
+    public static DateTime RenewalYearStart(DateTime nowUtc) =>
+        ComputePaidThrough(nowUtc).AddYears(-1);
+
+    /// <summary>
+    /// Whether a membership with the given <paramref name="paidThroughUtc"/> is
+    /// paid up for the financial year the next renewal covers, evaluated at
+    /// <paramref name="nowUtc"/>. Coverage is tested against the START of that
+    /// year (see <see cref="RenewalYearStart"/>) so a member covered through to
+    /// the year's end counts as paid even when their paid-through instant sits a
+    /// little before the exact 1 July boundary; comparing against the year end
+    /// instead marked fully-covered members as unpaid.
+    /// </summary>
+    public static bool IsPaidForRenewalYear(DateTime? paidThroughUtc, DateTime nowUtc) =>
+        paidThroughUtc is { } paidThrough && paidThrough > RenewalYearStart(nowUtc);
 }

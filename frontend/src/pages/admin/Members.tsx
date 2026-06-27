@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createMember, fetchMembers, fetchMembershipRenewalTarget, type Member } from '../../api/auth'
-import { useAppConfig } from '../../AppConfigContext'
-import { isPaidForRenewalYear, membershipPaidThroughFyLabel } from '../../format'
+import { isPaidForRenewalYear } from '../../format'
 import MemberEmailModal from './MemberEmailModal'
 
 const ADMIN_ROLE = 'Admin'
@@ -249,7 +248,6 @@ function MembersList({
   onFilterChange: (filter: MemberFilter) => void
 }) {
   const navigate = useNavigate()
-  const { gardenName, membershipPriceCents, paymentsEnabled } = useAppConfig()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [emailOpen, setEmailOpen] = useState(false)
 
@@ -333,11 +331,6 @@ function MembersList({
       {emailOpen && (
         <MemberEmailModal
           members={selectedMembers}
-          gardenName={gardenName}
-          membershipPriceCents={membershipPriceCents}
-          paymentsEnabled={paymentsEnabled}
-          fyLabel={membershipPaidThroughFyLabel(renewalTargetUtc)}
-          membershipUrl={`${window.location.origin}/membership`}
           onClose={() => setEmailOpen(false)}
           onSent={(result) => {
             setEmailOpen(false)
