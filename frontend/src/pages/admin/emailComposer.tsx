@@ -8,8 +8,8 @@ import {
 import type { Member } from '../../api/auth'
 
 // Host-agnostic pieces of the email composer, shared by the full-page composer
-// (EmailCompose) and the in-modal payment-reminder composer
-// (PaymentReminderModal). The recipient-selection UI is NOT here - each host
+// (EmailCompose) and the in-modal composer for selected members
+// (MemberEmailModal). The recipient-selection UI is NOT here - each host
 // renders its own and supplies `buildRecipients`/`recipientCount`.
 
 interface HtmlEditorProps {
