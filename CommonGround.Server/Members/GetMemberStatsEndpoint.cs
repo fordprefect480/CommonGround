@@ -29,7 +29,7 @@ public sealed class GetMemberStatsEndpoint(AppDbContext db)
         // everyone else - never paid, lapsed, or covered only for the prior year
         // - is "not yet paid". This matches the admin Members page so the
         // Dashboard count and the page's chips agree.
-        var renewalYearStart = MembershipPeriod.ComputePaidThrough(now).AddYears(-1);
+        var renewalYearStart = MembershipPeriod.RenewalYearStart(now);
 
         var totalMembers = await db.Users.CountAsync(ct);
 
