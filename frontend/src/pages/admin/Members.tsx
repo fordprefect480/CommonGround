@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createMember, fetchMembers, fetchMembershipRenewalTarget, type Member } from '../../api/auth'
 import { useAppConfig } from '../../AppConfigContext'
-import { membershipPaidThroughFyLabel } from '../../format'
-import PaymentReminderModal from './PaymentReminderModal'
+import { isPaidForRenewalYear, membershipPaidThroughFyLabel } from '../../format'
+import MemberEmailModal from './MemberEmailModal'
 
 const ADMIN_ROLE = 'Admin'
 
@@ -45,17 +45,14 @@ function pluralize(n: number, singular: string): string {
 
 type MembershipStatus = 'paid' | 'notPaid'
 
-// "Paid" means the member has paid through the upcoming renewal boundary
-// (the next 1 July, with the late-join carry-over - see the server's
-// MembershipPeriod, surfaced as renewalTargetUtc). For most of the year that
-// boundary is the current financial year's, so this matches the obvious
-// reading; within the 8-week renewal window it additionally flags members who
-// are still covered this year but haven't renewed for the year ahead.
-function membershipStatus(member: Member, renewalTargetMs: number): MembershipStatus {
-  if (!member.membershipPaidThroughUtc) return 'notPaid'
-  const paidThrough = new Date(member.membershipPaidThroughUtc).getTime()
-  if (Number.isNaN(paidThrough)) return 'notPaid'
-  return paidThrough >= renewalTargetMs ? 'paid' : 'notPaid'
+// "Paid" means the member is paid up for the financial year the next renewal
+// covers (renewalTargetUtc - the next 1 July, with the late-join carry-over,
+// from the server's MembershipPeriod). For most of the year that's the current
+// financial year; within the 8-week renewal window it flags members still
+// covered this year but not yet renewed for the year ahead. See
+// isPaidForRenewalYear for why coverage is tested against the year's start.
+function membershipStatus(member: Member, renewalTargetUtc: string): MembershipStatus {
+  return isPaidForRenewalYear(member.membershipPaidThroughUtc, renewalTargetUtc) ? 'paid' : 'notPaid'
 }
 
 type MemberFilter = 'all' | 'paid' | 'notPaid'
@@ -254,14 +251,13 @@ function MembersList({
   const navigate = useNavigate()
   const { gardenName, membershipPriceCents, paymentsEnabled } = useAppConfig()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [reminderOpen, setReminderOpen] = useState(false)
+  const [emailOpen, setEmailOpen] = useState(false)
 
   if (members.length === 0) {
     return <p className="admin-empty">No users registered yet.</p>
   }
 
-  const renewalMs = new Date(renewalTargetUtc).getTime()
-  const statuses = members.map((m) => membershipStatus(m, renewalMs))
+  const statuses = members.map((m) => membershipStatus(m, renewalTargetUtc))
   const paidCount = statuses.filter((s) => s === 'paid').length
   const notPaidCount = statuses.filter((s) => s === 'notPaid').length
 
@@ -315,7 +311,7 @@ function MembersList({
       {selectedIds.size > 0 && (
         <div className="admin-actions" style={{ marginBottom: '1rem' }}>
           <span className="card-note">{pluralize(selectedIds.size, 'member')} selected</span>
-          <button type="button" className="primary-button" onClick={() => setReminderOpen(true)}>
+          <button type="button" className="primary-button" onClick={() => setEmailOpen(true)}>
             Email selected
           </button>
           <button type="button" className="footer-link" onClick={() => setSelectedIds(new Set())}>
@@ -326,7 +322,7 @@ function MembersList({
 
       <MembersTable
         members={visible}
-        renewalMs={renewalMs}
+        renewalTargetUtc={renewalTargetUtc}
         selectedIds={selectedIds}
         onToggleOne={toggleOne}
         allVisibleSelected={allVisibleSelected}
@@ -334,17 +330,17 @@ function MembersList({
         onToggleAllVisible={toggleAllVisible}
       />
 
-      {reminderOpen && (
-        <PaymentReminderModal
+      {emailOpen && (
+        <MemberEmailModal
           members={selectedMembers}
           gardenName={gardenName}
           membershipPriceCents={membershipPriceCents}
           paymentsEnabled={paymentsEnabled}
           fyLabel={membershipPaidThroughFyLabel(renewalTargetUtc)}
           membershipUrl={`${window.location.origin}/membership`}
-          onClose={() => setReminderOpen(false)}
+          onClose={() => setEmailOpen(false)}
           onSent={(result) => {
-            setReminderOpen(false)
+            setEmailOpen(false)
             setSelectedIds(new Set())
             navigate(`/admin/email/${result.id}`)
           }}
@@ -361,7 +357,7 @@ const MEMBERSHIP_PILL: Record<MembershipStatus, { className: string; label: stri
 
 function MembersTable({
   members,
-  renewalMs,
+  renewalTargetUtc,
   selectedIds,
   onToggleOne,
   allVisibleSelected,
@@ -369,7 +365,7 @@ function MembersTable({
   onToggleAllVisible,
 }: {
   members: Member[]
-  renewalMs: number
+  renewalTargetUtc: string
   selectedIds: Set<string>
   onToggleOne: (id: string) => void
   allVisibleSelected: boolean
@@ -409,7 +405,7 @@ function MembersTable({
         <tbody>
           {members.map((member) => {
             const isAdmin = member.roles.includes(ADMIN_ROLE)
-            const pill = MEMBERSHIP_PILL[membershipStatus(member, renewalMs)]
+            const pill = MEMBERSHIP_PILL[membershipStatus(member, renewalTargetUtc)]
             const name = member.displayName ?? member.email ?? '(no name)'
             const open = () => navigate(`/admin/members/${member.id}`)
             const stop = (e: React.SyntheticEvent) => e.stopPropagation()

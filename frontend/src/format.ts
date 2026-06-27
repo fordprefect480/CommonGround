@@ -31,3 +31,21 @@ export function membershipPaidThroughFyLabel(paidThroughIso: string): string {
   d.setDate(d.getDate() - 1)
   return financialYearLabel(d)
 }
+
+/**
+ * Whether a membership with the given paid-through date is paid up for the
+ * financial year that ends at `renewalTargetIso` (the next renewal boundary the
+ * server reports). True when coverage extends past the START of that year, so a
+ * member covered through to the year's end counts as paid even if their
+ * paid-through instant sits a little before the exact 1 July boundary. Compared
+ * against the year start (not the end) this stays robust to that off-by-hours
+ * boundary; comparing against the end marked fully-covered members as unpaid.
+ */
+export function isPaidForRenewalYear(paidThroughIso: string | null, renewalTargetIso: string): boolean {
+  if (!paidThroughIso) return false
+  const paid = new Date(paidThroughIso).getTime()
+  if (Number.isNaN(paid)) return false
+  const yearStart = new Date(renewalTargetIso)
+  yearStart.setUTCFullYear(yearStart.getUTCFullYear() - 1)
+  return paid > yearStart.getTime()
+}

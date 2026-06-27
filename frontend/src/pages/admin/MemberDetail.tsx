@@ -4,7 +4,7 @@ import { fetchMember, fetchMembershipRenewalTarget, recordMembershipPayment, upd
 import { fetchMemberEmails, type MemberEmailListItem } from '../../api/email'
 import { fetchLeasedBeds, recordLeasePayment, type AdminBed, type BedLeaseStatus } from '../../api/leasedBeds'
 import { useAppConfig } from '../../AppConfigContext'
-import { financialYearLabel, formatPrice, membershipPaidThroughFyLabel } from '../../format'
+import { financialYearLabel, formatPrice, isPaidForRenewalYear, membershipPaidThroughFyLabel } from '../../format'
 import { formatAbsolute, formatRelative } from './activityFormatting'
 import PaymentHistoryTable from './PaymentHistoryTable'
 import RecordPaymentModal from './RecordPaymentModal'
@@ -52,8 +52,9 @@ function MembershipCard({ memberId, paidThrough, onRecorded }: { memberId: strin
     return () => { active = false }
   }, [])
 
-  const threshold = renewalTargetUtc ? new Date(renewalTargetUtc).getTime() : now.getTime()
-  const isPaid = paidThrough != null && new Date(paidThrough).getTime() >= threshold
+  const isPaid = renewalTargetUtc
+    ? isPaidForRenewalYear(paidThrough, renewalTargetUtc)
+    : paidThrough != null && new Date(paidThrough).getTime() >= now.getTime()
   // When paid, label the FY the membership runs to; otherwise the upcoming FY
   // they need to renew for (falling back to the current FY before it loads).
   const fyLabel = isPaid
