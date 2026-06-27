@@ -107,8 +107,12 @@ if (!string.IsNullOrWhiteSpace(stripeSecretKey))
     StripeConfiguration.ApiKey = stripeSecretKey;
 }
 
-using (var scope = app.Services.CreateScope())
+// Integration tests boot the app against an in-memory provider that can't run
+// the SQL Server migrations, and seed their own data, so the startup
+// migrate/seed/warmup is skipped under the "Testing" environment.
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    using var scope = app.Services.CreateScope();
     var sp = scope.ServiceProvider;
     await sp.GetRequiredService<AppDbContext>().Database.MigrateAsync();
 
