@@ -7,6 +7,8 @@ export interface AppConfig {
   paymentsEnabled: boolean
   membershipPriceCents: number
   leasedBedPriceCents: number
+  /** When true, the public site is gated behind an under-construction page; only admins see the SPA. */
+  comingSoon: boolean
 }
 
 export async function fetchAppConfig(): Promise<AppConfig> {

@@ -101,6 +101,21 @@ export async function updateLeasedBedPrice(priceCents: number): Promise<{ priceC
   return putPrice('/api/admin/tools/leased-bed-price', priceCents)
 }
 
+export async function getComingSoon(): Promise<{ comingSoon: boolean }> {
+  return getJson('/api/admin/tools/coming-soon')
+}
+
+export async function updateComingSoon(comingSoon: boolean): Promise<{ comingSoon: boolean }> {
+  const res = await fetch('/api/admin/tools/coming-soon', {
+    method: 'PUT',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ comingSoon }),
+  })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
+}
+
 async function putPrice(url: string, priceCents: number): Promise<{ priceCents: number }> {
   const res = await fetch(url, {
     method: 'PUT',

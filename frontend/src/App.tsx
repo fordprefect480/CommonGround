@@ -2,10 +2,11 @@ import { lazy, Suspense, useEffect, type ReactElement } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AppInsightsContext, AppInsightsErrorBoundary } from '@microsoft/applicationinsights-react-js'
 import './App.css'
-import { AppConfigProvider } from './AppConfigContext'
+import { AppConfigProvider, useAppConfig } from './AppConfigContext'
 import { reactPlugin } from './applicationInsights'
 import { AuthProvider, useAuth } from './AuthContext'
 import Home from './pages/Home'
+import UnderConstruction from './pages/UnderConstruction'
 
 // Route components are lazy-loaded so the initial bundle stays small. The
 // public landing page (Home) ships eagerly for fast first paint; every other
@@ -57,6 +58,7 @@ export default function App() {
           <AuthProvider>
             <Suspense fallback={<div style={{ minHeight: '60vh' }} aria-busy="true" />}>
             <ScrollToTop />
+            <ComingSoonGate>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/membership" element={<Membership />} />
@@ -98,6 +100,7 @@ export default function App() {
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </ComingSoonGate>
             </Suspense>
           </AuthProvider>
         </AppConfigProvider>
@@ -120,6 +123,34 @@ function ScrollToTop() {
   }, [pathname, hash])
 
   return null
+}
+
+// Routes the public must still reach while the site is gated, so the owner can
+// sign in (and recover a password) to preview the unfinished site.
+const PUBLIC_AUTH_PATHS = new Set(['/login', '/forgot-password', '/reset-password'])
+
+// Pre-launch gate. When the "coming soon" setting is on, only signed-in admins
+// see the real SPA; everyone else gets the under-construction page. Toggle it
+// from the admin Settings page.
+function ComingSoonGate({ children }: { children: ReactElement }) {
+  const { comingSoon } = useAppConfig()
+  const { state } = useAuth()
+  const location = useLocation()
+
+  if (!comingSoon) return children
+
+  // Wait for the session check before deciding, otherwise a logged-in admin
+  // briefly sees the under-construction page on first load.
+  if (state.status === 'loading') {
+    return <div style={{ minHeight: '100vh' }} aria-busy="true" />
+  }
+
+  if (state.status === 'authenticated' && state.me.isAdmin) return children
+
+  // Let the public reach the sign-in screens; gate everything else.
+  if (PUBLIC_AUTH_PATHS.has(location.pathname)) return children
+
+  return <UnderConstruction />
 }
 
 interface RequireAuthProps {

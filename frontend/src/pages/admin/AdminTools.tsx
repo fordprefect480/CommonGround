@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   cleanupOrphanImages,
+  getComingSoon,
   getLeasedBedPrice,
   getMembershipPrice,
   importBlog,
+  updateComingSoon,
   updateLeasedBedPrice,
   updateMembershipPrice,
   type ImportBlogProgress,
@@ -67,6 +69,8 @@ export default function AdminTools() {
       </header>
 
       <div className="admin-tools-grid">
+        <ComingSoonCard />
+
         <PriceCard
           id="membership-price"
           title="Membership price"
@@ -155,6 +159,67 @@ function ImportProgressBar({ progress }: { progress: ImportBlogProgress | null }
       >
         <div className="progress-fill" style={{ width: `${pct}%` }} />
       </div>
+    </div>
+  )
+}
+
+function ComingSoonCard() {
+  const [comingSoon, setComingSoon] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+
+  useEffect(() => {
+    getComingSoon()
+      .then((r) => {
+        setComingSoon(r.comingSoon)
+        setLoaded(true)
+      })
+      .catch((err) => setMessage({ kind: 'error', text: err instanceof Error ? err.message : 'Could not load the setting.' }))
+  }, [])
+
+  const toggle = async () => {
+    const next = !comingSoon
+    setSaving(true)
+    setMessage(null)
+    try {
+      const result = await updateComingSoon(next)
+      setComingSoon(result.comingSoon)
+      setMessage({
+        kind: 'ok',
+        text: result.comingSoon
+          ? 'Under-construction page is on. Only signed-in admins can see the site.'
+          : 'The site is now live and visible to everyone.',
+      })
+    } catch (err) {
+      setMessage({ kind: 'error', text: err instanceof Error ? err.message : 'Could not save the setting.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="card">
+      <h2 className="section-title">Under-construction page</h2>
+      <p className="card-note">
+        While this is on, the public sees an &ldquo;under construction&rdquo; page with a log-in
+        button. Only signed-in admins can view the real site &mdash; use it to preview before launch.
+        Turn it off when you&rsquo;re ready to go live.
+      </p>
+      <div className="field" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <input
+          id="coming-soon"
+          type="checkbox"
+          checked={comingSoon}
+          onChange={toggle}
+          disabled={!loaded || saving}
+        />
+        <label className="field-label" htmlFor="coming-soon" style={{ margin: 0 }}>
+          {comingSoon ? 'Site is hidden from the public' : 'Site is live for everyone'}
+        </label>
+      </div>
+      {message?.kind === 'ok' && <div className="card-note" role="status">{message.text}</div>}
+      {message?.kind === 'error' && <div className="form-error" role="alert">{message.text}</div>}
     </div>
   )
 }
