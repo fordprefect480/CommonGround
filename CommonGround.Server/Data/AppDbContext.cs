@@ -222,7 +222,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
         builder.Entity<SiteSettings>(b =>
         {
-            b.HasData(new SiteSettings { Id = 1, MembershipPriceCents = 2500, LeasedBedPriceCents = 8000 });
+            b.HasData(new SiteSettings { Id = 1, MembershipPriceCents = 2500, LeasedBedPriceCents = 8000, ComingSoon = false });
         });
 
         builder.Entity<Bed>(b =>
