@@ -37,7 +37,13 @@ export default function UnderConstruction() {
           gap: 20,
         }}
       >
-        <img src="/swcg/logo-apple.png" width="72" height="85" alt="" />
+        <img
+          src="/swcg/logo-apple.png"
+          width="72"
+          height="85"
+          alt=""
+          style={{ flexShrink: 0, height: 'auto', objectFit: 'contain' }}
+        />
 
         <div
           style={{
@@ -51,13 +57,21 @@ export default function UnderConstruction() {
           Coming soon
         </div>
 
-        <h1 style={{ fontFamily: 'var(--font-serif, var(--font-sans))', fontSize: 34, lineHeight: 1.15, margin: 0 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 34, lineHeight: 1.15, margin: 0 }}>
           {gardenName}
         </h1>
 
         <p style={{ fontSize: 17, lineHeight: 1.6, color: 'var(--ink-700, #4a4a42)', margin: 0 }}>
-          Our new website is under construction. We're busy planting the final
-          rows &mdash; please check back soon.
+          Our site is offline for a bit &mdash; apologies! It will be back online ASAP.
+       
+          Stay up to date with our socials:{' '}
+          <a href="https://www.facebook.com/SeafordCG" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--apple-700)', fontWeight: 600 }}>
+            Facebook
+          </a>{' '}
+          and{' '}
+          <a href="https://www.instagram.com/seafordwetlandscg" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--apple-700)', fontWeight: 600 }}>
+            Instagram
+          </a>.
         </p>
 
         <MSButton variant="primary" size="lg" onClick={() => navigate('/login')}>
