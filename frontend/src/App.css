@@ -247,6 +247,51 @@ fieldset.field:disabled {
   cursor: pointer;
 }
 
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-block;
+  width: 3rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink-300);
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out), opacity var(--dur-1) var(--ease-out);
+}
+
+.switch[aria-checked="true"] {
+  background: var(--apple-600);
+}
+
+.switch:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+
+.switch:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: var(--paper);
+  transform: translateY(-50%);
+  box-shadow: var(--shadow-1);
+  transition: transform var(--dur-1) var(--ease-out);
+}
+
+.switch[aria-checked="true"] .switch-thumb {
+  transform: translate(1.4rem, -50%);
+}
+
 .primary-button {
   background: var(--apple-600);
   color: var(--paper);

@@ -69,8 +69,6 @@ export default function AdminTools() {
       </header>
 
       <div className="admin-tools-grid">
-        <ComingSoonCard />
-
         <PriceCard
           id="membership-price"
           title="Membership price"
@@ -93,6 +91,8 @@ export default function AdminTools() {
       <details className="admin-advanced-panel">
         <summary className="admin-advanced-summary">Advanced</summary>
         <div className="admin-tools-grid">
+          <ComingSoonCard />
+
           <div className="card">
             <h2 className="section-title">Send test email</h2>
             <p className="card-note">Compose a one-off email and send it to specific addresses without touching the mailing list. Useful for previewing templates.</p>
@@ -207,14 +207,19 @@ function ComingSoonCard() {
         Turn it off when you&rsquo;re ready to go live.
       </p>
       <div className="field" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <input
+        <button
+          type="button"
+          role="switch"
           id="coming-soon"
-          type="checkbox"
-          checked={comingSoon}
-          onChange={toggle}
+          className="switch"
+          aria-checked={comingSoon}
+          aria-labelledby="coming-soon-label"
+          onClick={toggle}
           disabled={!loaded || saving}
-        />
-        <label className="field-label" htmlFor="coming-soon" style={{ margin: 0 }}>
+        >
+          <span className="switch-thumb" aria-hidden="true" />
+        </button>
+        <label id="coming-soon-label" className="field-label" htmlFor="coming-soon" style={{ margin: 0 }}>
           {comingSoon ? 'Site is hidden from the public' : 'Site is live for everyone'}
         </label>
       </div>
