@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.1](https://github.com/fordprefect480/CommonGround/compare/v0.12.0...v0.12.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* allow assigning a bed to a member who already holds a lease ([d5a420f](https://github.com/fordprefect480/CommonGround/commit/d5a420f3a9508cfe766e63352e6313ca3bfc92db))
+* allow assigning a bed to a member who already holds a lease ([cb00806](https://github.com/fordprefect480/CommonGround/commit/cb00806da6a2bccc035c175a50d291c38ebfd6e2))
+
 ## [0.12.0](https://github.com/fordprefect480/CommonGround/compare/v0.11.0...v0.12.0) (2026-06-25)
 
 
