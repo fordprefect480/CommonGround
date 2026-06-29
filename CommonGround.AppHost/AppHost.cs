@@ -43,6 +43,20 @@ if (builder.ExecutionContext.IsPublishMode)
 	});
 }
 
+// Custom domain bindings are codified here so they survive redeploys. The managed
+// certificates live on the Container App Environment (cae) and persist across app
+// deployments; we reference them by name rather than reprovisioning. Supply the
+// matching domain/certificate-name parameter pairs in the deploy environment; each
+// pair present is bound, so the apex domain is optional.
+var customDomains = new[]
+{
+	(Domain: "custom-domain", Certificate: "certificate-name"),
+	(Domain: "apex-domain", Certificate: "apex-certificate-name"),
+}
+	.Where(p => !string.IsNullOrWhiteSpace(builder.Configuration["Parameters:" + p.Domain]))
+	.Select(p => (Domain: builder.AddParameter(p.Domain), Certificate: builder.AddParameter(p.Certificate)))
+	.ToList();
+
 var server = builder.AddProject<Projects.CommonGround_Server>("server")
 	.WithHttpHealthCheck("/health")
 	.WithReference(commonGroundDb)
@@ -57,6 +71,13 @@ var server = builder.AddProject<Projects.CommonGround_Server>("server")
 			c.Value!.Resources.Cpu = 0.25;
 			c.Value!.Resources.Memory = "0.5Gi";
 		}
+
+#pragma warning disable ASPIREACADOMAINS001
+		foreach (var (domain, certificate) in customDomains)
+		{
+			app.ConfigureCustomDomain(domain, certificate);
+		}
+#pragma warning restore ASPIREACADOMAINS001
 	});
 
 if (builder.ExecutionContext.IsPublishMode)

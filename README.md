@@ -286,6 +286,19 @@ dotnet publish CommonGround.AppHost -c Release
 
 Aspire generates a deployment manifest you can target at any container host.
 
+### Custom domains
+
+Custom domains are bound to the Container App **in the AppHost**, so the binding is part of the deployment model and survives every redeploy. (A domain bound by hand in the Azure portal is *not* in the model, so the next `aspire deploy` reconciles it away.) The AppHost binds each domain whose parameter pair is supplied, via `ConfigureCustomDomain` inside `PublishAsAzureContainerApp`:
+
+| Parameter | Purpose |
+|-----------|---------|
+| `custom-domain` | Primary custom hostname (e.g. `www.example.org`) |
+| `certificate-name` | Resource name of the managed certificate for the primary domain |
+| `apex-domain` | Optional apex/root hostname (e.g. `example.org`) |
+| `apex-certificate-name` | Resource name of the managed certificate for the apex |
+
+Each pair is optional — supply none for the default Azure-generated hostname, or just the primary pair to skip the apex. Managed certificates live on the Container App **Environment** (not the app), so they persist across app redeploys; the parameters reference them by resource name rather than reprovisioning. Binding a brand-new (never-validated) domain is a two-pass deploy — see the deploy repo's README for the DNS-validation walkthrough.
+
 ### Backup and restore
 
 The Container App is stateless - all durable data lives in the Azure SQL database. A 35-day point-in-time restore window is configured manually per environment (it survives redeploys); coverage beyond 35 days comes from scheduled `.bacpac` exports, since native long-term retention isn't available on this serverless + auto-pause database. See [`BACKUP.md`](BACKUP.md) for the full strategy, the one-time retention and SQL-server delete-lock setup, and step-by-step restore procedures.
