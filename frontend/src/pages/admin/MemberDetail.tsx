@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { fetchMember, recordMembershipPayment, updateMember, type Member } from '../../api/auth'
+import { fetchMember, fetchMembershipRenewalTarget, recordMembershipPayment, updateMember, type Member } from '../../api/auth'
 import { fetchMemberEmails, type MemberEmailListItem } from '../../api/email'
 import { fetchLeasedBeds, recordLeasePayment, type AdminBed, type BedLeaseStatus } from '../../api/leasedBeds'
 import { useAppConfig } from '../../AppConfigContext'
-import { financialYearLabel, formatPrice, membershipPaidThroughFyLabel } from '../../format'
+import { financialYearLabel, formatPrice, isPaidForRenewalYear, membershipPaidThroughFyLabel } from '../../format'
 import { formatAbsolute, formatRelative } from './activityFormatting'
 import PaymentHistoryTable from './PaymentHistoryTable'
 import RecordPaymentModal from './RecordPaymentModal'
@@ -39,10 +39,29 @@ function formatJoinedAt(iso: string): string {
 function MembershipCard({ memberId, paidThrough, onRecorded }: { memberId: string; paidThrough: string | null; onRecorded: (m: Member) => void }) {
   const { membershipPriceCents } = useAppConfig()
   const now = new Date()
-  const isPaid = paidThrough != null && new Date(paidThrough).getTime() >= now.getTime()
-  // When paid, label the FY the membership actually runs to (which may be next
-  // year's, thanks to the near-EOFY carryover); otherwise the current FY.
-  const fyLabel = isPaid ? membershipPaidThroughFyLabel(paidThrough!) : financialYearLabel(now)
+  const [renewalTargetUtc, setRenewalTargetUtc] = useState<string | null>(null)
+
+  // "Paid" means covered through the upcoming renewal boundary (the next 1 July,
+  // with the late-join carry-over), matching the Members list. Until that date
+  // loads, fall back to "covered as of now".
+  useEffect(() => {
+    let active = true
+    fetchMembershipRenewalTarget()
+      .then((iso) => { if (active) setRenewalTargetUtc(iso) })
+      .catch(() => { /* keep the now-based fallback */ })
+    return () => { active = false }
+  }, [])
+
+  const isPaid = renewalTargetUtc
+    ? isPaidForRenewalYear(paidThrough, renewalTargetUtc)
+    : paidThrough != null && new Date(paidThrough).getTime() >= now.getTime()
+  // When paid, label the FY the membership runs to; otherwise the upcoming FY
+  // they need to renew for (falling back to the current FY before it loads).
+  const fyLabel = isPaid
+    ? membershipPaidThroughFyLabel(paidThrough!)
+    : renewalTargetUtc
+      ? membershipPaidThroughFyLabel(renewalTargetUtc)
+      : financialYearLabel(now)
   const [modalOpen, setModalOpen] = useState(false)
 
   return (
@@ -63,7 +82,9 @@ function MembershipCard({ memberId, paidThrough, onRecorded }: { memberId: strin
       ) : (
         paidThrough && (
           <p className="card-note" style={{ margin: 0 }}>
-            Last membership ran until {dateFormatter.format(new Date(paidThrough))}.
+            {new Date(paidThrough).getTime() >= now.getTime()
+              ? `Currently covered until ${dateFormatter.format(new Date(paidThrough))}, not yet renewed for the year ahead.`
+              : `Last membership ran until ${dateFormatter.format(new Date(paidThrough))}.`}
           </p>
         )
       )}
