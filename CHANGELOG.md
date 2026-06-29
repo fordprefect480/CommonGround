@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/fordprefect480/CommonGround/compare/v0.12.3...v0.13.0) (2026-06-29)
+
+
+### Features
+
+* bind custom domains in AppHost so they survive redeploys ([f502dae](https://github.com/fordprefect480/CommonGround/commit/f502dae4fa9d31064f32852062a6c22c6a169482))
+
 ## [0.12.3](https://github.com/fordprefect480/CommonGround/compare/v0.12.2...v0.12.3) (2026-06-29)
 
 
