@@ -25,7 +25,14 @@ builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<BlogHtmlSanitizer>();
 builder.Services.AddSingleton<CommonGround.Server.Blog.BlogImport.BlogImportHtmlNormalizer>();
 builder.Services.AddOpenApi();
-builder.Services.AddFastEndpoints();
+// Restrict endpoint discovery to this assembly. All endpoints live here, and
+// scanning the full dependency closure (which happens under the test host) trips
+// over the AngleSharp/AngleSharp.Css version mismatch dragged in by HtmlSanitizer.
+builder.Services.AddFastEndpoints(cfg =>
+{
+    cfg.Assemblies = new[] { typeof(Program).Assembly };
+    cfg.DisableAutoDiscovery = true;
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
