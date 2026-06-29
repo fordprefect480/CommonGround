@@ -50,7 +50,7 @@ var server = builder.AddProject<Projects.CommonGround_Server>("server")
 	.WithExternalHttpEndpoints()
 	.PublishAsAzureContainerApp((_, app) =>
 	{
-		app.Template.Scale.MinReplicas = 0;
+		app.Template.Scale.MinReplicas = 1;
 		app.Template.Scale.MaxReplicas = 1;
 		foreach (var c in app.Template.Containers)
 		{
@@ -89,14 +89,14 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-api-key"
 
 if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-from-address"]))
 {
-	var resendTemplateId = builder.AddParameter("resend-from-address", secret: false);
-	server.WithEnvironment("Email__FromAddress", resendTemplateId);
+	var resendFromAddress = builder.AddParameter("resend-from-address", secret: false);
+	server.WithEnvironment("Email__FromAddress", resendFromAddress);
 }
 
 if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-from-name"]))
 {
-	var resendTemplateId = builder.AddParameter("resend-from-name", secret: false);
-	server.WithEnvironment("Email__FromName", resendTemplateId);
+	var resendFromName = builder.AddParameter("resend-from-name", secret: false);
+	server.WithEnvironment("Email__FromName", resendFromName);
 }
 
 if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-template-id"]))
