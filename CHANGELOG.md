@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.2](https://github.com/fordprefect480/CommonGround/compare/v0.12.1...v0.12.2) (2026-06-29)
+
+
+### Bug Fixes
+
+* refine under construction page copy, font, and logo ([702b2e1](https://github.com/fordprefect480/CommonGround/commit/702b2e17b0c556e72eaf322435476786edf75f99))
+* refine under construction page copy, font, and logo ([c1785c5](https://github.com/fordprefect480/CommonGround/commit/c1785c54855501a4b1c7a74b37e77774c599e746))
+
 ## [0.12.1](https://github.com/fordprefect480/CommonGround/compare/v0.12.0...v0.12.1) (2026-06-29)
 
 
