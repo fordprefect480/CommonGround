@@ -25,7 +25,14 @@ builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<BlogHtmlSanitizer>();
 builder.Services.AddSingleton<CommonGround.Server.Blog.BlogImport.BlogImportHtmlNormalizer>();
 builder.Services.AddOpenApi();
-builder.Services.AddFastEndpoints();
+// Restrict endpoint discovery to this assembly. All endpoints live here, and
+// scanning the full dependency closure (which happens under the test host) trips
+// over the AngleSharp/AngleSharp.Css version mismatch dragged in by HtmlSanitizer.
+builder.Services.AddFastEndpoints(cfg =>
+{
+    cfg.Assemblies = new[] { typeof(Program).Assembly };
+    cfg.DisableAutoDiscovery = true;
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
@@ -107,8 +114,12 @@ if (!string.IsNullOrWhiteSpace(stripeSecretKey))
     StripeConfiguration.ApiKey = stripeSecretKey;
 }
 
-using (var scope = app.Services.CreateScope())
+// Integration tests boot the app against an in-memory provider that can't run
+// the SQL Server migrations, and seed their own data, so the startup
+// migrate/seed/warmup is skipped under the "Testing" environment.
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    using var scope = app.Services.CreateScope();
     var sp = scope.ServiceProvider;
     await sp.GetRequiredService<AppDbContext>().Database.MigrateAsync();
 
