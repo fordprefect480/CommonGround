@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.3](https://github.com/fordprefect480/CommonGround/compare/v0.12.2...v0.12.3) (2026-06-29)
+
+
+### Bug Fixes
+
+* set deployment minReplicas to 1 ([6741685](https://github.com/fordprefect480/CommonGround/commit/6741685e4947022f84bd2da64060df2a188f0719))
+
 ## [0.12.2](https://github.com/fordprefect480/CommonGround/compare/v0.12.1...v0.12.2) (2026-06-29)
 
 
