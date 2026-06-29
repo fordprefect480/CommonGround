@@ -12,4 +12,10 @@ public class SiteSettings
 
     /// <summary>Default annual leased-bed price in the smallest currency unit (cents).</summary>
     public int LeasedBedPriceCents { get; set; }
+
+    /// <summary>
+    /// When true, the public site is gated behind an "under construction" page and only
+    /// signed-in admins can view the real SPA. Used to preview the site before launch.
+    /// </summary>
+    public bool ComingSoon { get; set; }
 }
