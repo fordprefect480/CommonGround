@@ -28,7 +28,8 @@ export default function MemberEmailModal({
   onClose,
   onSent,
 }: MemberEmailModalProps) {
-  const template = useEmailTemplate()
+  const [isNewsletter, setIsNewsletter] = useState(true)
+  const template = useEmailTemplate(isNewsletter)
 
   const eligible = members.filter(hasEmail)
   const skipped = members.length - eligible.length
@@ -102,6 +103,8 @@ export default function MemberEmailModal({
           onSubjectChange={setSubject}
           body={body}
           onBodyChange={setBody}
+          isNewsletter={isNewsletter}
+          onIsNewsletterChange={setIsNewsletter}
           template={template}
           recipientCount={recipients.length}
           buildRecipients={() => ({ mode: 'specific_members', memberIds: Array.from(recipientIds) })}

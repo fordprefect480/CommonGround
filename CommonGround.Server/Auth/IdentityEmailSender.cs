@@ -49,10 +49,9 @@ public sealed class IdentityEmailSender(
         {
             using var scope = scopeFactory.CreateScope();
             var emailSender = scope.ServiceProvider.GetRequiredService<TransactionalEmailSender>();
-            await emailSender.SendAsync(
+            await emailSender.SendMembershipAsync(
                 PasswordResetEmail.Subject(gardenName),
                 PasswordResetEmail.BuildHtml(user.DisplayName, resetUrl),
-                PasswordResetEmail.BuildText(user.DisplayName, resetUrl),
                 new TransactionalEmailSender.Recipient(email, user.Id),
                 ct: CancellationToken.None);
         }

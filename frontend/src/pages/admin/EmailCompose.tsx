@@ -29,7 +29,8 @@ export default function EmailCompose() {
   const navigate = useNavigate()
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
-  const template = useEmailTemplate()
+  const [isNewsletter, setIsNewsletter] = useState(true)
+  const template = useEmailTemplate(isNewsletter)
   const [mode, setMode] = useState<RecipientMode>('all_subscribers')
   const [subscriberCount, setSubscriberCount] = useState<SubscriberCountState>({ status: 'loading' })
   const [members, setMembers] = useState<MembersState>({ status: 'idle' })
@@ -358,6 +359,8 @@ export default function EmailCompose() {
           onSubjectChange={setSubject}
           body={body}
           onBodyChange={setBody}
+          isNewsletter={isNewsletter}
+          onIsNewsletterChange={setIsNewsletter}
           template={template}
           recipientCount={recipientCount}
           recipientNoun={recipientNoun}

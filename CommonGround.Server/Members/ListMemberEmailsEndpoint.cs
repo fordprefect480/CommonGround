@@ -20,6 +20,7 @@ public sealed class ListMemberEmailsEndpoint(AppDbContext db)
         DateTime SentAt,
         string Subject,
         string? SenderEmail,
+        bool IsNewsletter,
         string Email,
         string Status,
         string? ErrorMessage);
@@ -42,6 +43,7 @@ public sealed class ListMemberEmailsEndpoint(AppDbContext db)
                 r.SentEmail.SentAt,
                 r.SentEmail.Subject,
                 r.SentEmail.SenderEmailSnapshot,
+                r.SentEmail.IsNewsletter,
                 r.Email,
                 r.Status == SentEmailRecipientStatus.Sent ? "sent" : "failed",
                 r.ErrorMessage))

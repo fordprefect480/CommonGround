@@ -95,10 +95,9 @@ public sealed class MembershipActivationService(
             ? null
             : $"{gardenOptions.Value.PublicUrl.TrimEnd('/')}/login";
 
-        await emailSender.SendAsync(
+        await emailSender.SendMembershipAsync(
             MembershipWelcomeEmail.Subject,
             MembershipWelcomeEmail.BuildHtml(user.DisplayName, signInUrl),
-            MembershipWelcomeEmail.BuildText(user.DisplayName, signInUrl),
             new TransactionalEmailSender.Recipient(user.Email, user.Id),
             ct: ct);
     }
