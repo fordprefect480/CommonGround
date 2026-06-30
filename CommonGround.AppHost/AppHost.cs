@@ -126,6 +126,12 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-template
 	server.WithEnvironment("Email__TemplateId", resendTemplateId);
 }
 
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-transactional-template-id"]))
+{
+	var resendTransactionalTemplateId = builder.AddParameter("resend-transactional-template-id", secret: true);
+	server.WithEnvironment("Email__TransactionalTemplateId", resendTransactionalTemplateId);
+}
+
 if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:eventbrite-private-token"]))
 {
 	var eventbriteToken = builder.AddParameter("eventbrite-private-token", secret: true);
@@ -184,6 +190,12 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:stripe-webhook-
 {
 	var stripeWebhookSecret = builder.AddParameter("stripe-webhook-secret", secret: true);
 	server.WithEnvironment("Stripe__WebhookSecret", stripeWebhookSecret);
+}
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:admin-notification-email"]))
+{
+	var adminNotificationEmail = builder.AddParameter("admin-notification-email", secret: true);
+	server.WithEnvironment("LeasedBeds__AdminNotificationEmail", adminNotificationEmail);
 }
 
 if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:app-version"]))
