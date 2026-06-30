@@ -192,6 +192,12 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:stripe-webhook-
 	server.WithEnvironment("Stripe__WebhookSecret", stripeWebhookSecret);
 }
 
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:admin-notification-email"]))
+{
+	var adminNotificationEmail = builder.AddParameter("admin-notification-email", secret: true);
+	server.WithEnvironment("LeasedBeds__AdminNotificationEmail", adminNotificationEmail);
+}
+
 if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:app-version"]))
 {
 	var appVersion = builder.AddParameter("app-version");
