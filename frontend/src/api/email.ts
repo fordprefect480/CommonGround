@@ -9,6 +9,7 @@ export interface SentEmailListItem {
   sentAt: string
   subject: string
   senderEmail: string | null
+  recipientEmail: string | null
   recipientCount: number
   sentCount: number
   failedCount: number
