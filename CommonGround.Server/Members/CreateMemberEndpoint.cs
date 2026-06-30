@@ -96,14 +96,14 @@ public sealed class CreateMemberEndpoint(
             return;
         }
 
-        var signInUrl = string.IsNullOrWhiteSpace(gardenOptions.Value.PublicUrl)
+        var profileUrl = string.IsNullOrWhiteSpace(gardenOptions.Value.PublicUrl)
             ? null
-            : $"{gardenOptions.Value.PublicUrl.TrimEnd('/')}/login";
+            : $"{gardenOptions.Value.PublicUrl.TrimEnd('/')}/profile";
 
         await emailSender.SendAsync(
             MemberAccountCreatedEmail.Subject,
-            MemberAccountCreatedEmail.BuildHtml(user.DisplayName, signInUrl),
-            MemberAccountCreatedEmail.BuildText(user.DisplayName, signInUrl),
+            MemberAccountCreatedEmail.BuildHtml(user.DisplayName, profileUrl),
+            MemberAccountCreatedEmail.BuildText(user.DisplayName, profileUrl),
             new TransactionalEmailSender.Recipient(user.Email, user.Id),
             ct: ct);
     }
