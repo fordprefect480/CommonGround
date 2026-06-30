@@ -390,6 +390,17 @@ fieldset.field:disabled {
   color: var(--ink-900);
 }
 
+.card-subheading {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.8rem;
+  line-height: 1.25;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0;
+  color: var(--ink-500);
+}
+
 .card-note {
     margin: 0;
     font-family: var(--font-sans);

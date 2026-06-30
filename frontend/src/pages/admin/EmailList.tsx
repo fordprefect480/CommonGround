@@ -45,6 +45,8 @@ export default function EmailList() {
               <tr>
                 <th scope="col">Sent</th>
                 <th scope="col">Subject</th>
+                <th scope="col">Type</th>
+                <th scope="col">From</th>
                 <th scope="col">To</th>
                 <th scope="col">Delivery</th>
               </tr>
@@ -54,6 +56,12 @@ export default function EmailList() {
                 <tr key={item.id}>
                   <td data-label="Sent" title={formatAbsolute(item.sentAt)}>{formatRelative(item.sentAt)}</td>
                   <td data-label="Subject"><Link to={`/admin/email/${item.id}`} className="admin-table-link">{item.subject}</Link></td>
+                  <td data-label="Type">
+                    {item.isNewsletter
+                      ? <span className="pill pill-warn">Newsletter</span>
+                      : <span className="pill pill-ok">Membership</span>}
+                  </td>
+                  <td data-label="From">{item.senderEmail ?? '—'}</td>
                   <td data-label="To">
                     {item.recipientCount === 0 ? '—' :
                      item.recipientCount === 1 ? (item.recipientEmail ?? '—') : (

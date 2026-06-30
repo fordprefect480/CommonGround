@@ -26,11 +26,11 @@ public sealed class LeasedBedNotifications(
 
         var (subject, html, text) = status == BedRequestStatus.Waitlisted
             ? (LeasedBedEmails.WaitlistSubject,
-                LeasedBedEmails.BuildWaitlistedHtml(memberName, waitlistTotal),
-                LeasedBedEmails.BuildWaitlistedText(memberName, waitlistTotal))
+                LeasedBedEmails.BuildWaitlistedHtml(memberName, waitlistTotal, gardenOptions.Value.PublicUrl),
+                LeasedBedEmails.BuildWaitlistedText(memberName, waitlistTotal, gardenOptions.Value.PublicUrl))
             : (LeasedBedEmails.AppliedSubject,
-                LeasedBedEmails.BuildAppliedHtml(memberName, remaining),
-                LeasedBedEmails.BuildAppliedText(memberName, remaining));
+                LeasedBedEmails.BuildAppliedHtml(memberName, remaining, gardenOptions.Value.PublicUrl),
+                LeasedBedEmails.BuildAppliedText(memberName, remaining, gardenOptions.Value.PublicUrl));
 
         // Sent to the admin notification address, so no member is attached.
         await emailSender.SendAsync(subject, html, text, new TransactionalEmailSender.Recipient(recipient), ct: ct);
@@ -52,10 +52,9 @@ public sealed class LeasedBedNotifications(
         var amount = amountCents > 0 ? $"${amountCents / 100m:0.00}" : null;
 
         var html = LeasedBedEmails.BuildAssignmentHtml(name, bedLabel, fyLabel, expiresOn, amount, profileUrl);
-        var text = LeasedBedEmails.BuildAssignmentText(name, bedLabel, fyLabel, expiresOn, amount, profileUrl);
 
-        await emailSender.SendAsync(
-            LeasedBedEmails.AssignedSubject, html, text,
+        await emailSender.SendMembershipAsync(
+            LeasedBedEmails.AssignedSubject, html,
             new TransactionalEmailSender.Recipient(member.Email, member.Id),
             ct: ct);
     }
