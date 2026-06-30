@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import AdminBackButton from './AdminBackButton'
-import { fetchSubscriberCount, type NewsletterRecipients } from '../../api/email'
+import AdminModal from './AdminModal'
+import { fetchSubscriberCount, type NewsletterRecipients, type SendNewsletterResult } from '../../api/email'
 import { fetchMembers, type Member } from '../../api/auth'
 import { ComposeForm, memberLabel, pluralize, useEmailTemplate } from './emailComposer'
+
+interface EmailComposeModalProps {
+  onClose: () => void
+  onSent: (result: SendNewsletterResult) => void
+}
 
 type SubscriberCountState =
   | { status: 'loading' }
@@ -25,8 +29,7 @@ function parseEmails(raw: string): string[] {
     .filter((part) => part.length > 0)
 }
 
-export default function EmailCompose() {
-  const navigate = useNavigate()
+export default function EmailComposeModal({ onClose, onSent }: EmailComposeModalProps) {
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [isNewsletter, setIsNewsletter] = useState(true)
@@ -190,20 +193,14 @@ export default function EmailCompose() {
   const recipientNoun = mode === 'custom_emails' ? 'address' : 'recipient'
 
   return (
-    <section className="admin-page" aria-labelledby="email-heading">
-      <header className="admin-page-header">
-        <div className="admin-page-heading-group">
-          <AdminBackButton to="/admin/email" label="Back to emails" />
-          <h1 id="email-heading" className="admin-page-title">New email</h1>
-        </div>
-      </header>
+    <AdminModal ariaLabel="New email" onClose={onClose} closeDisabled={sending}>
+      <h2 className="section-title">New email</h2>
 
       {subscriberCount.status === 'error' && mode === 'all_subscribers' && (
         <div className="form-error" role="alert">{subscriberCount.message}</div>
       )}
 
-      <div className="card">
-        <fieldset className="field" disabled={sending}>
+      <fieldset className="field" disabled={sending}>
           <legend className="field-label">Recipients</legend>
           <div className="recipient-mode-options">
             <label className="checkbox-field">
@@ -344,7 +341,7 @@ export default function EmailCompose() {
                 autoComplete="off"
                 spellCheck={false}
               />
-              <span className="card-note">
+              <span className="card-note" style={{ fontSize: '0.8rem' }}>
                 Separate addresses with commas, spaces, or newlines. Each recipient gets their own copy.
                 {customEmails.length > 0 && (
                   <> Parsed <strong>{customEmails.length}</strong> address{customEmails.length === 1 ? '' : 'es'}.</>
@@ -365,10 +362,10 @@ export default function EmailCompose() {
           recipientCount={recipientCount}
           recipientNoun={recipientNoun}
           buildRecipients={buildRecipients}
-          onSent={(result) => navigate(`/admin/email/${result.id}`, { replace: true })}
+          onSent={onSent}
           onSendingChange={setSending}
           secondaryAction={
-            <button type="button" className="footer-link" onClick={() => navigate('/admin/email')}>
+            <button type="button" className="footer-link" onClick={onClose} disabled={sending}>
               Cancel
             </button>
           }
@@ -378,7 +375,6 @@ export default function EmailCompose() {
             ) : undefined
           }
         />
-      </div>
-    </section>
+    </AdminModal>
   )
 }
