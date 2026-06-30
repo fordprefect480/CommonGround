@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import {
   fetchEmailTemplate,
   sendNewsletter,
@@ -28,6 +28,12 @@ export function HtmlEditor({ value, onChange, disabled }: HtmlEditorProps) {
     }
   }, [value])
 
+  // The editor only mounts once the template preview is ready, so focusing on
+  // mount drops the cursor into the body as soon as the preview loads.
+  useEffect(() => {
+    ref.current?.focus()
+  }, [])
+
   return (
     <div
       ref={ref}
@@ -42,6 +48,19 @@ export function HtmlEditor({ value, onChange, disabled }: HtmlEditorProps) {
     />
   )
 }
+
+// The template chrome wraps remote <img> tags. Memoizing on the HTML string keeps
+// keystrokes elsewhere in the composer from re-rendering it and reloading the
+// images (which flickers the preview).
+const TemplateChrome = memo(function TemplateChrome({ html }: { html: string }) {
+  return (
+    <div
+      className="email-compose-chrome"
+      aria-hidden="true"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  )
+})
 
 export type TemplateState =
   | { status: 'loading' }
@@ -170,10 +189,7 @@ type SendState =
   | { status: 'error'; message: string }
 
 const NEWSLETTER_TOOLTIP =
-  'Newsletters are bulk emails members can opt out of — they use the newsletter template and ' +
-  'include an unsubscribe link + List-Unsubscribe headers (anti-spam law). Turn off for other ' +
-  'membership emails (welcomes, account notices), which use the membership template with no ' +
-  'unsubscribe link.'
+  'This will include an unsubscribe link at the bottom of the email.'
 
 interface ComposeFormProps {
   subject: string
@@ -244,38 +260,6 @@ export function ComposeForm({
 
   return (
     <>
-      <div className="field" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <button
-          type="button"
-          role="switch"
-          id="email-is-newsletter"
-          className="switch"
-          aria-checked={isNewsletter}
-          aria-labelledby="email-is-newsletter-label"
-          onClick={() => onIsNewsletterChange(!isNewsletter)}
-          disabled={sending}
-        >
-          <span className="switch-thumb" aria-hidden="true" />
-        </button>
-        <label
-          id="email-is-newsletter-label"
-          className="field-label"
-          htmlFor="email-is-newsletter"
-          style={{ margin: 0 }}
-        >
-          Newsletter
-        </label>
-        <span
-          tabIndex={0}
-          role="img"
-          aria-label={NEWSLETTER_TOOLTIP}
-          title={NEWSLETTER_TOOLTIP}
-          style={{ cursor: 'help', color: 'var(--color-muted, #6b6b6b)' }}
-        >
-          ⓘ
-        </span>
-      </div>
-
       <div className="field">
         <label className="field-label" htmlFor="email-subject">Subject</label>
         <input
@@ -297,27 +281,52 @@ export function ComposeForm({
         {template.status === 'loading' ? (
           <p className="admin-loading">Loading template from Resend&hellip;</p>
         ) : (
-          <div className="email-compose-preview">
-            {template.status === 'ready' && (
-              <div
-                className="email-compose-chrome"
-                aria-hidden="true"
-                dangerouslySetInnerHTML={{ __html: template.header }}
-              />
-            )}
+          <div className={`email-compose-preview${isNewsletter ? '' : ' hide-unsubscribe'}`}>
+            {template.status === 'ready' && <TemplateChrome html={template.header} />}
             <HtmlEditor value={body} onChange={onBodyChange} disabled={sending} />
-            {template.status === 'ready' && (
-              <div
-                className="email-compose-chrome"
-                aria-hidden="true"
-                dangerouslySetInnerHTML={{ __html: template.footer }}
-              />
-            )}
+            {template.status === 'ready' && <TemplateChrome html={template.footer} />}
           </div>
         )}
       </div>
 
       {send.status === 'idle' && (
+        <>
+        <div className="field" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <button
+            type="button"
+            role="switch"
+            id="email-is-newsletter"
+            className="switch"
+            aria-checked={isNewsletter}
+            aria-labelledby="email-is-newsletter-label"
+            onClick={() => onIsNewsletterChange(!isNewsletter)}
+            disabled={sending}
+          >
+            <span className="switch-thumb" aria-hidden="true" />
+          </button>
+          <label
+            id="email-is-newsletter-label"
+            className="field-label"
+            htmlFor="email-is-newsletter"
+            style={{ margin: 0 }}
+          >
+            This is a newsletter
+          </label>
+          <span
+            tabIndex={0}
+            role="img"
+            aria-label={NEWSLETTER_TOOLTIP}
+            title={NEWSLETTER_TOOLTIP}
+            style={{ display: 'inline-flex', cursor: 'help', color: 'var(--ink-500, #6b6b6b)' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <title>{NEWSLETTER_TOOLTIP}</title>
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+          </span>
+        </div>
         <div className="admin-actions">
           <button type="button" className="primary-button" onClick={confirmSend} disabled={!canSend}>
             {recipientCount > 0 ? `Send to ${pluralize(recipientCount, recipientNoun)}` : 'Send'}
@@ -325,6 +334,7 @@ export function ComposeForm({
           {secondaryAction}
           {footerNote}
         </div>
+        </>
       )}
 
       {send.status === 'confirming' && (
