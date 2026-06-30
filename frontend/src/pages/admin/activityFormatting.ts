@@ -25,6 +25,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   'tool.members_exported': 'Members exported',
   'settings.membership_price.updated': 'Membership price updated',
   'settings.leased_bed_price.updated': 'Leased bed price updated',
+  'settings.coming_soon.updated': 'Under-construction page toggled',
   'member.payment_recorded': 'Membership payment recorded',
   'leased_bed.added': 'Leased bed added',
   'leased_bed.updated': 'Leased bed updated',
