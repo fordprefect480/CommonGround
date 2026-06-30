@@ -1787,16 +1787,19 @@ button.footer-link:disabled {
     margin: 0 auto;
 }
 .email-compose-chrome img { max-width: 100%; height: auto; }
+.email-compose-chrome > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td {
+    padding: 0 !important;
+}
 
 .email-html-editor {
-  min-height: 180px;
-  padding: 16px 40px;
-  background: #FFFFFF;
-  max-width: 600px;
-  width: 100%;
-  margin: 0 auto;
-  box-sizing: border-box;
+    min-height: 180px;
+    padding: 16px 40px;
+    background: #FFFFFF;
+    max-width: 600px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
-.email-html-editor:focus { outline: 2px solid var(--apple-600); outline-offset: -1px; }
+.email-html-editor:focus { outline: 2px solid var(--apple-600); outline-offset: -2px; }
 .email-html-editor[aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; }
 .email-html-editor img { max-width: 100%; height: auto; }
