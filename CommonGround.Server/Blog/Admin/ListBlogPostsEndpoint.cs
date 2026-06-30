@@ -21,7 +21,9 @@ public sealed class ListBlogPostsEndpoint(AppDbContext db)
     {
         var rows = await db.BlogPosts
             .AsNoTracking()
-            .OrderByDescending(p => p.UpdatedAt)
+            .OrderBy(p => p.Status)
+            .ThenByDescending(p => p.PublishedAt)
+            .ThenByDescending(p => p.CreatedAt)
             .Select(p => new
             {
                 p.Id, p.Slug, p.Title, p.AuthorName,
