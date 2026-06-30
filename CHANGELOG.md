@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.14.1](https://github.com/fordprefect480/CommonGround/compare/v0.14.0...v0.14.1) (2026-06-30)
+
+
+### Bug Fixes
+
+* survive serverless Azure SQL cold starts ([b403cbf](https://github.com/fordprefect480/CommonGround/commit/b403cbf9ca420ee7eab3fa8355626bc94372cf95))
+* survive serverless Azure SQL cold starts on the config endpoint ([bd8ece2](https://github.com/fordprefect480/CommonGround/commit/bd8ece29a2c6b043f92bcf1420038f331cc900d5))
+
 ## [0.14.0](https://github.com/fordprefect480/CommonGround/compare/v0.13.0...v0.14.0) (2026-06-30)
 
 
