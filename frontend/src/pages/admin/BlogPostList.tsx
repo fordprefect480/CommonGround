@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { blogImageUrl, deleteBlogPost, fetchAdminBlogPosts, type BlogPostAdminListItem } from '../../api/blog'
+import BlogEmailModal from './BlogEmailModal'
 
 const STATUS_PUBLISHED = 1
 
@@ -12,6 +13,7 @@ type State =
 export default function BlogPostList() {
   const navigate = useNavigate()
   const [state, setState] = useState<State>({ status: 'loading' })
+  const [emailPost, setEmailPost] = useState<BlogPostAdminListItem | null>(null)
 
   const reload = () => {
     setState({ status: 'loading' })
@@ -86,6 +88,8 @@ export default function BlogPostList() {
                       {' · '}
                       {published && <a className="footer-link" href={`/blog/${p.slug}`} target="_blank" rel="noopener noreferrer">View</a>}
                       {published && ' · '}
+                      {published && <button type="button" className="footer-link" onClick={() => setEmailPost(p)}>Send Email</button>}
+                      {published && ' · '}
                       <button type="button" className="footer-link" onClick={() => handleDelete(p)}>Delete</button>
                     </td>
                   </tr>
@@ -94,6 +98,17 @@ export default function BlogPostList() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {emailPost && (
+        <BlogEmailModal
+          post={emailPost}
+          onClose={() => setEmailPost(null)}
+          onSent={(result) => {
+            setEmailPost(null)
+            navigate(`/admin/email/${result.id}`)
+          }}
+        />
       )}
     </section>
   )
