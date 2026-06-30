@@ -15,11 +15,11 @@ public static class LeasedBedEmails
     public static string BuildAppliedHtml(string memberName, int remaining, string publicUrl) =>  
         Wrap($"<p>{Enc(memberName)} has applied for one of the {remaining} remaining beds.</p><p>Please assign them a bed on the <a href=\"{Enc(publicUrl)}admin/leased-beds\">Leased Beds page</a>.</p>");
 
-    public static string BuildWaitlistedText(string memberName, int total) =>
-        $"{memberName} has joined the waiting list for a leased bed. There are now {total} members on the waiting list.\n";
+    public static string BuildWaitlistedText(string memberName, int total, string publicUrl) =>
+        $"{memberName} has joined the waiting list for a leased bed. There are now {total} members on the waiting list.\nYou can view the current waiting list on the Leased Beds page: {Enc(publicUrl)}admin/leased-beds";
 
-    public static string BuildWaitlistedHtml(string memberName, int total) =>
-        Wrap($"<p>{Enc(memberName)} has joined the waiting list for a leased bed. There are now {total} members on the waiting list.</p>");
+    public static string BuildWaitlistedHtml(string memberName, int total, string publicUrl) =>
+        Wrap($"<p>{Enc(memberName)} has joined the waiting list for a leased bed. There are now {total} members on the waiting list.</p><p>You can view the current waiting list on the <a href=\"{Enc(publicUrl)}admin/leased-beds\">Leased Beds page</a>.</p>");
 
     /// <summary>
     /// The member assignment notice as an HTML fragment, fed to the membership template's BODY
