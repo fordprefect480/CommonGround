@@ -91,9 +91,14 @@ export default function BlogPostEditor() {
         featuredImageId: deriveFeaturedImageId(form.bodyHtml),
         status,
       }
+      const wasPublished = originalStatus === STATUS_PUBLISHED
       const result = isNew
         ? await createBlogPost(payload)
         : await updateBlogPost(Number(id), payload)
+      if (result.status === STATUS_PUBLISHED && !wasPublished) {
+        navigate('/admin/blog')
+        return
+      }
       navigate(`/admin/blog/${result.id}/edit`, { replace: true })
       setOriginalStatus(result.status)
       setNotice(result.status === STATUS_PUBLISHED ? 'Post published.' : 'Draft saved.')
