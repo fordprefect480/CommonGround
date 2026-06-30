@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace CommonGround.Server.Data;
 
@@ -24,6 +25,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<BedRequest> BedRequests => Set<BedRequest>();
     public DbSet<BedLeasePayment> BedLeasePayments => Set<BedLeasePayment>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
+    // SQL Server datetime2 columns carry no kind, so EF materializes every DateTime as
+    // Unspecified - which System.Text.Json then serializes without a 'Z', leaving clients to
+    // misread a UTC instant as local time. Every DateTime in this model is UTC (written from
+    // DateTime.UtcNow / SYSUTCDATETIME()), so stamp Kind=Utc on read globally.
+    protected override void ConfigureConventions(ModelConfigurationBuilder builder)
+    {
+        builder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+        builder.Properties<DateTime?>().HaveConversion<NullableUtcDateTimeConverter>();
+    }
+
+    private sealed class UtcDateTimeConverter() : ValueConverter<DateTime, DateTime>(
+        v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+    private sealed class NullableUtcDateTimeConverter() : ValueConverter<DateTime?, DateTime?>(
+        v => v, v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v);
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -136,9 +153,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             b.Property(x => x.Url).HasMaxLength(500);
             b.Property(x => x.Location).HasMaxLength(200);
             b.Property(x => x.Tone).HasMaxLength(16).IsRequired();
-
-            b.Property(x => x.StartUtc).HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
-            b.Property(x => x.EndUtc).HasConversion(v => v, v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : default(DateTime?));
 
             b.HasIndex(x => x.StartUtc).HasDatabaseName("IX_CommunityEvent_StartUtc");
             b.HasIndex(x => x.DisplayOrder).HasDatabaseName("IX_CommunityEvent_DisplayOrder");
