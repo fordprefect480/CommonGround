@@ -10,6 +10,7 @@ using CommonGround.Server.Misc;
 using FastEndpoints;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
@@ -49,7 +50,19 @@ builder.Services.AddDataProtection()
     .SetApplicationName("CommonGround");
 builder.Services.AddSingleton<UnsubscribeTokenService>();
 
-builder.AddSqlServerDbContext<AppDbContext>("commongroundDb");
+builder.AddSqlServerDbContext<AppDbContext>("commongroundDb", settings =>
+{
+    // The Azure SQL database is serverless with auto-pause, so the first request
+    // after an idle period must wait out the compute resume, which routinely
+    // exceeds the 15s default connection timeout and 500s the caller. Widen the
+    // connection timeout so a single attempt outlasts the resume; Aspire keeps
+    // EF's transient-error retries on by default as a backstop.
+    settings.ConnectionString = new SqlConnectionStringBuilder(settings.ConnectionString)
+    {
+        ConnectTimeout = 60,
+    }.ConnectionString;
+    settings.CommandTimeout = 60;
+});
 
 builder.Services.Configure<GardenOptions>(builder.Configuration.GetSection(GardenOptions.SectionName));
 builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
