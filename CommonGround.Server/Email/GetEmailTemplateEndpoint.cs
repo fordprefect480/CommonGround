@@ -30,14 +30,9 @@ public sealed class GetEmailTemplateEndpoint(
             return;
         }
 
-        if (!Guid.TryParse(options.Value.TemplateId, out var templateId))
-        {
-            await Send.ResultAsync(Results.Problem(
-                title: "Template not configured",
-                detail: "Set Email:TemplateId to the Resend template ID to use as the email template.",
-                statusCode: 503));
-            return;
-        }
+        // Preview the chrome for the selected audience; defaults to the newsletter template.
+        var isNewsletter = Query<bool?>("isNewsletter", isRequired: false) ?? true;
+        var templateId = options.Value.TemplateIdFor(isNewsletter);
 
         try
         {

@@ -10,6 +10,13 @@ public class SentEmail
     public string? SenderUserId { get; set; }
     public ApplicationUser? Sender { get; set; }
     public string? SenderEmailSnapshot { get; set; }
+
+    /// <summary>
+    /// True for bulk newsletters (members can opt out; sent with an unsubscribe link and
+    /// List-Unsubscribe headers). False for transactional/membership mail and admin notices.
+    /// </summary>
+    public bool IsNewsletter { get; set; }
+
     public int RecipientCount { get; set; }
     public int SentCount { get; set; }
     public int FailedCount { get; set; }

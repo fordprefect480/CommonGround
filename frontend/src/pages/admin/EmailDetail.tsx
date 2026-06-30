@@ -48,6 +48,14 @@ export default function EmailDetailPage() {
           <span className="field-readonly">{email.senderEmail ?? '-'}</span>
         </div>
         <div className="field">
+          <span className="field-label">Type</span>
+          <span className="field-readonly">
+            {email.isNewsletter
+              ? <span className="pill pill-warn">Newsletter</span>
+              : <span className="pill pill-ok">Membership</span>}
+          </span>
+        </div>
+        <div className="field">
           <span className="field-label">Delivery</span>
           <span className="field-readonly">
             {email.sentCount} of {email.recipientCount} delivered

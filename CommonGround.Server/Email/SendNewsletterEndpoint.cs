@@ -1,4 +1,3 @@
-using AngleSharp;
 using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
 using CommonGround.Server.Configuration;
@@ -28,16 +27,14 @@ public sealed class SendNewsletterEndpoint(
         string HtmlBody,
         string? Mode,
         IReadOnlyList<string>? MemberIds,
-        IReadOnlyList<string>? Emails);
+        IReadOnlyList<string>? Emails,
+        bool? IsNewsletter);
 
     public sealed record Result(long Id, int Sent, int Failed);
 
     private const string ModeAllSubscribers = "all_subscribers";
     private const string ModeSpecificMembers = "specific_members";
     private const string ModeCustomEmails = "custom_emails";
-
-    private const string UnsubscribePlaceholder = "{{{RESEND_UNSUBSCRIBE_URL}}}";
-    private const string UnsubscribeSentinelUrl = "https://commonground.local/__unsubscribe_sentinel__";
 
     private sealed record ResolvedRecipient(string? UserId, string Email);
 
@@ -59,7 +56,7 @@ public sealed class SendNewsletterEndpoint(
         }
 
         var subject = (req.Subject ?? "").Trim();
-        var html = (req.HtmlBody ?? "").Trim().Replace(UnsubscribePlaceholder, UnsubscribeSentinelUrl);
+        var body = (req.HtmlBody ?? "").Trim();
 
         if (subject.Length == 0)
         {
@@ -67,13 +64,14 @@ public sealed class SendNewsletterEndpoint(
             return;
         }
 
-        var textBody = await HtmlToTextAsync(html, ct);
-        if (textBody.Length == 0)
+        if (body.Length == 0)
         {
             await Send.ResultAsync(Results.BadRequest(new { error = "Body is required." }));
             return;
         }
-        textBody += $"\n\n---\nUnsubscribe: {UnsubscribeSentinelUrl}";
+
+        var isNewsletter = req.IsNewsletter ?? true;
+        var templateId = options.Value.TemplateIdFor(isNewsletter);
 
         var mode = string.IsNullOrWhiteSpace(req.Mode) ? ModeAllSubscribers : req.Mode!.Trim();
         List<ResolvedRecipient> recipients;
@@ -160,10 +158,10 @@ public sealed class SendNewsletterEndpoint(
         var sentEmail = new SentEmail
         {
             Subject = subject,
-            HtmlBody = html,
-            TextBody = textBody,
+            HtmlBody = body,
             SenderUserId = senderUserId,
             SenderEmailSnapshot = senderEmail,
+            IsNewsletter = isNewsletter,
             RecipientCount = recipients.Count,
         };
 
@@ -174,28 +172,35 @@ public sealed class SendNewsletterEndpoint(
         {
             ct.ThrowIfCancellationRequested();
 
-            var unsubscribeUrl = BuildUnsubscribeUrl(r);
-            var personalizedHtml = html.Replace(UnsubscribeSentinelUrl, unsubscribeUrl);
-            var personalizedText = textBody.Replace(UnsubscribeSentinelUrl, unsubscribeUrl);
+            // Newsletters carry a per-recipient unsubscribe link and the List-Unsubscribe
+            // headers (anti-spam law); membership emails don't.
+            var unsubscribeUrl = isNewsletter ? BuildUnsubscribeUrl(r) : null;
 
-            var headers = new Dictionary<string, string>
+            var variables = new Dictionary<string, object> { ["BODY"] = body };
+            if (unsubscribeUrl is not null)
             {
-                ["List-Unsubscribe"] = $"<{unsubscribeUrl}>",
-            };
-            if (unsubscribeUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            {
-                headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+                variables["RESEND_UNSUBSCRIBE_URL"] = unsubscribeUrl;
             }
 
             var message = new EmailMessage
             {
                 From = options.Value.From,
                 Subject = subject,
-                HtmlBody = personalizedHtml,
-                TextBody = personalizedText,
-                Headers = headers,
+                Template = new EmailMessageTemplate { TemplateId = templateId, Variables = variables },
             };
             message.To.Add(r.Email);
+
+            if (unsubscribeUrl is not null)
+            {
+                message.Headers = new Dictionary<string, string>
+                {
+                    ["List-Unsubscribe"] = $"<{unsubscribeUrl}>",
+                };
+                if (unsubscribeUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    message.Headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+                }
+            }
 
             var record = new SentEmailRecipient
             {
@@ -231,7 +236,7 @@ public sealed class SendNewsletterEndpoint(
             $"sent the newsletter \"{subject}\" to {sent} of {recipients.Count} recipient(s)",
             targetType: "sentEmail",
             targetId: sentEmail.Id.ToString(),
-            details: new { Subject = subject, Sent = sent, Failed = failed, Recipients = recipients.Count, Mode = mode },
+            details: new { Subject = subject, Sent = sent, Failed = failed, Recipients = recipients.Count, Mode = mode, IsNewsletter = isNewsletter },
             ct: ct);
 
         await Send.OkAsync(new Result(sentEmail.Id, sent, failed), ct);
@@ -247,17 +252,5 @@ public sealed class SendNewsletterEndpoint(
             return configured.TrimEnd('/');
         }
         return http is not null ? $"{http.Request.Scheme}://{http.Request.Host}" : "";
-    }
-
-    private static async Task<string> HtmlToTextAsync(string html, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(html)) return "";
-        var context = BrowsingContext.New(AngleSharp.Configuration.Default);
-        var doc = await context.OpenAsync(r => r.Content(html), ct);
-        var text = doc.Body?.TextContent ?? "";
-        return string.Join("\n", text
-            .Split('\n', StringSplitOptions.None)
-            .Select(line => line.Trim())
-            .Where(line => line.Length > 0));
     }
 }

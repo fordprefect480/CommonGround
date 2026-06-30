@@ -64,6 +64,63 @@ public sealed class TransactionalEmailSender(
             RecipientCount = 1,
         };
 
+        return await SendAndRecordAsync(message, record, sentEmail, recipient.Email, subject, ct);
+    }
+
+    /// <summary>
+    /// Sends member-facing transactional mail (welcome, password reset, bed assignment) via the
+    /// shared membership template, passing <paramref name="bodyHtml"/> as the template's BODY
+    /// variable. Resend renders both the HTML and plain-text parts from the template; the history
+    /// stores the content fragment we passed, since the rendered chrome lives only on Resend's side.
+    /// Returns true if delivery succeeded.
+    /// </summary>
+    public async Task<bool> SendMembershipAsync(
+        string subject,
+        string bodyHtml,
+        Recipient recipient,
+        string? replyTo = null,
+        CancellationToken ct = default)
+    {
+        var message = new EmailMessage
+        {
+            From = emailOptions.Value.From,
+            Subject = subject,
+            Template = new EmailMessageTemplate
+            {
+                TemplateId = emailOptions.Value.TemplateIdFor(isNewsletter: false),
+                Variables = new Dictionary<string, object> { ["BODY"] = bodyHtml },
+            },
+        };
+        if (!string.IsNullOrWhiteSpace(replyTo))
+        {
+            message.ReplyTo = replyTo;
+        }
+        message.To.Add(recipient.Email);
+
+        var record = new SentEmailRecipient
+        {
+            UserId = recipient.UserId,
+            Email = recipient.Email,
+        };
+
+        var sentEmail = new SentEmail
+        {
+            Subject = subject,
+            HtmlBody = bodyHtml,
+            RecipientCount = 1,
+        };
+
+        return await SendAndRecordAsync(message, record, sentEmail, recipient.Email, subject, ct);
+    }
+
+    private async Task<bool> SendAndRecordAsync(
+        EmailMessage message,
+        SentEmailRecipient record,
+        SentEmail sentEmail,
+        string recipientEmail,
+        string subject,
+        CancellationToken ct)
+    {
         var delivered = false;
         try
         {
@@ -74,7 +131,7 @@ public sealed class TransactionalEmailSender(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to send transactional email \"{Subject}\" to {Recipient}", subject, recipient.Email);
+            logger.LogError(ex, "Failed to send transactional email \"{Subject}\" to {Recipient}", subject, recipientEmail);
             record.Status = SentEmailRecipientStatus.Failed;
             record.ErrorMessage = Truncate(ex.Message, 1000);
             sentEmail.FailedCount = 1;

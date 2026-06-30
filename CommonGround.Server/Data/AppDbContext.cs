@@ -204,6 +204,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             b.Property(e => e.TextBody).IsRequired();
             b.Property(e => e.SenderUserId).HasMaxLength(450);
             b.Property(e => e.SenderEmailSnapshot).HasMaxLength(256);
+            b.Property(e => e.IsNewsletter).HasDefaultValue(false);
 
             b.HasOne(e => e.Sender)
                 .WithMany()
