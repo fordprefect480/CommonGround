@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import Seo from '../Seo'
 import { useAppConfig } from '../AppConfigContext'
 import { formatPrice } from '../format'
@@ -66,7 +67,7 @@ export default function LeaseAPlot() {
             </p>
             <p style={{ ...bodyPara, marginBottom: 0 }}>
               Rental rates are {bedPriceLabel}/year and raised bed rental is only
-              available to financial members.
+              available to members.
             </p>
           </div>
           <img
@@ -111,15 +112,21 @@ export default function LeaseAPlot() {
               A private bed gives you your own space to grow what you like,
               with everything you need included.
             </p>
-            <p style={{ ...bodyPara, marginBottom: 28 }}>
+            <p style={{ ...bodyPara, marginBottom: 14 }}>
               Have a read of our{' '}
               <a href={PLOTHOLDER_POLICY_URL} target="_blank" rel="noopener noreferrer">
                 Plotholder Policy
               </a>{' '}
               before applying.
             </p>
-            <MSButton size="lg" onClick={() => handleNav('contact')}>
-              Get in touch to apply
+            <p style={{ ...bodyPara, marginBottom: 28 }}>
+              Raised beds are only available to members. Become a
+              member first, then{' '}
+              <Link to="/login">sign in</Link> and apply for a bed from your
+              profile.
+            </p>
+            <MSButton size="lg" onClick={() => handleNav('membership')}>
+              Become a member
             </MSButton>
           </div>
           <ul
@@ -182,7 +189,7 @@ export default function LeaseAPlot() {
           }}
         >
           <DetailCard title="Become a member first">
-            Raised bed rental is only available to financial members.
+            Raised bed rental is only available to members.
             Membership is just {priceLabel}/year and comes with plenty of other
             benefits.{' '}
             <a
