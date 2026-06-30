@@ -35,6 +35,9 @@ export default function AdminLayout() {
               </NavLink>
             ))}
           </nav>
+          <p className="admin-help-note">
+            🥸 <a href="mailto:owen.symes@gmail.com">Ask Owen for help</a>
+          </p>
         </aside>
         <main className="admin-main">
           <Outlet />
