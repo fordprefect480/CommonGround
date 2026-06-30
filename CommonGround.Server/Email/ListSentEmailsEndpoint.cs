@@ -14,6 +14,7 @@ public sealed class ListSentEmailsEndpoint(AppDbContext db)
         DateTime SentAt,
         string Subject,
         string? SenderEmail,
+        bool IsNewsletter,
         int RecipientCount,
         int SentCount,
         int FailedCount);
@@ -33,6 +34,7 @@ public sealed class ListSentEmailsEndpoint(AppDbContext db)
                 e.SentAt,
                 e.Subject,
                 e.SenderEmailSnapshot,
+                e.IsNewsletter,
                 e.RecipientCount,
                 e.SentCount,
                 e.FailedCount))

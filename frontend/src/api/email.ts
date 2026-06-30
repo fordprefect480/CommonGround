@@ -9,6 +9,7 @@ export interface SentEmailListItem {
   sentAt: string
   subject: string
   senderEmail: string | null
+  isNewsletter: boolean
   recipientCount: number
   sentCount: number
   failedCount: number
@@ -30,6 +31,7 @@ export interface SentEmailDetail {
   textBody: string
   senderUserId: string | null
   senderEmail: string | null
+  isNewsletter: boolean
   recipientCount: number
   sentCount: number
   failedCount: number
@@ -57,8 +59,10 @@ export async function sendTestEmail(
   return res.json()
 }
 
-export async function fetchEmailTemplate(): Promise<string> {
-  const res = await fetch('/api/admin/tools/email/template', { credentials: 'include' })
+export async function fetchEmailTemplate(isNewsletter: boolean): Promise<string> {
+  const res = await fetch(`/api/admin/tools/email/template?isNewsletter=${isNewsletter}`, {
+    credentials: 'include',
+  })
   if (!res.ok) throw new Error(await res.text())
   const body = (await res.json()) as { htmlBody: string }
   return body.htmlBody
@@ -82,8 +86,9 @@ export async function sendNewsletter(
   subject: string,
   htmlBody: string,
   recipients: NewsletterRecipients,
+  isNewsletter: boolean,
 ): Promise<SendNewsletterResult> {
-  const payload: Record<string, unknown> = { subject, htmlBody, mode: recipients.mode }
+  const payload: Record<string, unknown> = { subject, htmlBody, mode: recipients.mode, isNewsletter }
   if (recipients.mode === 'specific_members') payload.memberIds = recipients.memberIds
   if (recipients.mode === 'custom_emails') payload.emails = recipients.emails
   const res = await fetch('/api/admin/tools/email/newsletter', {
@@ -114,6 +119,7 @@ export interface MemberEmailListItem {
   sentAt: string
   subject: string
   senderEmail: string | null
+  isNewsletter: boolean
   email: string
   status: 'sent' | 'failed'
   errorMessage: string | null
