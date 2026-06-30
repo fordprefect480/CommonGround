@@ -1,14 +1,20 @@
 using CommonGround.Server.Activity;
 using CommonGround.Server.Auth;
+using CommonGround.Server.Configuration;
 using CommonGround.Server.Data;
+using CommonGround.Server.Email;
 using FastEndpoints;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 
 namespace CommonGround.Server.Members;
 
 public sealed class CreateMemberEndpoint(
     UserManager<ApplicationUser> userManager,
-    IActivityLogger activityLogger)
+    IActivityLogger activityLogger,
+    TransactionalEmailSender emailSender,
+    IOptions<EmailOptions> emailOptions,
+    IOptions<GardenOptions> gardenOptions)
     : Endpoint<CreateMemberDto, MemberDto>
 {
     public override void Configure()
@@ -70,6 +76,8 @@ public sealed class CreateMemberEndpoint(
             targetId: user.Id,
             ct: ct);
 
+        await SendAccountCreatedEmailAsync(user, ct);
+
         var dto = new MemberDto(
             user.Id, user.Email, user.UserName, user.FirstName, user.LastName, user.DisplayName,
             user.PhoneNumber, user.JoinedAt, user.MembershipPaidThroughUtc, user.EmailConfirmed,
@@ -80,4 +88,23 @@ public sealed class CreateMemberEndpoint(
 
     private Task SendBadRequest(string error) =>
         Send.ResultAsync(Results.BadRequest(new { error }));
+
+    private async Task SendAccountCreatedEmailAsync(ApplicationUser user, CancellationToken ct)
+    {
+        if (!emailOptions.Value.IsConfigured || string.IsNullOrWhiteSpace(user.Email))
+        {
+            return;
+        }
+
+        var signInUrl = string.IsNullOrWhiteSpace(gardenOptions.Value.PublicUrl)
+            ? null
+            : $"{gardenOptions.Value.PublicUrl.TrimEnd('/')}/login";
+
+        await emailSender.SendAsync(
+            MemberAccountCreatedEmail.Subject,
+            MemberAccountCreatedEmail.BuildHtml(user.DisplayName, signInUrl),
+            MemberAccountCreatedEmail.BuildText(user.DisplayName, signInUrl),
+            new TransactionalEmailSender.Recipient(user.Email, user.Id),
+            ct: ct);
+    }
 }
