@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { fetchSentEmails, type SentEmailListItem } from '../../api/email'
 import { formatAbsolute, formatRelative } from './activityFormatting'
+import RecipientsPopover from './RecipientsPopover'
 
 type State =
   | { status: 'loading' }
@@ -11,6 +12,7 @@ type State =
 export default function EmailList() {
   const navigate = useNavigate()
   const [state, setState] = useState<State>({ status: 'loading' })
+  const [popover, setPopover] = useState<{ id: number; anchor: DOMRect } | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -45,21 +47,36 @@ export default function EmailList() {
                 <th scope="col">Subject</th>
                 <th scope="col">Type</th>
                 <th scope="col">From</th>
+                <th scope="col">To</th>
                 <th scope="col">Delivery</th>
               </tr>
             </thead>
             <tbody>
               {state.items.map((item) => (
                 <tr key={item.id}>
-                  <td title={formatAbsolute(item.sentAt)}>{formatRelative(item.sentAt)}</td>
-                  <td><Link to={`/admin/email/${item.id}`}>{item.subject}</Link></td>
-                  <td>
+                  <td data-label="Sent" title={formatAbsolute(item.sentAt)}>{formatRelative(item.sentAt)}</td>
+                  <td data-label="Subject"><Link to={`/admin/email/${item.id}`} className="admin-table-link">{item.subject}</Link></td>
+                  <td data-label="Type">
                     {item.isNewsletter
                       ? <span className="pill pill-warn">Newsletter</span>
                       : <span className="pill pill-ok">Membership</span>}
                   </td>
-                  <td>{item.senderEmail ?? '-'}</td>
-                  <td>
+                  <td data-label="From">{item.senderEmail ?? '—'}</td>
+                  <td data-label="To">
+                    {item.recipientCount === 0 ? '—' :
+                     item.recipientCount === 1 ? (item.recipientEmail ?? '—') : (
+                      <button
+                        type="button"
+                        className="recipients-toggle"
+                        aria-haspopup="dialog"
+                        onClick={(e) => setPopover({ id: item.id, anchor: e.currentTarget.getBoundingClientRect() })}
+                      >
+                        {item.recipientEmail ?? `${item.recipientCount} recipients`}
+                        {item.recipientEmail && <span className="recipients-toggle-more"> +{item.recipientCount - 1} more</span>}
+                      </button>
+                    )}
+                  </td>
+                  <td data-label="Delivery">
                     {item.failedCount > 0 ? (
                       <span className="pill pill-warn">
                         {item.sentCount}/{item.recipientCount} delivered
@@ -75,6 +92,14 @@ export default function EmailList() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {popover && (
+        <RecipientsPopover
+          emailId={popover.id}
+          anchor={popover.anchor}
+          onClose={() => setPopover(null)}
+        />
       )}
     </section>
   )

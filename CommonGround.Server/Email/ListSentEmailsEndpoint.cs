@@ -15,6 +15,7 @@ public sealed class ListSentEmailsEndpoint(AppDbContext db)
         string Subject,
         string? SenderEmail,
         bool IsNewsletter,
+        string? RecipientEmail,
         int RecipientCount,
         int SentCount,
         int FailedCount);
@@ -35,6 +36,7 @@ public sealed class ListSentEmailsEndpoint(AppDbContext db)
                 e.Subject,
                 e.SenderEmailSnapshot,
                 e.IsNewsletter,
+                e.Recipients.Select(r => r.Email).FirstOrDefault(),
                 e.RecipientCount,
                 e.SentCount,
                 e.FailedCount))

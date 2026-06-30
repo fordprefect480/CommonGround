@@ -10,6 +10,7 @@ export interface SentEmailListItem {
   subject: string
   senderEmail: string | null
   isNewsletter: boolean
+  recipientEmail: string | null
   recipientCount: number
   sentCount: number
   failedCount: number
