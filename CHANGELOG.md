@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.14.0](https://github.com/fordprefect480/CommonGround/compare/v0.13.0...v0.14.0) (2026-06-30)
+
+
+### Features
+
+* add help contact note to admin sidebar nav ([c0be6cc](https://github.com/fordprefect480/CommonGround/commit/c0be6cc180d769b5b861804c5e865e7eb98bad7f))
+* direct lease-a-plot visitors to join then apply from profile ([f7e5eb1](https://github.com/fordprefect480/CommonGround/commit/f7e5eb1a7d6aa7168017e65ddd83515b76925a24))
+* direct lease-a-plot visitors to join then apply from profile ([4279318](https://github.com/fordprefect480/CommonGround/commit/42793181ddfac44b6ccc48cbeab8e14aeedc9ea4))
+* email subscribers from blog admin and redirect on publish ([f449ed5](https://github.com/fordprefect480/CommonGround/commit/f449ed5a91bf0c851590ec649f8d2c5b3db7e9c3))
+* email subscribers from blog admin and redirect to list on publish ([120ca04](https://github.com/fordprefect480/CommonGround/commit/120ca047cd7637d82d583c5b4b93f9b48e4cbfbc))
+* **email:** compose from a modal on the emails list, trim the list table ([215497a](https://github.com/fordprefect480/CommonGround/commit/215497a42493c6f4c73ce0c685303fc63f870dbe))
+* **email:** rework newsletter toggle and fix preview flicker ([9c2ecd6](https://github.com/fordprefect480/CommonGround/commit/9c2ecd6347f02b0eebb0fd98c77b47186e620f51))
+* **email:** split newsletter and membership email templates ([35b2afa](https://github.com/fordprefect480/CommonGround/commit/35b2afae2a8b62b75e407eb4ee502edeaa6fc2a4))
+* **email:** split newsletter and membership email templates ([ceaf7e3](https://github.com/fordprefect480/CommonGround/commit/ceaf7e36ebafcf148edfed0f2b3276556a2a9e30))
+* **leased-beds:** group profile bed card into Currently leased and Pending ([c445f0d](https://github.com/fordprefect480/CommonGround/commit/c445f0db86566ee5dc5ad21824b66a0b60180ddf))
+* **leased-beds:** improve the profile leased-bed card ([b756adf](https://github.com/fordprefect480/CommonGround/commit/b756adf934fde13b86e952ecbb65e1e32da84635))
+* **leased-beds:** link to the waiting list in waitlist notification email ([64735de](https://github.com/fordprefect480/CommonGround/commit/64735def6cd43ac00f304692b4aeab4aa71b99e8))
+* **leased-beds:** route assignment emails through the membership template and notify admins ([dbf5538](https://github.com/fordprefect480/CommonGround/commit/dbf553860cb26c0b305fa80fb6d895337cb563e9))
+* show recipients in admin email list with popover ([917084b](https://github.com/fordprefect480/CommonGround/commit/917084b537b9f0a6bc910717ca2661613526519c))
+* show recipients in admin email list with popover ([e1768c7](https://github.com/fordprefect480/CommonGround/commit/e1768c71712b66fb31437a592f217a1ae2f20f0f))
+
+
+### Bug Fixes
+
+* **api:** serialize DateTime values as UTC ([8bdb5f7](https://github.com/fordprefect480/CommonGround/commit/8bdb5f75ede7a7fa012df12cf52c69de2f75795f))
+* **api:** serialize DateTime values as UTC ([9c881b2](https://github.com/fordprefect480/CommonGround/commit/9c881b2a57d91b39a78b3607ba5f953a8002581b))
+* **email:** focus body once on preview load, drop preview unsubscribe-hide ([ccab150](https://github.com/fordprefect480/CommonGround/commit/ccab150a26a30ca97b653267a1a12d3fe2b290bf))
+* forward /unsubscribe to the backend in the Vite dev proxy ([bb339be](https://github.com/fordprefect480/CommonGround/commit/bb339bebbcf5ba3e759f8356e02b4e7bcf099a2b))
+* **leased-beds:** clear stuck payment confirmation message ([a3fd381](https://github.com/fordprefect480/CommonGround/commit/a3fd3812dcab874fa8217095cefd55f70f3dfa0c))
+
 ## [0.13.0](https://github.com/fordprefect480/CommonGround/compare/v0.12.3...v0.13.0) (2026-06-29)
 
 
