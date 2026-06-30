@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAppConfig } from '../../AppConfigContext'
 import {
   applyForBed,
@@ -26,8 +26,14 @@ export default function LeasedBedCard() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [cancelledNotice, setCancelledNotice] = useState(false)
+  const started = useRef(false)
 
   useEffect(() => {
+    // Run once. StrictMode double-invokes effects in dev; without this guard the first
+    // run wipes the payment param and gets torn down, leaving the confirming poll orphaned.
+    if (started.current) return
+    started.current = true
+
     const params = new URLSearchParams(window.location.search)
     const payment = params.get('payment')
     if (payment) {
@@ -36,10 +42,8 @@ export default function LeasedBedCard() {
       window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''))
     }
 
-    let cancelled = false
-    const fail = (err: unknown) => {
-      if (!cancelled) setState({ status: 'error', message: err instanceof Error ? err.message : 'Could not load your bed status' })
-    }
+    const fail = (err: unknown) =>
+      setState({ status: 'error', message: err instanceof Error ? err.message : 'Could not load your bed status' })
 
     if (payment === 'cancelled') setCancelledNotice(true)
 
@@ -51,7 +55,6 @@ export default function LeasedBedCard() {
         attempts++
         try {
           const data = await fetchMyLeasedBedStatus()
-          if (cancelled) return
           setState({ status: 'ready', data })
           if (!data.leases.some((l) => l.status === 'AwaitingPayment') || attempts >= 8) {
             setConfirming(false)
@@ -63,16 +66,14 @@ export default function LeasedBedCard() {
             return
           }
         }
-        if (!cancelled) setTimeout(poll, 2500)
+        setTimeout(poll, 2500)
       }
       poll()
     } else {
       fetchMyLeasedBedStatus()
-        .then((data) => { if (!cancelled) setState({ status: 'ready', data }) })
+        .then((data) => setState({ status: 'ready', data }))
         .catch(fail)
     }
-
-    return () => { cancelled = true }
   }, [])
 
   const run = async (action: () => Promise<MyLeasedBedStatus>) => {
@@ -240,9 +241,16 @@ function RequestSection({
 
   if (request?.status === 'Pending') {
     return (
-      <p className="card-note" style={{ margin: 0 }}>
-        Your application is pending — an admin will assign you a bed.
-      </p>
+      <>
+        <p className="card-note" style={{ margin: 0 }}>
+          Your application is pending — an admin will assign you a bed.
+        </p>
+        <div className="admin-actions">
+          <button type="button" className="secondary-button" onClick={onWithdraw} disabled={busy}>
+            Cancel my application
+          </button>
+        </div>
+      </>
     )
   }
 
