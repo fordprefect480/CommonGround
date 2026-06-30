@@ -544,6 +544,19 @@ button.footer-link:disabled {
   color: var(--apple-700);
 }
 
+.admin-help-note {
+  margin: 16px 0 0;
+  padding: 0 12px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-500);
+}
+
+.admin-help-note a {
+  color: var(--apple-700);
+}
+
 .admin-main {
   flex: 1;
   width: 100%;
