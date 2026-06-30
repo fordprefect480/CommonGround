@@ -7,8 +7,8 @@ import {
 } from '../../api/email'
 import type { Member } from '../../api/auth'
 
-// Host-agnostic pieces of the email composer, shared by the full-page composer
-// (EmailCompose) and the in-modal composer for selected members
+// Host-agnostic pieces of the email composer, shared by the New Email modal
+// (EmailComposeModal) and the in-modal composer for selected members
 // (MemberEmailModal). The recipient-selection UI is NOT here - each host
 // renders its own and supplies `buildRecipients`/`recipientCount`.
 
@@ -27,12 +27,6 @@ export function HtmlEditor({ value, onChange, disabled }: HtmlEditorProps) {
       el.innerHTML = value
     }
   }, [value])
-
-  // The editor only mounts once the template preview is ready, so focusing on
-  // mount drops the cursor into the body as soon as the preview loads.
-  useEffect(() => {
-    ref.current?.focus()
-  }, [])
 
   return (
     <div
@@ -234,6 +228,17 @@ export function ComposeForm({
 }: ComposeFormProps) {
   const [send, setSend] = useState<SendState>({ status: 'idle' })
 
+  // Drop the cursor into the body the first time the preview loads. Guarded so
+  // toggling the newsletter switch (which reloads the template and remounts the
+  // editor) doesn't keep stealing focus back.
+  const bodyFocusedRef = useRef(false)
+  useEffect(() => {
+    if (template.status === 'ready' && !bodyFocusedRef.current) {
+      bodyFocusedRef.current = true
+      document.getElementById('email-html-body')?.focus()
+    }
+  }, [template.status])
+
   const subjectTrimmed = subject.trim()
   const canCompose = subjectTrimmed.length > 0 && !isBodyEmpty(body)
   const canSend = canCompose && recipientCount > 0 && send.status === 'idle'
@@ -281,7 +286,7 @@ export function ComposeForm({
         {template.status === 'loading' ? (
           <p className="admin-loading">Loading template from Resend&hellip;</p>
         ) : (
-          <div className={`email-compose-preview${isNewsletter ? '' : ' hide-unsubscribe'}`}>
+          <div className="email-compose-preview">
             {template.status === 'ready' && <TemplateChrome html={template.header} />}
             <HtmlEditor value={body} onChange={onBodyChange} disabled={sending} />
             {template.status === 'ready' && <TemplateChrome html={template.footer} />}

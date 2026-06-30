@@ -1774,7 +1774,6 @@ button.footer-link:disabled {
     margin: 0 auto;
 }
 .email-compose-chrome img { max-width: 100%; height: auto; }
-.email-compose-preview.hide-unsubscribe .preview-hide-unsubscribe { display: none; }
 .email-compose-chrome > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td {
     padding: 0 !important;
 }
