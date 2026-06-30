@@ -126,6 +126,12 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-template
 	server.WithEnvironment("Email__TemplateId", resendTemplateId);
 }
 
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:resend-transactional-template-id"]))
+{
+	var resendTransactionalTemplateId = builder.AddParameter("resend-transactional-template-id", secret: true);
+	server.WithEnvironment("Email__TransactionalTemplateId", resendTransactionalTemplateId);
+}
+
 if (!string.IsNullOrWhiteSpace(builder.Configuration["Parameters:eventbrite-private-token"]))
 {
 	var eventbriteToken = builder.AddParameter("eventbrite-private-token", secret: true);

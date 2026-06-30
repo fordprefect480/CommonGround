@@ -135,15 +135,20 @@ export function pluralize(n: number, singular: string): string {
   return `${n} ${singular}${n === 1 ? '' : 's'}`
 }
 
-/** Loads the Resend template once and returns it split around the {{{BODY}}} slot. */
-export function useEmailTemplate(): TemplateState {
+/**
+ * Loads the Resend preview template for the selected audience and returns it split
+ * around the {{{BODY}}} slot. Re-fetches when `isNewsletter` toggles; the `cancelled`
+ * guard keeps a fast toggle from applying a stale template.
+ */
+export function useEmailTemplate(isNewsletter: boolean): TemplateState {
   const [template, setTemplate] = useState<TemplateState>({ status: 'loading' })
 
   useEffect(() => {
     let cancelled = false
+    setTemplate({ status: 'loading' })
     ;(async () => {
       try {
-        const html = await fetchEmailTemplate()
+        const html = await fetchEmailTemplate(isNewsletter)
         if (cancelled) return
         const { header, footer } = splitTemplate(html)
         setTemplate({ status: 'ready', header, footer })
@@ -153,7 +158,7 @@ export function useEmailTemplate(): TemplateState {
       }
     })()
     return () => { cancelled = true }
-  }, [])
+  }, [isNewsletter])
 
   return template
 }
@@ -164,11 +169,19 @@ type SendState =
   | { status: 'sending' }
   | { status: 'error'; message: string }
 
+const NEWSLETTER_TOOLTIP =
+  'Newsletters are bulk emails members can opt out of — they use the newsletter template and ' +
+  'include an unsubscribe link + List-Unsubscribe headers (anti-spam law). Turn off for other ' +
+  'membership emails (welcomes, account notices), which use the membership template with no ' +
+  'unsubscribe link.'
+
 interface ComposeFormProps {
   subject: string
   onSubjectChange: (subject: string) => void
   body: string
   onBodyChange: (html: string) => void
+  isNewsletter: boolean
+  onIsNewsletterChange: (isNewsletter: boolean) => void
   template: TemplateState
   recipientCount: number
   recipientNoun?: string
@@ -192,6 +205,8 @@ export function ComposeForm({
   onSubjectChange,
   body,
   onBodyChange,
+  isNewsletter,
+  onIsNewsletterChange,
   template,
   recipientCount,
   recipientNoun = 'recipient',
@@ -217,10 +232,9 @@ export function ComposeForm({
     setSend({ status: 'sending' })
     onSendingChange?.(true)
     try {
-      const fullHtml = template.status === 'ready'
-        ? template.header + body + template.footer
-        : body
-      const result = await sendNewsletter(subjectTrimmed, fullHtml, buildRecipients())
+      // The server wraps this body in the selected template's chrome, so we send just
+      // the body fragment (the header/footer are preview-only WYSIWYG).
+      const result = await sendNewsletter(subjectTrimmed, body, buildRecipients(), isNewsletter)
       onSent(result)
     } catch (err) {
       setSend({ status: 'error', message: err instanceof Error ? err.message : 'Send failed' })
@@ -230,6 +244,38 @@ export function ComposeForm({
 
   return (
     <>
+      <div className="field" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <button
+          type="button"
+          role="switch"
+          id="email-is-newsletter"
+          className="switch"
+          aria-checked={isNewsletter}
+          aria-labelledby="email-is-newsletter-label"
+          onClick={() => onIsNewsletterChange(!isNewsletter)}
+          disabled={sending}
+        >
+          <span className="switch-thumb" aria-hidden="true" />
+        </button>
+        <label
+          id="email-is-newsletter-label"
+          className="field-label"
+          htmlFor="email-is-newsletter"
+          style={{ margin: 0 }}
+        >
+          Newsletter
+        </label>
+        <span
+          tabIndex={0}
+          role="img"
+          aria-label={NEWSLETTER_TOOLTIP}
+          title={NEWSLETTER_TOOLTIP}
+          style={{ cursor: 'help', color: 'var(--color-muted, #6b6b6b)' }}
+        >
+          ⓘ
+        </span>
+      </div>
+
       <div className="field">
         <label className="field-label" htmlFor="email-subject">Subject</label>
         <input
