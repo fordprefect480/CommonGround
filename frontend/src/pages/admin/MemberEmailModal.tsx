@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useState } from 'react'
 import type { Member } from '../../api/auth'
 import type { SendNewsletterResult } from '../../api/email'
+import AdminModal from './AdminModal'
 import { ComposeForm, memberLabel, pluralize, useEmailTemplate } from './emailComposer'
 
 interface MemberEmailModalProps {
@@ -39,14 +39,6 @@ export default function MemberEmailModal({
   const [body, setBody] = useState(BODY_PLACEHOLDER)
   const [sending, setSending] = useState(false)
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !sending) onClose()
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [onClose, sending])
-
   const recipients = eligible.filter((m) => recipientIds.has(m.id))
 
   const removeRecipient = (id: string) => {
@@ -58,16 +50,8 @@ export default function MemberEmailModal({
     })
   }
 
-  return createPortal(
-    <div role="presentation" onClick={() => { if (!sending) onClose() }} style={overlayStyle}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Email selected members"
-        className="card admin-form"
-        onClick={(e) => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: 680, margin: 0, maxHeight: '90vh', overflowY: 'auto' }}
-      >
+  return (
+    <AdminModal ariaLabel="Email selected members" onClose={onClose} closeDisabled={sending}>
         <h2 className="section-title">Email selected members</h2>
 
         <div className="field">
@@ -116,19 +100,6 @@ export default function MemberEmailModal({
             </button>
           }
         />
-      </div>
-    </div>,
-    document.body,
+    </AdminModal>
   )
-}
-
-const overlayStyle: React.CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  zIndex: 1000,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: 20,
-  background: 'rgba(20, 20, 16, 0.55)',
 }

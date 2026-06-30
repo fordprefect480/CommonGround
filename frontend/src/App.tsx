@@ -33,7 +33,6 @@ const BlogPostList = lazy(() => import('./pages/admin/BlogPostList'))
 const CommunityEventEditor = lazy(() => import('./pages/admin/CommunityEventEditor'))
 const CommunityEventList = lazy(() => import('./pages/admin/CommunityEventList'))
 const Dashboard = lazy(() => import('./pages/admin/Dashboard'))
-const EmailCompose = lazy(() => import('./pages/admin/EmailCompose'))
 const EmailDetail = lazy(() => import('./pages/admin/EmailDetail'))
 const EmailList = lazy(() => import('./pages/admin/EmailList'))
 const EmailTestTool = lazy(() => import('./pages/admin/EmailTestTool'))
@@ -91,7 +90,6 @@ export default function App() {
                 <Route path="events/:id/edit" element={<CommunityEventEditor />} />
                 <Route path="leased-beds" element={<LeasedBeds />} />
                 <Route path="email" element={<EmailList />} />
-                <Route path="email/new" element={<EmailCompose />} />
                 <Route path="email/:id" element={<EmailDetail />} />
                 <Route path="tools" element={<AdminTools />} />
                 <Route path="tools/email-test" element={<EmailTestTool />} />
