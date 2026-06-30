@@ -16,9 +16,7 @@ public sealed class ListSentEmailsEndpoint(AppDbContext db)
         string? SenderEmail,
         bool IsNewsletter,
         string? RecipientEmail,
-        int RecipientCount,
-        int SentCount,
-        int FailedCount);
+        int RecipientCount);
 
     public override void Configure()
     {
@@ -37,9 +35,7 @@ public sealed class ListSentEmailsEndpoint(AppDbContext db)
                 e.SenderEmailSnapshot,
                 e.IsNewsletter,
                 e.Recipients.Select(r => r.Email).FirstOrDefault(),
-                e.RecipientCount,
-                e.SentCount,
-                e.FailedCount))
+                e.RecipientCount))
             .ToListAsync(ct);
 
         await Send.OkAsync(new Result(items), ct);

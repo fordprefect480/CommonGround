@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { fetchSentEmails, type SentEmailListItem } from '../../api/email'
 import { formatAbsolute, formatRelative } from './activityFormatting'
+import EmailComposeModal from './EmailComposeModal'
 import RecipientsPopover from './RecipientsPopover'
 
 type State =
@@ -13,6 +14,7 @@ export default function EmailList() {
   const navigate = useNavigate()
   const [state, setState] = useState<State>({ status: 'loading' })
   const [popover, setPopover] = useState<{ id: number; anchor: DOMRect } | null>(null)
+  const [composeOpen, setComposeOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -28,7 +30,7 @@ export default function EmailList() {
     <section className="admin-page" aria-labelledby="email-heading">
       <header className="admin-page-header">
         <h1 id="email-heading" className="admin-page-title">Email</h1>
-        <button type="button" className="primary-button" onClick={() => navigate('/admin/email/new')}>
+        <button type="button" className="primary-button" onClick={() => setComposeOpen(true)}>
           New email
         </button>
       </header>
@@ -48,7 +50,6 @@ export default function EmailList() {
                 <th scope="col">Type</th>
                 <th scope="col">From</th>
                 <th scope="col">To</th>
-                <th scope="col">Delivery</th>
               </tr>
             </thead>
             <tbody>
@@ -76,17 +77,6 @@ export default function EmailList() {
                       </button>
                     )}
                   </td>
-                  <td data-label="Delivery">
-                    {item.failedCount > 0 ? (
-                      <span className="pill pill-warn">
-                        {item.sentCount}/{item.recipientCount} delivered
-                      </span>
-                    ) : (
-                      <span className="pill pill-ok">
-                        {item.sentCount} delivered
-                      </span>
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -99,6 +89,16 @@ export default function EmailList() {
           emailId={popover.id}
           anchor={popover.anchor}
           onClose={() => setPopover(null)}
+        />
+      )}
+
+      {composeOpen && (
+        <EmailComposeModal
+          onClose={() => setComposeOpen(false)}
+          onSent={(result) => {
+            setComposeOpen(false)
+            navigate(`/admin/email/${result.id}`)
+          }}
         />
       )}
     </section>

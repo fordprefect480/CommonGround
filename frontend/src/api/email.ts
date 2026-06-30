@@ -12,8 +12,6 @@ export interface SentEmailListItem {
   isNewsletter: boolean
   recipientEmail: string | null
   recipientCount: number
-  sentCount: number
-  failedCount: number
 }
 
 export interface SentEmailRecipient {
