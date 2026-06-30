@@ -8,6 +8,7 @@ import {
   withdrawBedRequest,
   type MyLease,
   type MyLeasedBedStatus,
+  type MyRequestInfo,
 } from '../../api/leasedBeds'
 import { formatPrice } from '../../format'
 
@@ -102,7 +103,7 @@ export default function LeasedBedCard() {
 
   return (
     <section className="card admin-form">
-      <h2 className="section-title">Leased bed</h2>
+      <h2 className="section-title">Leased Beds</h2>
 
       {confirming && (
         <p className="card-note" style={{ margin: 0 }} role="status">
@@ -122,29 +123,62 @@ export default function LeasedBedCard() {
             You need an active membership before you can lease a garden bed.
           </p>
         ) : (
-          <>
-            {state.data.leases.map((lease) => (
-              <LeaseRow
-                key={lease.leaseId}
-                lease={lease}
-                paymentsEnabled={paymentsEnabled}
-                busy={busy}
-                onPay={() => startPayment(lease.leaseId)}
-                onRenew={() => run(() => renewLease(lease.leaseId))}
-              />
-            ))}
+          (() => {
+            const currentLeases = state.data.leases.filter((l) => l.status === 'Active' || l.status === 'Expired')
+            const pendingLeases = state.data.leases.filter((l) => l.status === 'AwaitingPayment')
+            const pendingRequest = state.data.request?.status === 'Pending' || state.data.request?.status === 'Waitlisted'
 
-            <RequestSection
-              data={state.data}
-              hasActiveLease={state.data.leases.some((l) => l.status === 'Active')}
-              awaitingPayment={state.data.leases.some((l) => l.status === 'AwaitingPayment')}
-              busy={busy}
-              onApply={() => run(applyForBed)}
-              onWithdraw={() => run(withdrawBedRequest)}
-            />
+            return (
+              <>
+                {currentLeases.length > 0 && (
+                  <div className="admin-subsection">
+                    <h3 className="card-subheading">Currently leased</h3>
+                    {currentLeases.map((lease) => (
+                      <LeaseRow
+                        key={lease.leaseId}
+                        lease={lease}
+                        paymentsEnabled={paymentsEnabled}
+                        busy={busy}
+                        onPay={() => startPayment(lease.leaseId)}
+                        onRenew={() => run(() => renewLease(lease.leaseId))}
+                      />
+                    ))}
+                  </div>
+                )}
 
-            {actionError && <div className="form-error" role="alert">{actionError}</div>}
-          </>
+                {(pendingLeases.length > 0 || pendingRequest) && (
+                  <div className="admin-subsection">
+                    <h3 className="card-subheading">Pending</h3>
+                    {pendingLeases.map((lease) => (
+                      <LeaseRow
+                        key={lease.leaseId}
+                        lease={lease}
+                        paymentsEnabled={paymentsEnabled}
+                        busy={busy}
+                        onPay={() => startPayment(lease.leaseId)}
+                        onRenew={() => run(() => renewLease(lease.leaseId))}
+                      />
+                    ))}
+                    <PendingRequest
+                      request={state.data.request}
+                      busy={busy}
+                      onWithdraw={() => run(withdrawBedRequest)}
+                    />
+                  </div>
+                )}
+
+                <ApplyCta
+                  data={state.data}
+                  hasActiveLease={state.data.leases.some((l) => l.status === 'Active')}
+                  awaitingPayment={pendingLeases.length > 0}
+                  busy={busy}
+                  onApply={() => run(applyForBed)}
+                />
+
+                {actionError && <div className="form-error" role="alert">{actionError}</div>}
+              </>
+            )
+          })()
         )
       )}
     </section>
@@ -209,36 +243,33 @@ function LeaseRow({
     )
   }
 
-  // Active
+  // Active. Only surface a payment label when there's something to convey — a "no
+  // payment required" lease needs no action, so we drop it and just show the expiry.
+  const paymentLabel = lease.isPaid
+    ? (lease.paidOnUtc ? `Paid ${formatDate(lease.paidOnUtc)}` : null)
+    : 'Awaiting payment'
   return (
     <div style={leaseRowStyle}>
-      <span className="pill pill-ok">Bed {lease.bedLabel}</span>
-      <p className="card-note" style={{ margin: 0 }}>
-        {lease.isPaid ? (lease.paidOnUtc ? `Paid ${formatDate(lease.paidOnUtc)}` : 'No payment required') : 'Awaiting payment'}
-        {' · '}Lease expires {formatDate(lease.expiresOn)}.
-      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span className="pill pill-ok">Bed {lease.bedLabel}</span>
+        <span className="card-note">
+          {paymentLabel ? `${paymentLabel} · ` : ''}Lease expires {formatDate(lease.expiresOn)}
+        </span>
+      </div>
       {lease.canRenew && <RenewButton busy={busy} onRenew={onRenew} />}
     </div>
   )
 }
 
-function RequestSection({
-  data,
-  hasActiveLease,
-  awaitingPayment,
+function PendingRequest({
+  request,
   busy,
-  onApply,
   onWithdraw,
 }: {
-  data: MyLeasedBedStatus
-  hasActiveLease: boolean
-  awaitingPayment: boolean
+  request: MyRequestInfo | null
   busy: boolean
-  onApply: () => void
   onWithdraw: () => void
 }) {
-  const { capacity, request } = data
-
   if (request?.status === 'Pending') {
     return (
       <>
@@ -269,10 +300,27 @@ function RequestSection({
     )
   }
 
-  // A bed is assigned but not yet paid for — no apply CTA until that's settled.
-  if (awaitingPayment) return null
+  return null
+}
 
-  // No active request — show a single call to action.
+function ApplyCta({
+  data,
+  hasActiveLease,
+  awaitingPayment,
+  busy,
+  onApply,
+}: {
+  data: MyLeasedBedStatus
+  hasActiveLease: boolean
+  awaitingPayment: boolean
+  busy: boolean
+  onApply: () => void
+}) {
+  const { capacity, request } = data
+
+  // An existing application or an assigned-but-unpaid bed already covers the next step.
+  if (request?.status === 'Pending' || request?.status === 'Waitlisted' || awaitingPayment) return null
+
   return (
     <div className="admin-actions">
       <button type="button" className="primary-button" onClick={onApply} disabled={busy}>
