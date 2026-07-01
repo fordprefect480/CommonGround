@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.2](https://github.com/fordprefect480/CommonGround/compare/v0.16.1...v0.16.2) (2026-07-01)
+
+
+### Bug Fixes
+
+* **home:** Rotate image ([5e01def](https://github.com/fordprefect480/CommonGround/commit/5e01def7ae63476731f46b44c7540ee62f9cda09))
+
 ## [0.16.1](https://github.com/fordprefect480/CommonGround/compare/v0.16.0...v0.16.1) (2026-07-01)
 
 
