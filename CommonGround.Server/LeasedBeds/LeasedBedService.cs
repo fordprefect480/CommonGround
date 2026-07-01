@@ -32,9 +32,9 @@ public sealed class LeasedBedService(AppDbContext db)
 
     public async Task<LeasedBedsOverview> GetOverviewAsync(CancellationToken ct)
     {
-        var beds = await db.Beds
-            .OrderBy(b => b.Label)
-            .ToListAsync(ct);
+        var beds = await db.Beds.ToListAsync(ct);
+        // Natural order (N1, N2, … N10) rather than the lexical N1, N10, N2 a plain sort gives.
+        beds.Sort((a, b) => NaturalCompare(a.Label, b.Label));
 
         // The lease governing each bed = its most recent non-released lease.
         var liveLeases = await db.BedLeases
@@ -87,6 +87,37 @@ public sealed class LeasedBedService(AppDbContext db)
 
     public static string? NormalizeText(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>
+    /// Compares bed labels the way people read them: runs of digits are compared
+    /// numerically (so N2 &lt; N10) and everything else ordinally, case-insensitively.
+    /// </summary>
+    internal static int NaturalCompare(string a, string b)
+    {
+        int i = 0, j = 0;
+        while (i < a.Length && j < b.Length)
+        {
+            if (char.IsDigit(a[i]) && char.IsDigit(b[j]))
+            {
+                int startA = i, startB = j;
+                while (i < a.Length && char.IsDigit(a[i])) i++;
+                while (j < b.Length && char.IsDigit(b[j])) j++;
+                var numA = a.AsSpan(startA, i - startA).TrimStart('0');
+                var numB = b.AsSpan(startB, j - startB).TrimStart('0');
+                if (numA.Length != numB.Length) return numA.Length - numB.Length;
+                int digits = numA.SequenceCompareTo(numB);
+                if (digits != 0) return digits;
+            }
+            else
+            {
+                int cmp = char.ToUpperInvariant(a[i]).CompareTo(char.ToUpperInvariant(b[j]));
+                if (cmp != 0) return cmp;
+                i++;
+                j++;
+            }
+        }
+        return (a.Length - i) - (b.Length - j);
+    }
 
     /// <summary>Active lease past its expiry reads as Expired for display, even though it still occupies the bed.</summary>
     public static string EffectiveStatus(BedLease lease, DateOnly today) =>
