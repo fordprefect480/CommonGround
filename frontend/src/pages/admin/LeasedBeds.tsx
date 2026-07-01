@@ -102,7 +102,7 @@ export default function LeasedBeds() {
   }
 
   const handleRemove = async (request: AdminBedRequest) => {
-    if (!confirm(`Remove ${request.memberName ?? 'this member'} from the waiting list?`)) return
+    if (!confirm(`Remove ${request.memberName ?? 'this member'} from the waitlist?`)) return
     setError(null)
     try {
       await removeBedRequest(request.requestId)
@@ -313,9 +313,9 @@ function WaitlistSection({
 }) {
   return (
     <div className="card">
-      <h2 className="section-title">Waiting list</h2>
+      <h2 className="section-title">Waitlist</h2>
       {requests.length === 0 ? (
-        <p className="card-note">The waiting list is empty.</p>
+        <p className="card-note">The waitlist is empty.</p>
       ) : (
         requests.map((r) => (
           <div key={r.requestId} className="field" style={{ borderTop: '1px solid var(--hairline, #e5e5e5)', paddingTop: 12 }}>

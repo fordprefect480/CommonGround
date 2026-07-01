@@ -5,7 +5,7 @@ public enum BedRequestStatus
     /// <summary>Applied while beds were available; awaiting an admin to assign a bed.</summary>
     Pending = 0,
 
-    /// <summary>Joined the waiting list because the garden was full. Position is by <see cref="BedRequest.CreatedAtUtc"/>.</summary>
+    /// <summary>Joined the waitlist because the garden was full. Position is by <see cref="BedRequest.CreatedAtUtc"/>.</summary>
     Waitlisted = 1,
 
     /// <summary>Resolved into a lease.</summary>

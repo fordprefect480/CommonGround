@@ -15,7 +15,6 @@ export type NavId =
   | 'donate'
   | 'resources'
   | 'contact'
-  | 'acknowledgement'
 
 interface ChromeProps {
   active: NavId
@@ -591,7 +590,7 @@ const FOOTER_GROUPS: ReadonlyArray<{
   {
     title: "What's on",
     links: [
-      ['events', 'Events'],
+      ['events', "What's On"],
       ['blog', 'Blog'],
       ['resources', 'Resources'],
     ],
@@ -600,7 +599,6 @@ const FOOTER_GROUPS: ReadonlyArray<{
     title: 'About',
     links: [
       ['contact', 'Contact us'],
-      ['acknowledgement', 'Acknowledgement'],
     ],
   },
 ]
