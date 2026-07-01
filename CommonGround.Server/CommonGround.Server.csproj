@@ -14,8 +14,8 @@
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.5.1" />
     <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.4.6" />
-    <!-- Registers the Azure AD auth providers (e.g. ActiveDirectoryDefault) that Microsoft.Data.SqlClient 6+ no longer bundles; required for managed-identity auth to Azure SQL in production. -->
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="1.0.0" />
+    <!-- Registers the Azure AD auth providers (e.g. ActiveDirectoryDefault) that Microsoft.Data.SqlClient 7.0 moved out of the core package; required for managed-identity auth to Azure SQL in production. Must track the SqlClient 7.0.x line (pulled in transitively via Aspire) — a mismatched version breaks the auth-provider binding at runtime with AmbiguousMatchException. -->
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="7.0.2" />
     <PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.5.0" />
     <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="FastEndpoints" Version="8.1.0" />
