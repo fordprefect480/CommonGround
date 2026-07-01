@@ -34,8 +34,25 @@
 
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- Preload the mobile hero image so the browser starts fetching it during
+         HTML parse, in parallel with the JS bundle, rather than waiting for
+         React to render the <img> tag (~4.5 s later). Scoped to mobile widths
+         because desktop loads the video instead. -->
+    <link
+      rel="preload"
+      as="image"
+      href="/swcg/hero-image.webp"
+      fetchpriority="high"
+      media="(max-width: 767px)"
+    />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Kept render-blocking on purpose: loading this async (media="print" swap)
+         made the hero <h1> paint in a fallback font and then reflow when
+         Bricolage Grotesque arrived, spiking CLS to ~0.35. Blocking on the font
+         CSS keeps CLS ~0 at the cost of ~150ms; the preconnects above soften it. -->
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,500;10..48,600;10..48,700;10..48,800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
