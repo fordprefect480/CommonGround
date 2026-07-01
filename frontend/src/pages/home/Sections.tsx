@@ -56,8 +56,12 @@ export function HomeHero({ onNav }: NavProps) {
     maskImage: isMobile ? 'none' : heroMask,
     WebkitMaskImage: isMobile ? 'none' : heroMask,
     pointerEvents: 'none',
-    opacity: mediaReady ? 1 : 0,
-    transition: 'opacity 700ms ease-out',
+    // On mobile the static image is the LCP element — keeping it at opacity:0
+    // until onLoad fires means Lighthouse records LCP only after the full image
+    // download, massively inflating the score. Only apply the fade on desktop
+    // where the video plays (not the LCP element).
+    opacity: useVideo ? (mediaReady ? 1 : 0) : 1,
+    transition: useVideo ? 'opacity 700ms ease-out' : undefined,
   }
 
   return (
@@ -79,9 +83,10 @@ export function HomeHero({ onNav }: NavProps) {
         />
       ) : (
         <img
-          src="/swcg/hero-image.png"
+          src="/swcg/hero-image.webp"
           alt=""
           aria-hidden="true"
+          fetchPriority="high"
           onLoad={() => setMediaReady(true)}
           style={mediaStyle}
         />
@@ -232,8 +237,9 @@ export function HomeAbout({ onNav }: NavProps) {
         }}
       >
         <img
-          src="/swcg/working-bee.jpg"
+          src="/swcg/working-bee.webp"
           alt="Volunteers at a working bee in the garden"
+          loading="lazy"
           style={{
             width: '100%',
             aspectRatio: '4 / 5',
@@ -675,6 +681,7 @@ export function MembershipBanner({ onNav }: NavProps) {
           <img
             src="/swcg/logo-apple.png"
             alt=""
+            loading="lazy"
             style={{
               width: '100%',
               maxWidth: isTablet ? 200 : 280,

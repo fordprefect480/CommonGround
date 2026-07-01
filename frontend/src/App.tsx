@@ -1,9 +1,8 @@
-import { lazy, Suspense, useEffect, type ReactElement } from 'react'
+import { Component, lazy, Suspense, useEffect, type ReactElement, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { AppInsightsContext, AppInsightsErrorBoundary } from '@microsoft/applicationinsights-react-js'
 import './App.css'
 import { AppConfigProvider, useAppConfig } from './AppConfigContext'
-import { reactPlugin } from './applicationInsights'
+import { getApplicationInsights } from './applicationInsights'
 import { AuthProvider, useAuth } from './AuthContext'
 import Home from './pages/Home'
 import UnderConstruction from './pages/UnderConstruction'
@@ -44,15 +43,7 @@ const Members = lazy(() => import('./pages/admin/Members'))
 
 export default function App() {
   return (
-    <AppInsightsContext.Provider value={reactPlugin}>
-      <AppInsightsErrorBoundary
-        appInsights={reactPlugin}
-        onError={() => (
-          <main className="app-bootstrap-error" role="alert">
-            <p>Something went wrong. Please refresh the page.</p>
-          </main>
-        )}
-      >
+    <AppErrorBoundary>
         <AppConfigProvider>
           <AuthProvider>
             <Suspense fallback={<div style={{ minHeight: '60vh' }} aria-busy="true" />}>
@@ -102,9 +93,35 @@ export default function App() {
             </Suspense>
           </AuthProvider>
         </AppConfigProvider>
-      </AppInsightsErrorBoundary>
-    </AppInsightsContext.Provider>
+    </AppErrorBoundary>
   )
+}
+
+// Minimal error boundary. Replaces App Insights' <AppInsightsErrorBoundary> so
+// the analytics SDK stays off the initial critical path (it now loads lazily
+// after the config fetch). Crashes are still reported to App Insights when it
+// has finished loading by the time they occur.
+class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false }
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error): void {
+    getApplicationInsights()?.trackException({ exception: error })
+  }
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return (
+        <main className="app-bootstrap-error" role="alert">
+          <p>Something went wrong. Please refresh the page.</p>
+        </main>
+      )
+    }
+    return this.props.children
+  }
 }
 
 // React Router doesn't reset scroll on navigation, so a route change kept the
