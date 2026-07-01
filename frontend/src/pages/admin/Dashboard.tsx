@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchActivity, type ActivityItem } from '../../api/activity'
 import { fetchMemberStats, type MemberStats } from '../../api/auth'
+import { fetchLeasedBeds, type CapacitySummary } from '../../api/leasedBeds'
 import { formatAbsolute, formatRelative, labelFor } from './activityFormatting'
 
 type ActivityState =
@@ -14,11 +15,15 @@ type StatsState =
   | { status: 'error' }
   | { status: 'ready'; stats: MemberStats }
 
-const TOTAL_BEDS = 32
+type BedsState =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'ready'; capacity: CapacitySummary }
 
 export default function Dashboard() {
   const [activity, setActivity] = useState<ActivityState>({ status: 'loading' })
   const [stats, setStats] = useState<StatsState>({ status: 'loading' })
+  const [beds, setBeds] = useState<BedsState>({ status: 'loading' })
 
   useEffect(() => {
     let cancelled = false
@@ -52,6 +57,22 @@ export default function Dashboard() {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const result = await fetchLeasedBeds()
+        if (cancelled) return
+        setBeds({ status: 'ready', capacity: result.capacity })
+      } catch {
+        if (cancelled) return
+        setBeds({ status: 'error' })
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [])
+
   const statValue = (value: number | null) =>
     stats.status === 'loading' ? '…' : stats.status === 'error' ? '—' : String(value)
 
@@ -75,7 +96,11 @@ export default function Dashboard() {
           <span className="admin-stat-label">Sign-ups in past 30 days</span>
         </div>
         <div className="admin-stat-card">
-          <span className="admin-stat-value">0 <span className="admin-stat-value-total">/ {TOTAL_BEDS}</span></span>
+          <span className="admin-stat-value">
+            {beds.status === 'loading' ? '…' : beds.status === 'error' ? '—' : (
+              <>{beds.capacity.leased} <span className="admin-stat-value-total">/ {beds.capacity.total}</span></>
+            )}
+          </span>
           <span className="admin-stat-label">Leased beds</span>
         </div>
       </div>
