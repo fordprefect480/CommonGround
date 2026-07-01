@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.16.0](https://github.com/fordprefect480/CommonGround/compare/v0.15.3...v0.16.0) (2026-07-01)
+
+
+### Features
+
+* add event structured data and dynamic sitemap for bots ([7ef7641](https://github.com/fordprefect480/CommonGround/commit/7ef7641bfdfb6d0b87f97357bea5f47c6ee8da9e))
+* add event structured data and dynamic sitemap for bots ([959f3cc](https://github.com/fordprefect480/CommonGround/commit/959f3cc8c8b0cc4f93f1164e770fae028e0a0653))
+
 ## [0.15.3](https://github.com/fordprefect480/CommonGround/compare/v0.15.2...v0.15.3) (2026-07-01)
 
 
