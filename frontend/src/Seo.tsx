@@ -27,6 +27,16 @@ interface SeoProps {
 /** Canonical production origin - keeps canonical/og:url stable across preview and dev hosts. */
 export const SITE_URL = 'https://seafordwetlandscommunitygarden.com'
 const DEFAULT_IMAGE = '/swcg/hero-image.png'
+
+/** schema.org PostalAddress for the garden - shared across structured-data blocks so it stays in one place. */
+export const GARDEN_POSTAL_ADDRESS = {
+  '@type': 'PostalAddress',
+  streetAddress: '100 Seaford Rd',
+  addressLocality: 'Seaford',
+  addressRegion: 'SA',
+  postalCode: '5169',
+  addressCountry: 'AU',
+}
 const JSON_LD_ID = 'seo-jsonld'
 
 function upsertMeta(attr: 'name' | 'property', key: string, content: string | null) {
