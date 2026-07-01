@@ -68,7 +68,7 @@ export default function Home() {
   }, [navigate])
 
   return (
-    <div data-screen-label="SWCG · home">
+    <main data-screen-label="SWCG · home">
       <Seo
         description={HOME_DESCRIPTION}
         jsonLd={{
@@ -95,6 +95,6 @@ export default function Home() {
       <InstagramStrip />
       <ContactPage />
       <MSFooter onNav={handleNav} />
-    </div>
+    </main>
   )
 }
