@@ -21,6 +21,7 @@ interface FormState {
   firstName: string
   lastName: string
   phoneNumber: string
+  address: string
   isAdmin: boolean
   isSubscribedToMailingList: boolean
 }
@@ -253,6 +254,7 @@ function memberToForm(member: Member): FormState {
     firstName: member.firstName ?? '',
     lastName: member.lastName ?? '',
     phoneNumber: member.phoneNumber ?? '',
+    address: member.address ?? '',
     isAdmin: member.roles.includes(ADMIN_ROLE),
     isSubscribedToMailingList: member.isSubscribedToMailingList,
   }
@@ -262,6 +264,7 @@ export default function MemberDetail() {
   const { id } = useParams<{ id: string }>()
   const [state, setState] = useState<State>({ status: 'loading' })
   const [form, setForm] = useState<FormState | null>(null)
+  const [secondary, setSecondary] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -274,6 +277,7 @@ export default function MemberDetail() {
       .then((member) => {
         setState({ status: 'ready', member })
         setForm(memberToForm(member))
+        setSecondary(member.secondaryMembers)
       })
       .catch((err: unknown) => {
         setState({ status: 'error', message: err instanceof Error ? err.message : 'Failed to load member' })
@@ -315,11 +319,14 @@ export default function MemberDetail() {
         firstName: form.firstName.trim() || null,
         lastName: form.lastName.trim() || null,
         phoneNumber: form.phoneNumber.trim() || null,
+        address: form.address.trim() || null,
+        secondaryMembers: secondary.map((s) => s.trim()).filter(Boolean),
         isAdmin: form.isAdmin,
         isSubscribedToMailingList: form.isSubscribedToMailingList,
       })
       setState({ status: 'ready', member: updated })
       setForm(memberToForm(updated))
+      setSecondary(updated.secondaryMembers)
       setSaved(true)
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Save failed')
@@ -378,6 +385,53 @@ export default function MemberDetail() {
             onChange={(e) => updateForm({ phoneNumber: e.target.value })}
           />
         </label>
+
+        <label className="field">
+          <span className="field-label">Address</span>
+          <input
+            value={form.address}
+            onChange={(e) => updateForm({ address: e.target.value })}
+            maxLength={300}
+          />
+        </label>
+
+        <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+          <span className="field-label">Additional household members</span>
+          {secondary.map((value, i) => (
+            <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <input
+                value={value}
+                maxLength={200}
+                onChange={(e) => {
+                  setSecondary((prev) => prev.map((v, idx) => (idx === i ? e.target.value : v)))
+                  if (saved) setSaved(false)
+                }}
+              />
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  setSecondary((prev) => prev.filter((_, idx) => idx !== i))
+                  if (saved) setSaved(false)
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          {secondary.length < 4 && (
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                setSecondary((prev) => [...prev, ''])
+                if (saved) setSaved(false)
+              }}
+            >
+              Add a member
+            </button>
+          )}
+        </fieldset>
 
         <label className="checkbox-field">
           <input
