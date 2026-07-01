@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CommonGround.Server.LeasedBeds.Member;
 
 /// <summary>
-/// Single apply / join-waiting-list action. The server re-checks availability and
+/// Single apply / join-waitlist action. The server re-checks availability and
 /// routes to Pending (beds free) or Waitlisted (full), enforcing active membership,
 /// one in-flight request per member, and no lease still awaiting payment.
 /// </summary>
@@ -64,7 +64,7 @@ public sealed class ApplyForBedEndpoint(
 
         await activityLogger.LogAsync(
             "leased_bed.requested",
-            status == BedRequestStatus.Pending ? "applied for a bed" : "joined the bed waiting list",
+            status == BedRequestStatus.Pending ? "applied for a bed" : "joined the bed waitlist",
             targetType: "Member",
             targetId: user.Id,
             ct: ct);

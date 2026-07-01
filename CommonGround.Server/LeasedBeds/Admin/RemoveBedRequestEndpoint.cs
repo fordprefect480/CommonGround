@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CommonGround.Server.LeasedBeds.Admin;
 
-/// <summary>Admin removes an open request (declines a pending application or drops a waiting-list entry).</summary>
+/// <summary>Admin removes an open request (declines a pending application or drops a waitlist entry).</summary>
 public sealed class RemoveBedRequestEndpoint(
     AppDbContext db,
     LeasedBedService beds,
@@ -37,7 +37,7 @@ public sealed class RemoveBedRequestEndpoint(
 
             await activityLogger.LogAsync(
                 "leased_bed.request_removed",
-                $"removed {request.User?.DisplayName ?? request.User?.Email ?? request.UserId} from the bed waiting list",
+                $"removed {request.User?.DisplayName ?? request.User?.Email ?? request.UserId} from the bed waitlist",
                 targetType: "Member",
                 targetId: request.UserId,
                 ct: ct);
