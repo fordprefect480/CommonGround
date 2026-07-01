@@ -19,6 +19,8 @@ export interface Member {
   lastName: string | null
   displayName: string | null
   phoneNumber: string | null
+  address: string | null
+  secondaryMembers: string[]
   joinedAt: string
   membershipPaidThroughUtc: string | null
   emailConfirmed: boolean
@@ -246,6 +248,8 @@ export interface UpdateMemberInput {
   firstName: string | null
   lastName: string | null
   phoneNumber: string | null
+  address: string | null
+  secondaryMembers: string[]
   isAdmin: boolean
   isSubscribedToMailingList: boolean
 }
