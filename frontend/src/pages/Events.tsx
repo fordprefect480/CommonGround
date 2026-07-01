@@ -95,25 +95,52 @@ export default function Events() {
                       borderRadius: 'var(--r-lg)',
                       padding: '16px 18px',
                       display: 'flex',
-                      flexDirection: 'column',
-                      gap: 6,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 14,
                       transition: 'all 120ms var(--ease-out)',
                     }}
                   >
-                    <span style={{ fontSize: 12, color: 'var(--fg-4)', fontFamily: 'var(--font-mono)' }}>
-                      {eventDayFmt.format(start)} &middot; {formatEventTimeRange(e.startUtc, e.endUtc)}
-                    </span>
-                    <span
+                    <div
                       style={{
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 700,
-                        fontSize: 18,
-                        letterSpacing: '-0.015em',
-                        textTransform: 'uppercase',
-                        color: isSelected ? 'var(--apple-700)' : 'var(--ink-900)',
+                        flex: '0 0 auto',
+                        width: 56,
+                        height: 56,
+                        borderRadius: 'var(--r-md)',
+                        overflow: 'hidden',
                       }}
                     >
-                      {e.title}
+                      {e.imageUrl ? (
+                        <img
+                          src={e.imageUrl}
+                          alt=""
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        />
+                      ) : (
+                        <Photo
+                          ratio="1 / 1"
+                          tone={e.tone}
+                          icon={eventIcon(e.tone, 26)}
+                          style={{ borderRadius: 0, width: '100%', height: '100%' }}
+                        />
+                      )}
+                    </div>
+                    <span style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+                      <span style={{ fontSize: 12, color: 'var(--fg-4)', fontFamily: 'var(--font-mono)' }}>
+                        {eventDayFmt.format(start)} &middot; {formatEventTimeRange(e.startUtc, e.endUtc)}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-display)',
+                          fontWeight: 700,
+                          fontSize: 18,
+                          letterSpacing: '-0.015em',
+                          textTransform: 'uppercase',
+                          color: isSelected ? 'var(--apple-700)' : 'var(--ink-900)',
+                        }}
+                      >
+                        {e.title}
+                      </span>
                     </span>
                   </button>
                 )
