@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.15.3](https://github.com/fordprefect480/CommonGround/compare/v0.15.2...v0.15.3) (2026-07-01)
+
+
+### Features
+
+* add thumbnails to public events list ([ea9e176](https://github.com/fordprefect480/CommonGround/commit/ea9e176ef0c0a1e1d99cbbda77c3336e684b626d))
+* add thumbnails to public events list ([996d1f2](https://github.com/fordprefect480/CommonGround/commit/996d1f2d1ee4ed911956629de37c80defea412b4))
+* admin can view and edit member address and secondary members (API) ([89d887a](https://github.com/fordprefect480/CommonGround/commit/89d887a8d053d0f914a951cd745b6da2e7dbabed))
+* edit member address and household members on admin member page ([94055b2](https://github.com/fordprefect480/CommonGround/commit/94055b2e4c48f1ef1156b7f043b9f9cde8e0faea))
+* view and edit member address & household members on admin member page ([b4f6991](https://github.com/fordprefect480/CommonGround/commit/b4f6991d0a7c9452bb2e0e95723bc7bf0d0ec6a4))
+
+
+### Miscellaneous Chores
+
+* release 0.15.3 ([9d4d2ba](https://github.com/fordprefect480/CommonGround/commit/9d4d2ba2937c8ac6a2809beb47a3d21dbf1f1db4))
+
 ## [0.15.2](https://github.com/fordprefect480/CommonGround/compare/v0.15.1...v0.15.2) (2026-07-01)
 
 
