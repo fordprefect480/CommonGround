@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.2](https://github.com/fordprefect480/CommonGround/compare/v0.15.1...v0.15.2) (2026-07-01)
+
+
+### Bug Fixes
+
+* align Microsoft.Data.SqlClient.Extensions.Azure with SqlClient 7.0 line ([8bc2ffe](https://github.com/fordprefect480/CommonGround/commit/8bc2ffe)) ([#61](https://github.com/fordprefect480/CommonGround/issues/61))
+
 ## [0.15.1](https://github.com/fordprefect480/CommonGround/compare/v0.15.0...v0.15.1) (2026-07-01)
 
 
