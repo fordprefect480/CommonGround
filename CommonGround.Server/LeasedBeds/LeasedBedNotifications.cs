@@ -15,7 +15,7 @@ public sealed class LeasedBedNotifications(
     IOptions<GardenOptions> gardenOptions,
     IOptions<LeasedBedsOptions> bedOptions)
 {
-    /// <summary>Notifies the admin that a member applied (beds available) or joined the waiting list (full).</summary>
+    /// <summary>Notifies the admin that a member applied (beds available) or joined the waitlist (full).</summary>
     public async Task SendApplicationReceivedAsync(string memberName, BedRequestStatus status, int remaining, int waitlistTotal, CancellationToken ct)
     {
         var recipient = bedOptions.Value.AdminNotificationEmail;

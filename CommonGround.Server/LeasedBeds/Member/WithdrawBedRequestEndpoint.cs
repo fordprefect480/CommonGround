@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace CommonGround.Server.LeasedBeds.Member;
 
-/// <summary>Member cancels their pending application or leaves the waiting list.</summary>
+/// <summary>Member cancels their pending application or leaves the waitlist.</summary>
 public sealed class WithdrawBedRequestEndpoint(
     UserManager<ApplicationUser> userManager,
     AppDbContext db,
