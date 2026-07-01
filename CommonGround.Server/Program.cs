@@ -171,6 +171,8 @@ app.MapGroup("/api/auth").MapIdentityApi<ApplicationUser>();
 
 app.MapUnsubscribeEndpoint();
 
+app.MapSitemapEndpoint();
+
 app.MapDefaultEndpoints();
 
 app.UseFileServer();
