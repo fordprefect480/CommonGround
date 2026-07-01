@@ -1,6 +1,9 @@
 # CommonGround
 
-An open-source web application for community gardens - a public blog, member directory, and admin tools, built as a reusable platform any garden can self-host.
+[![CI](https://github.com/fordprefect480/CommonGround/actions/workflows/ci.yml/badge.svg)](https://github.com/fordprefect480/CommonGround/actions/workflows/ci.yml)
+[![Licence: GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-blue.svg)](LICENSE)
+
+An open-source web application for community gardens - a public site, member and membership management, paid plot (bed) leasing, events, newsletters, and admin tools, built as a reusable platform any garden can self-host.
 
 The codebase is a single .NET Aspire solution that orchestrates an ASP.NET Core API, a React single-page frontend, and a SQL Server database, so a developer can clone the repo and run the entire stack with one command.
 
@@ -19,42 +22,54 @@ The codebase is a single .NET Aspire solution that orchestrates an ASP.NET Core 
 ## Key features
 
 - Mobile-responsive public site - the homepage and public pages reflow from desktop to phone, with a slide-in nav drawer on small screens
-- Public blog with categories (Newsletters, Events, How-to, Announcements), slugs, featured images
-- Admin console (`/admin`) for member CRUD, blog post editing with rich-text + image upload, and tools
-- Wix blog importer that pulls existing posts from a `feed.xml` source
-- Member export to Excel (.xlsx)
-- Cookie-based auth with role-gated admin routes
+- Membership signup and renewal with Stripe checkout (or admin-recorded manual payments), household/secondary members, and member export to Excel (.xlsx)
+- Paid plot ("leased bed") leasing - members apply/waitlist for beds, pay or renew a lease via Stripe, and admins assign, release, and record payments
+- Public blog with categories (Newsletters, Events, How-to, Announcements), slugs, and featured images, plus a Wix blog importer that pulls existing posts from a `feed.xml` source
+- Community events - manually authored events plus an optional Eventbrite feed, surfaced on the public `/events` page
+- Instagram tiles - curated, reorderable embeds shown on the home page
+- Newsletters and transactional email via Resend, with a public subscribe/unsubscribe flow, sent-email history, and a contact form (Cloudflare Turnstile protected)
+- Admin console (`/admin`) - dashboard, member CRUD, blog/events/Instagram editing with rich text + image upload, leased-bed management, email tools, an activity/audit log, and site settings
+- "Coming soon" gate that shows an under-construction page to the public while admins preview the real site
+- Cookie-based auth (ASP.NET Core Identity) with role-gated admin routes and a password-reset flow
 - Single-binary publish: the Vite-built SPA is bundled into the API's `wwwroot` for production
 
 ## Repository layout
 
 ```
 .
-├── CommonGround.AppHost/      Aspire orchestrator - start here
+├── CommonGround.AppHost/      Aspire orchestrator - start here (AppHost.cs)
 ├── CommonGround.Server/       ASP.NET Core API
-│   ├── Account/               /api/account/* - current user profile
-│   ├── Auth/                  Endpoint groups, role constants, dev seed
+│   ├── Account/               /api/account/* - current user's profile + payments
+│   ├── Activity/              Activity/audit log writer + /api/admin/activity
+│   ├── Auth/                  Endpoint groups, role constants, dev seed, Identity email sender
 │   ├── Blog/                  /api/blog/* (public) + /api/admin/blog/* (admin)
 │   │   ├── Admin/             Blog CRUD + image upload
 │   │   ├── AdminTools/        Wix import, orphan-image cleanup
 │   │   ├── BlogImport/        WixBlogClient + BlogImporter
 │   │   └── Public/            Public listing/detail
-│   ├── Configuration/         GardenOptions (per-garden settings)
+│   ├── Configuration/         Options types (Garden, Contact, Stripe, Eventbrite, LeasedBeds)
 │   ├── Data/                  AppDbContext, entities, EF migrations
-│   ├── Members/               /api/admin/members/* - admin member CRUD + Excel export
-│   ├── Misc/                  Health ping, /api/config, logout
+│   ├── Email/                 Resend sender, newsletters, subscribe/unsubscribe, sent-email history
+│   ├── Events/                Community events + optional Eventbrite feed (public + admin)
+│   ├── Instagram/             Curated Instagram tiles (public + admin)
+│   ├── LeasedBeds/            Plot leasing - member apply/pay/renew + admin assign/release
+│   ├── Members/               Membership signup/renewal, Stripe checkout + webhook, Excel export
+│   ├── Misc/                  Health ping, /api/config, contact form, site-settings toggles, logout
 │   └── Extensions.cs          Aspire ServiceDefaults (OTel, health checks, service discovery)
 ├── frontend/                  React + Vite SPA (esproj - built by Aspire)
 │   └── src/
-│       ├── api/               Typed clients (auth, blog, adminTools, config)
+│       ├── api/               Typed clients (auth, blog, membership, leasedBeds, events, email, ...)
 │       ├── pages/             Route components (lazy-loaded via React.lazy)
 │       │   ├── home/          Public home page sections + responsive.ts (useMediaQuery)
 │       │   ├── blog/          Public blog index + post
 │       │   └── admin/         Admin console pages
-│       ├── App.tsx            Routes + code-split lazy imports
+│       ├── App.tsx            Routes + code-split lazy imports + coming-soon gate
 │       ├── AppConfigContext.tsx
 │       └── AuthContext.tsx
 ├── CommonGround.slnx          Solution file (.slnx XML format)
+├── BACKUP.md                  Backup & restore runbook (Azure SQL)
+├── AGENTS.md                  Notes for AI coding agents
+├── CHANGELOG.md               Generated by release-please
 └── LICENSE                    GPL-3.0
 ```
 
@@ -90,7 +105,12 @@ The Aspire AppHost is the single entry point. It launches SQL Server (in a conta
 
 ```bash
 dotnet run --project CommonGround.AppHost
+
+# Or, with the Aspire CLI installed:
+aspire run
 ```
+
+The SQL container is shared and persistent (`commonground-sql-shared`), and each git worktree gets its own database (`commongroundDb_<worktree>`) so parallel checkouts don't clobber each other's data; a published build uses `commongroundDb`.
 
 Then open the Aspire dashboard at the URL printed in the console (typically <https://localhost:17158>). From the dashboard you can click into:
 
@@ -119,17 +139,32 @@ Configuration is layered in standard ASP.NET Core fashion: `appsettings.json` �
 
 ### Settings reference
 
+Sections bind to strongly-typed options classes in [`CommonGround.Server/Configuration/`](CommonGround.Server/Configuration/) (and `Email/EmailOptions.cs`). Most integrations are optional: when their keys are blank the feature is disabled but the app still runs.
+
 | Key                      | Where                                  | Description                              | Default                                    |
 |--------------------------|----------------------------------------|------------------------------------------|--------------------------------------------|
-| `Garden:Name`            | `CommonGround.Server/appsettings.json` | Display name shown in the SPA title bar  | `Seaford Wetlands Community Garden`        |
+| `Garden:Name`            | `appsettings.json`                     | Display name shown in the SPA title bar and emails | empty                            |
+| `Garden:PublicUrl`       | `appsettings.json`                     | Public base URL (scheme + host, no trailing slash) used to build email links (e.g. unsubscribe). Falls back to the request host when unset - wrong behind a TLS-terminating proxy | empty |
 | `ConnectionStrings:commongroundDb` | injected by Aspire           | SQL Server connection string             | provided by AppHost                        |
 | `ASPNETCORE_ENVIRONMENT` | env var                                | `Development` enables the dev admin seed and OpenAPI UI; migrations run in every environment | `Development` (in launchSettings) |
-| `Email:ApiToken`         | secret                                 | Resend API key - required for any outbound email (newsletters, contact form) | empty (sending disabled)               |
+| `Email:ApiToken`         | secret                                 | Resend API key - required for any outbound email (newsletters, transactional, contact form) | empty (sending disabled)     |
 | `Email:FromAddress`      | `appsettings.json`                     | Verified sender address used as `From` on outbound mail | empty                                    |
 | `Email:FromName`         | `appsettings.json`                     | Optional display name for the sender     | empty                                      |
-| `Contact:RecipientAddress` | `appsettings.json`                   | Inbox that contact form submissions are delivered to | empty (contact form returns 503)        |
-| `Contact:TurnstileSiteKey` | `appsettings.json`                   | Cloudflare Turnstile site key - sent to the frontend so it can render the widget | empty (captcha disabled, form still sends) |
-| `Contact:TurnstileSecretKey` | secret                             | Cloudflare Turnstile secret key - used server-side to verify the captcha token | empty (captcha disabled, form still sends) |
+| `Email:TemplateId`       | secret                                 | Resend template GUID used for **newsletters** (bulk, unsubscribe link) | empty                            |
+| `Email:TransactionalTemplateId` | secret                          | Resend template GUID used for **transactional/membership** mail (welcomes, password reset, bed assignment) | empty      |
+| `ContactForm:RecipientAddress` | `appsettings.json`               | Inbox that contact form submissions are delivered to | empty (contact form returns 503)        |
+| `ContactForm:TurnstileSiteKey` | `appsettings.json`               | Cloudflare Turnstile site key - sent to the frontend so it can render the widget | empty (captcha disabled, form still sends) |
+| `ContactForm:TurnstileSecretKey` | secret                         | Cloudflare Turnstile secret key - used server-side to verify the captcha token | empty (captcha disabled, form still sends) |
+| `Stripe:SecretKey`       | secret                                 | Stripe secret key - enables Stripe checkout for memberships and leased beds | empty (online payments disabled; admins can still record manual payments) |
+| `Stripe:WebhookSecret`   | secret                                 | Stripe webhook signing secret - verifies the `/api/membership/stripe-webhook` callback | empty                    |
+| `Stripe:Currency`        | `appsettings.json`                     | ISO currency code for Stripe charges     | `aud`                                      |
+| `Eventbrite:PrivateToken` | secret                                | Eventbrite private OAuth token - enables the optional Eventbrite events feed | empty (Eventbrite feed disabled) |
+| `Eventbrite:OrganizationId` | `appsettings.json`                  | Eventbrite organizer ID whose upcoming events are shown | empty                                    |
+| `LeasedBeds:AdminNotificationEmail` | secret                      | Address that leased-bed admin notifications (applications, waitlist joins) are sent to | empty                    |
+| `BuildInfo:Version`      | env var (set at deploy)                | App version string exposed via `/api/config` and shown in the UI | empty                              |
+| `BuildInfo:CommitSha`    | env var (set at deploy)                | Git commit SHA exposed via `/api/config` | empty                                      |
+
+> Membership and leased-bed **prices** are not config keys - they live in the database (`SiteSettings`), are seeded on first run, and are edited from the admin **Settings** page. The current values are exposed to the SPA via `/api/config` (`membershipPriceCents`, `leasedBedPriceCents`).
 
 ### Per-developer secrets
 
@@ -141,7 +176,7 @@ dotnet user-secrets --project CommonGround.AppHost set <Key> <Value>
 
 ### Contact form and captcha (Cloudflare Turnstile)
 
-The contact form (rendered by `ContactPage` on the public site) posts to `POST /api/contact`. The API sends the submission as an email via Resend to `Contact:RecipientAddress`, with the submitter's address set as `Reply-To` so a regular "reply" in your inbox goes back to them.
+The contact form on the public site posts to `POST /api/contact`. The API sends the submission as an email via Resend to `ContactForm:RecipientAddress`, with the submitter's address set as `Reply-To` so a regular "reply" in your inbox goes back to them.
 
 The form is protected by [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile/) - a free, privacy-friendly CAPTCHA that doesn't depend on Google. Turnstile is optional: if no keys are configured, the form still works, just without bot protection.
 
@@ -162,16 +197,16 @@ The site key lives in plain `appsettings.json`; the secret belongs in user secre
 ```bash
 # Site key (public - fine to commit to appsettings.{Environment}.json)
 # appsettings.Production.json:
-#   "Contact": {
+#   "ContactForm": {
 #     "RecipientAddress": "contact@yourgarden.org",
 #     "TurnstileSiteKey": "0x4AAAAAAA..."
 #   }
 
 # Secret key (never commit)
-dotnet user-secrets --project CommonGround.AppHost set Contact:TurnstileSecretKey "0x4AAAAAAA..."
+dotnet user-secrets --project CommonGround.AppHost set ContactForm:TurnstileSecretKey "0x4AAAAAAA..."
 
 # Or as env vars in production:
-#   Contact__TurnstileSecretKey=0x4AAAAAAA...
+#   ContactForm__TurnstileSecretKey=0x4AAAAAAA...
 ```
 
 The `/api/config` endpoint exposes `turnstileSiteKey` to the SPA, which lazy-loads `https://challenges.cloudflare.com/turnstile/v0/api.js` and renders the widget. If `turnstileSiteKey` is null, the SPA skips the widget entirely.
@@ -186,11 +221,11 @@ The `/api/config` endpoint exposes `turnstileSiteKey` to the SPA, which lazy-loa
 | `2x00000000000000000000AB`    | `2x0000000000000000000000000000000AA`     | Always blocks              |
 | `3x00000000000000000000FF`    | `1x0000000000000000000000000000000AA`     | Forces an interactive challenge |
 
-To disable the captcha locally (e.g. while iterating on form layout), blank `Contact:TurnstileSiteKey` and `Contact:TurnstileSecretKey` in `appsettings.Development.json`.
+To disable the captcha locally (e.g. while iterating on form layout), blank `ContactForm:TurnstileSiteKey` and `ContactForm:TurnstileSecretKey` in `appsettings.Development.json`.
 
 **Disabling the contact form**
 
-Leave `Contact:RecipientAddress` empty. The endpoint will return `503 Service Unavailable` for every submission, which the SPA surfaces as a "temporarily unavailable" error.
+Leave `ContactForm:RecipientAddress` empty. The endpoint will return `503 Service Unavailable` for every submission, which the SPA surfaces as a "temporarily unavailable" error.
 
 ## Development workflow
 
@@ -248,16 +283,21 @@ https://localhost:7592/openapi/v1.json
 
 The most relevant route prefixes:
 
-| Prefix              | Purpose                                              |
-|---------------------|------------------------------------------------------|
-| `/api/auth/*`       | ASP.NET Core Identity API (register, login, etc.)    |
-| `/api/account/*`    | Current user's profile (`GET`/`PUT /api/account/me`) |
-| `/api/blog/*`       | Public blog listing, post detail, images             |
-| `/api/admin/*`      | Admin-only CRUD (members, blog posts, tools)         |
-| `/api/config`       | Public app config (garden name, Turnstile site key)  |
-| `/api/contact`      | Public contact form submission (captcha-verified)    |
-| `/api/health/ping`  | Liveness probe                                       |
-| `/health`, `/alive` | Aspire health endpoints (Development only)           |
+| Prefix                        | Purpose                                                        |
+|-------------------------------|----------------------------------------------------------------|
+| `/api/auth/*`                 | ASP.NET Core Identity API (register, login, forgot/reset password) |
+| `/api/account/*`              | Current user's profile and payment history                     |
+| `/api/blog/*`                 | Public blog listing, post detail, categories, images           |
+| `/api/events/*`               | Public upcoming community events                               |
+| `/api/instagram/*`            | Public Instagram tiles                                         |
+| `/api/membership/*`           | Membership signup/renewal, Stripe checkout + webhook           |
+| `/api/leased-beds/*`          | Member-facing plot leasing (apply, pay, renew, status)         |
+| `/api/subscribe`, `/unsubscribe` | Newsletter subscribe / unsubscribe                        |
+| `/api/admin/*`                | Admin-only CRUD (members, blog, events, instagram, leased-beds, email, tools, activity) |
+| `/api/config`                 | Public app config (garden name, prices, Turnstile site key, coming-soon flag) |
+| `/api/contact`                | Public contact form submission (captcha-verified)             |
+| `/api/health/ping`            | Liveness probe                                                |
+| `/health`, `/alive`           | Aspire health endpoints (Development only)                    |
 
 There's a small [`CommonGround.Server.http`](CommonGround.Server/CommonGround.Server.http) file you can use with VS Code's REST client extension for ad-hoc requests.
 
