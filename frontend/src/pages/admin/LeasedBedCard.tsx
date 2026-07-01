@@ -289,11 +289,11 @@ function PendingRequest({
     return (
       <>
         <p className="card-note" style={{ margin: 0 }}>
-          You are number {request.waitlistPosition} on the waiting list.
+          You are number {request.waitlistPosition} on the waitlist.
         </p>
         <div className="admin-actions">
           <button type="button" className="secondary-button" onClick={onWithdraw} disabled={busy}>
-            Leave the waiting list
+            Leave the waitlist
           </button>
         </div>
       </>
@@ -324,7 +324,7 @@ function ApplyCta({
   return (
     <div className="admin-actions">
       <button type="button" className="primary-button" onClick={onApply} disabled={busy}>
-        {capacity.isFull ? 'Join the waiting list' : hasActiveLease ? 'Apply for another bed' : 'Apply for a bed'}
+        {capacity.isFull ? 'Join the waitlist' : hasActiveLease ? 'Apply for another bed' : 'Apply for a bed'}
       </button>
     </div>
   )
