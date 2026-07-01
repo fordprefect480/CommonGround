@@ -11,7 +11,9 @@ export function AppConfigProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchAppConfig()
       .then((c) => {
-        initializeApplicationInsights(c.applicationInsightsConnectionString)
+        // Fire-and-forget: analytics loads its own chunk after paint and must
+        // never block rendering or surface an error if the SDK fails to load.
+        void initializeApplicationInsights(c.applicationInsightsConnectionString).catch(() => {})
         setConfig(c)
         document.title = c.gardenName
       })
