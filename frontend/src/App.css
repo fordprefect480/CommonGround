@@ -843,6 +843,35 @@ button.footer-link:disabled {
 .admin-table tbody tr:last-child td { border-bottom: none; }
 .admin-table tbody tr:hover         { background: var(--table-row-hover); }
 
+/* Stacks the per-row action links so each stays on its own line instead of
+   wrapping mid-phrase inside the narrow Actions column. */
+.admin-cell-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+.admin-cell-actions .footer-link { white-space: nowrap; }
+
+/* Pairs a small leading icon with a link label, keeping them centred and
+   preventing the icon from squashing when the label wraps. */
+.icon-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.icon-link svg { flex-shrink: 0; }
+
+/* Notes are secondary detail, so render them small and muted. Scoped through
+   `.admin-table tbody` to outweigh the base cell colour on specificity. */
+.admin-table tbody td.admin-note-cell {
+  font-size: 0.82rem;
+  color: var(--ink-500);
+}
+/* The "No note" placeholder uses .card-note, which sets its own larger
+   font-size; pull it back to match the note text. */
+.admin-table tbody td.admin-note-cell .card-note { font-size: inherit; }
+
 .admin-table th.admin-table-checkbox { width: 2.5rem; }
 .admin-table-checkbox { text-align: center; }
 .admin-table-checkbox input[type="checkbox"] {
@@ -1352,6 +1381,51 @@ button.footer-link:disabled {
   .admin-table tbody td.admin-card-title::before { content: none; }
   .admin-table tbody td.admin-card-title .admin-table-link {
     font-size: 1.05rem;
+  }
+
+  /* Leased beds: purpose-built cards. The bed label becomes the card title,
+     each remaining field stacks label-above-value, and the "no value" cells
+     (marked data-empty on available beds) drop out entirely so a free bed
+     shows only what matters. Row actions become full-width tap targets. */
+  .admin-table--beds tbody tr { padding: 1rem 1.1rem; }
+
+  .admin-table--beds tbody td {
+    display: block;
+    text-align: left;
+    padding: 0.25rem 0;
+  }
+  .admin-table--beds tbody td::before {
+    display: block;
+    margin-bottom: 0.1rem;
+  }
+  .admin-table--beds tbody td[data-empty] { display: none; }
+
+  .admin-table--beds tbody td[data-label="Bed"] {
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 0 0 0.55rem;
+    margin-bottom: 0.55rem;
+    border-bottom: 1px solid var(--ink-100);
+  }
+  .admin-table--beds tbody td[data-label="Bed"]::before { content: none; }
+
+  /* Buttons are self-describing, so drop the "Actions" label and give the
+     links button-sized hit areas stacked full width. */
+  .admin-table--beds tbody td[data-label="Actions"] { padding-top: 0.5rem; }
+  .admin-table--beds tbody td[data-label="Actions"]::before { content: none; }
+  .admin-table--beds .admin-cell-actions { width: 100%; gap: 0.5rem; }
+
+  .admin-table--beds tbody td[data-label="Actions"] > .footer-link,
+  .admin-table--beds .admin-cell-actions .footer-link {
+    width: 100%;
+    justify-content: center;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid var(--ink-200);
+    border-radius: var(--r-md);
+    background: var(--ivory);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: normal;
   }
 }
 
