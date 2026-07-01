@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import Seo from '../Seo'
+import Seo, { GARDEN_POSTAL_ADDRESS, SITE_URL } from '../Seo'
+import { useAppConfig } from '../AppConfigContext'
 import { fetchUpcomingEvents, type UpcomingEvent } from '../api/events'
 import { MSFooter, MSHeader, usePageNav } from './home/Chrome'
 import { MSEyebrow, MSSection, Photo } from './home/Primitives'
@@ -8,6 +9,7 @@ import { eventDayFmt, eventIcon, formatEventTimeRange } from './home/Sections'
 
 export default function Events() {
   const handleNav = usePageNav('events')
+  const { gardenName } = useAppConfig()
   const [events, setEvents] = useState<UpcomingEvent[] | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -27,11 +29,40 @@ export default function Events() {
 
   const selected = events?.find((e) => e.id === selectedId) ?? events?.[0]
 
+  // schema.org ItemList of upcoming Events - makes the listing eligible for
+  // Google's event rich results. Only emitted once events have loaded.
+  const eventsJsonLd = events && events.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        itemListElement: events.map((e, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          item: {
+            '@type': 'Event',
+            name: e.title,
+            startDate: e.startUtc,
+            ...(e.endUtc ? { endDate: e.endUtc } : {}),
+            ...(e.body ? { description: e.body } : {}),
+            url: e.url ?? `${SITE_URL}/events`,
+            ...(e.imageUrl ? { image: new URL(e.imageUrl, SITE_URL).href } : {}),
+            eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+            eventStatus: 'https://schema.org/EventScheduled',
+            location: e.location
+              ? { '@type': 'Place', name: e.location }
+              : { '@type': 'Place', name: gardenName, address: GARDEN_POSTAL_ADDRESS },
+            organizer: { '@type': 'Organization', name: gardenName, url: SITE_URL },
+          },
+        })),
+      }
+    : undefined
+
   return (
     <div data-screen-label="SWCG · events">
       <Seo
         title="Events"
         description="Workshops, working bees and community events at Seaford Wetlands Community Garden. See what's coming up and join us in the garden in Seaford, SA."
+        jsonLd={eventsJsonLd}
       />
       <MSHeader active="events" onNav={handleNav} />
 

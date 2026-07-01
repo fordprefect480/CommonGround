@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Seo, { SITE_URL } from '../Seo'
+import Seo, { GARDEN_POSTAL_ADDRESS, SITE_URL } from '../Seo'
 import { useAppConfig } from '../AppConfigContext'
 import { MSFooter, MSHeader, type NavId } from './home/Chrome'
 import {
@@ -81,14 +81,7 @@ export default function Home() {
           logo: `${SITE_URL}/swcg/logo-mark.svg`,
           image: `${SITE_URL}/swcg/hero-image.png`,
           email: 'seafordcg@gmail.com',
-          address: {
-            '@type': 'PostalAddress',
-            streetAddress: '100 Seaford Rd',
-            addressLocality: 'Seaford',
-            addressRegion: 'SA',
-            postalCode: '5169',
-            addressCountry: 'AU',
-          },
+          address: GARDEN_POSTAL_ADDRESS,
           sameAs: ['https://www.facebook.com/SeafordCG'],
         }}
       />
