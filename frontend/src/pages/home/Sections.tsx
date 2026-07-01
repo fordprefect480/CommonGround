@@ -385,10 +385,10 @@ export function FeatureGrid() {
   )
 }
 
-export function eventIcon(tone: PhotoTone) {
-  if (tone === 'leaf') return <Leaf size={64} style={{ opacity: 0.5 }} />
-  if (tone === 'apple') return <Tomato size={64} style={{ opacity: 0.5 }} />
-  return <Beet size={64} style={{ opacity: 0.5 }} />
+export function eventIcon(tone: PhotoTone, size = 64) {
+  if (tone === 'leaf') return <Leaf size={size} style={{ opacity: 0.5 }} />
+  if (tone === 'apple') return <Tomato size={size} style={{ opacity: 0.5 }} />
+  return <Beet size={size} style={{ opacity: 0.5 }} />
 }
 
 export const eventDayFmt = new Intl.DateTimeFormat('en-AU', {
