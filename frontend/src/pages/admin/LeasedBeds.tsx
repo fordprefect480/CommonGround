@@ -39,6 +39,48 @@ function parsePriceCents(priceDollars: string): { cents: number } | { error: str
   return { cents: Math.round(dollars * 100) }
 }
 
+const iconProps = {
+  width: 15,
+  height: 15,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  'aria-hidden': true,
+} as const
+
+function PaymentIcon() {
+  return (
+    <svg {...iconProps}>
+      <line x1="12" y1="1" x2="12" y2="23" />
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    </svg>
+  )
+}
+
+function ReleaseIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="8.5" cy="7" r="4" />
+      <line x1="23" y1="11" x2="17" y2="11" />
+    </svg>
+  )
+}
+
+function AssignIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="8.5" cy="7" r="4" />
+      <line x1="20" y1="8" x2="20" y2="14" />
+      <line x1="23" y1="11" x2="17" y2="11" />
+    </svg>
+  )
+}
+
 function leaseStatusLabel(status: BedLeaseStatus): string {
   switch (status) {
     case 'AwaitingPayment':
@@ -176,15 +218,15 @@ export default function LeasedBeds() {
 
             <h2 className="section-title">All beds</h2>
             <div className="admin-table-wrap">
-              <table className="admin-table">
+              <table className="admin-table admin-table--beds">
                 <thead>
                   <tr>
                     <th scope="col">Bed</th>
-                    <th scope="col">Notes</th>
                     <th scope="col">Holder</th>
                     <th scope="col">Lease</th>
                     <th scope="col">Payment</th>
                     <th scope="col">Expires</th>
+                    <th scope="col">Notes</th>
                     <th scope="col">Actions</th>
                   </tr>
                 </thead>
@@ -197,7 +239,19 @@ export default function LeasedBeds() {
                           <strong>{bed.label}</strong>
                           {!bed.isActive && <> <span className="pill">Out of service</span></>}
                         </td>
-                        <td data-label="Notes">
+                        <td data-label="Holder" data-empty={!lease && !bed.isActive ? '' : undefined}>{lease?.memberName ?? (bed.isActive ? <span className="pill pill-ok">Available</span> : '—')}</td>
+                        <td data-label="Lease" data-empty={lease ? undefined : ''}>
+                          {lease ? <>{leaseStatusLabel(lease.status)}{' · '}{formatPrice(lease.priceAtAllocationCents)}</> : '—'}
+                        </td>
+                        <td data-label="Payment" data-empty={lease ? undefined : ''}>
+                          {lease
+                            ? lease.isPaid
+                              ? lease.paidOnUtc ? `Paid ${formatDate(lease.paidOnUtc)}` : 'No payment required'
+                              : <span className="pill pill-warn">Awaiting payment</span>
+                            : '—'}
+                        </td>
+                        <td data-label="Expires" data-empty={lease ? undefined : ''}>{lease ? formatDate(lease.expiresOn) : '—'}</td>
+                        <td data-label="Notes" className="admin-note-cell">
                           {bed.notes
                             ? <span style={{ whiteSpace: 'pre-wrap' }}>{bed.notes}</span>
                             : <span className="card-note">No note</span>}
@@ -206,29 +260,18 @@ export default function LeasedBeds() {
                             {bed.notes ? 'Edit' : 'Add'}
                           </button>
                         </td>
-                        <td data-label="Holder">{lease?.memberName ?? (bed.isActive ? <span className="pill pill-ok">Available</span> : '—')}</td>
-                        <td data-label="Lease">
-                          {lease ? <>{leaseStatusLabel(lease.status)}{' · '}{formatPrice(lease.priceAtAllocationCents)}</> : '—'}
-                        </td>
-                        <td data-label="Payment">
-                          {lease
-                            ? lease.isPaid
-                              ? lease.paidOnUtc ? `Paid ${formatDate(lease.paidOnUtc)}` : 'No payment required'
-                              : <span className="pill pill-warn">Awaiting payment</span>
-                            : '—'}
-                        </td>
-                        <td data-label="Expires">{lease ? formatDate(lease.expiresOn) : '—'}</td>
                         <td data-label="Actions">
                           {lease ? (
-                            <>
+                            <div className="admin-cell-actions">
                               {lease.status === 'AwaitingPayment' && (
-                                <>
-                                  <button type="button" className="footer-link" onClick={() => setPaymentBed(bed)} disabled={busy}>Record a manual payment</button>
-                                  {' · '}
-                                </>
+                                <button type="button" className="footer-link icon-link" onClick={() => setPaymentBed(bed)} disabled={busy}>
+                                  <PaymentIcon />Record manual payment
+                                </button>
                               )}
-                              <button type="button" className="footer-link" onClick={() => handleRelease(bed)} disabled={busy}>Release</button>
-                            </>
+                              <button type="button" className="footer-link icon-link" onClick={() => handleRelease(bed)} disabled={busy}>
+                                <ReleaseIcon />Release bed
+                              </button>
+                            </div>
                           ) : (
                             bed.isActive ? (
                               <BedAssignControls
@@ -367,7 +410,7 @@ function BedAssignControls({
   }, [members, filter])
 
   if (!open) {
-    return <button type="button" className="footer-link" onClick={() => setOpen(true)}>Assign member</button>
+    return <button type="button" className="footer-link icon-link" onClick={() => setOpen(true)}><AssignIcon />Assign bed</button>
   }
 
   const submit = async () => {
