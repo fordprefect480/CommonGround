@@ -578,6 +578,10 @@ export function HomeEvents({ onNav }: NavProps) {
                       color: 'var(--fg-2)',
                       margin: 0,
                       flex: 1,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 4,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
                     }}
                   >
                     {e.body}
