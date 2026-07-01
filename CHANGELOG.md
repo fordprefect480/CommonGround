@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.16.1](https://github.com/fordprefect480/CommonGround/compare/v0.16.0...v0.16.1) (2026-07-01)
+
+
+### Performance Improvements
+
+* **frontend:** cut homepage LCP from ~29s to ~6s on mobile ([5a4587a](https://github.com/fordprefect480/CommonGround/commit/5a4587a5547231f1e62201b1237d2e45229b8382))
+* **frontend:** cut homepage LCP from ~29s to ~6s on mobile ([520d640](https://github.com/fordprefect480/CommonGround/commit/520d6403ce78cbb9a1a750b86689c660f3ae01f4))
+
 ## [0.16.0](https://github.com/fordprefect480/CommonGround/compare/v0.15.3...v0.16.0) (2026-07-01)
 
 
