@@ -16,7 +16,7 @@ Use the Aspire CLI from the repo root:
 
 Don't run `npm run dev` in `frontend/` on its own - the Vite proxy needs env vars that only the Aspire AppHost injects, so the SPA hits a `/api/config` 500 and won't render.
 
-If you only need to eyeball the UI (no real data), you *can* run `npm run dev` standalone and stub the backend via your browser-automation tool's request interception: fulfil `GET /api/config` with `{ "gardenName": "...", "applicationInsightsConnectionString": null, "turnstileSiteKey": null }` (and return `[]` for `/api/events/*`, `/api/instagram/*`, etc.). The home page then renders without the AppHost.
+If you only need to eyeball the UI (no real data), you *can* run `npm run dev` standalone and stub the backend via your browser-automation tool's request interception: fulfil `GET /api/config` with the current `ConfigResult` shape - `{ "gardenName": "...", "applicationInsightsConnectionString": null, "turnstileSiteKey": null, "version": null, "commitSha": null, "paymentsEnabled": false, "membershipPriceCents": 2500, "leasedBedPriceCents": 0, "comingSoon": false }` (and return `[]` for `/api/events/*`, `/api/instagram/*`, etc.). `comingSoon: false` is what keeps the public site visible without an authenticated admin. The home page then renders without the AppHost.
 
 ## Frontend
 
