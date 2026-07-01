@@ -72,9 +72,14 @@ public sealed class RecordMembershipPaymentEndpoint(
             ct: ct);
 
         var roles = await userManager.GetRolesAsync(user);
+        var secondaryMembers = await db.SecondaryMembers
+            .Where(s => s.UserId == user.Id)
+            .OrderBy(s => s.Id)
+            .Select(s => s.FullName)
+            .ToArrayAsync(ct);
         await Send.OkAsync(new MemberDto(
             user.Id, user.Email, user.UserName, user.FirstName, user.LastName, user.DisplayName,
-            user.PhoneNumber, user.JoinedAt, user.MembershipPaidThroughUtc, user.EmailConfirmed,
-            user.IsSubscribedToMailingList, roles.ToArray()), ct);
+            user.PhoneNumber, user.Address, user.JoinedAt, user.MembershipPaidThroughUtc,
+            user.EmailConfirmed, user.IsSubscribedToMailingList, secondaryMembers, roles.ToArray()), ct);
     }
 }

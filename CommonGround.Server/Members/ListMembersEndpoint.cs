@@ -28,11 +28,20 @@ public sealed class ListMembersEndpoint(AppDbContext db)
             .GroupBy(x => x.UserId)
             .ToDictionary(g => g.Key, g => g.Select(x => x.RoleName).ToArray());
 
+        var secondaryPairs = await db.SecondaryMembers
+            .OrderBy(s => s.Id)
+            .Select(s => new { s.UserId, s.FullName })
+            .ToListAsync(ct);
+
+        var secondaryByUser = secondaryPairs
+            .GroupBy(x => x.UserId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.FullName).ToArray());
+
         var members = users
             .Select(u => new MemberDto(
                 u.Id, u.Email, u.UserName, u.FirstName, u.LastName, u.DisplayName,
-                u.PhoneNumber, u.JoinedAt, u.MembershipPaidThroughUtc, u.EmailConfirmed,
-                u.IsSubscribedToMailingList, rolesByUser.GetValueOrDefault(u.Id, [])))
+                u.PhoneNumber, u.Address, u.JoinedAt, u.MembershipPaidThroughUtc, u.EmailConfirmed,
+                u.IsSubscribedToMailingList, secondaryByUser.GetValueOrDefault(u.Id, []), rolesByUser.GetValueOrDefault(u.Id, [])))
             .ToList();
 
         await Send.OkAsync(members, ct);
