@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.15.1](https://github.com/fordprefect480/CommonGround/compare/v0.15.0...v0.15.1) (2026-07-01)
+
+
+### Bug Fixes
+
+* **leased-beds:** order beds naturally (N1, N2 … N10) in admin overview ([de117eb](https://github.com/fordprefect480/CommonGround/commit/de117ebfdac3115778312f85fdbe26b73410b913))
+* **leased-beds:** order beds naturally (N1, N2 … N10) in admin overview ([58632d9](https://github.com/fordprefect480/CommonGround/commit/58632d93c28a0ecd7bc843e83cc1917cce407659))
+* **leased-beds:** refine bed actions and redesign mobile cards ([d2ffd37](https://github.com/fordprefect480/CommonGround/commit/d2ffd37a7bb75a13c72ab8ec944ccf70b07aa014))
+* **leased-beds:** refine bed actions and redesign mobile cards ([6c95d59](https://github.com/fordprefect480/CommonGround/commit/6c95d59be4ee86252ad285d2ca2dec2ee2939e11))
+
 ## [0.15.0](https://github.com/fordprefect480/CommonGround/compare/v0.14.1...v0.15.0) (2026-07-01)
 
 
