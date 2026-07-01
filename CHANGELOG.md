@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.15.0](https://github.com/fordprefect480/CommonGround/compare/v0.14.1...v0.15.0) (2026-07-01)
+
+
+### Features
+
+* truncate event card descriptions on home page ([0c965b8](https://github.com/fordprefect480/CommonGround/commit/0c965b85a4fb8d45db8213ea875117db4c534e0b))
+
+
+### Bug Fixes
+
+* align footer links with nav bar ([4da8592](https://github.com/fordprefect480/CommonGround/commit/4da8592fb969e6db8c4a2057e29d1c835ff839b6))
+* align footer links with nav bar ([80a9b8a](https://github.com/fordprefect480/CommonGround/commit/80a9b8a2a89c91211d10ddb82e61c22e1168710e))
+* **leased-beds:** rename 'waiting list' to 'waitlist' in user-facing text ([74dcc90](https://github.com/fordprefect480/CommonGround/commit/74dcc905aed4177a8ebc1b8cceee8cbf3b0a439a))
+
 ## [0.14.1](https://github.com/fordprefect480/CommonGround/compare/v0.14.0...v0.14.1) (2026-06-30)
 
 
