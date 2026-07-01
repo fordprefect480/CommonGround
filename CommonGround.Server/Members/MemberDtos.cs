@@ -8,10 +8,12 @@ public record MemberDto(
     string? LastName,
     string? DisplayName,
     string? PhoneNumber,
+    string? Address,
     DateTime JoinedAt,
     DateTime? MembershipPaidThroughUtc,
     bool EmailConfirmed,
     bool IsSubscribedToMailingList,
+    string[] SecondaryMembers,
     string[] Roles);
 
 public record CreateMemberDto(
