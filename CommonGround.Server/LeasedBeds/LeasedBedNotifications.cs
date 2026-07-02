@@ -44,7 +44,7 @@ public sealed class LeasedBedNotifications(
             return;
         }
 
-        var name = member.DisplayName ?? "there";
+        var name = member.FirstName ?? "there";
         var fyLabel = $"{expiresOn.Year - 1}/{expiresOn.Year}";
         var profileUrl = string.IsNullOrWhiteSpace(gardenOptions.Value.PublicUrl)
             ? null
