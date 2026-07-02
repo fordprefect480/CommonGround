@@ -10,9 +10,9 @@ public static class MembershipWelcomeEmail
     /// The message content as an HTML fragment, fed to the membership template's BODY variable
     /// (the template supplies the surrounding chrome). Resend renders the plain-text part.
     /// </summary>
-    public static string BuildHtml(string? displayName, string? signInUrl)
+    public static string BuildHtml(string? firstName, string? signInUrl)
     {
-        var greetingName = string.IsNullOrWhiteSpace(displayName) ? "there" : WebUtility.HtmlEncode(displayName);
+        var greetingName = string.IsNullOrWhiteSpace(firstName) ? "there" : WebUtility.HtmlEncode(firstName);
         var signInLink = string.IsNullOrWhiteSpace(signInUrl)
             ? ""
             : $"""<p><a href="{WebUtility.HtmlEncode(signInUrl)}">Sign in to your profile</a> any time to update your details or apply for a leased bed.</p>""";

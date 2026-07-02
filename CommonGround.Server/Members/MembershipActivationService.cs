@@ -97,7 +97,7 @@ public sealed class MembershipActivationService(
 
         await emailSender.SendMembershipAsync(
             MembershipWelcomeEmail.Subject,
-            MembershipWelcomeEmail.BuildHtml(user.DisplayName, signInUrl),
+            MembershipWelcomeEmail.BuildHtml(user.FirstName, signInUrl),
             new TransactionalEmailSender.Recipient(user.Email, user.Id),
             ct: ct);
     }
