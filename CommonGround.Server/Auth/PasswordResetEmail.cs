@@ -13,9 +13,9 @@ public static class PasswordResetEmail
     /// The message content as an HTML fragment, fed to the membership template's BODY variable
     /// (the template supplies the surrounding chrome). Resend renders the plain-text part.
     /// </summary>
-    public static string BuildHtml(string? displayName, string resetUrl)
+    public static string BuildHtml(string? firstName, string resetUrl)
     {
-        var greetingName = string.IsNullOrWhiteSpace(displayName) ? "there" : WebUtility.HtmlEncode(displayName);
+        var greetingName = string.IsNullOrWhiteSpace(firstName) ? "there" : WebUtility.HtmlEncode(firstName);
         var safeUrl = WebUtility.HtmlEncode(resetUrl);
         return $"""
             <h2 style="margin:0 0 16px;">Reset your password</h2>

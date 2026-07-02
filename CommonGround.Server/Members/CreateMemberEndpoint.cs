@@ -102,8 +102,8 @@ public sealed class CreateMemberEndpoint(
 
         await emailSender.SendAsync(
             MemberAccountCreatedEmail.Subject,
-            MemberAccountCreatedEmail.BuildHtml(user.DisplayName, profileUrl),
-            MemberAccountCreatedEmail.BuildText(user.DisplayName, profileUrl),
+            MemberAccountCreatedEmail.BuildHtml(user.FirstName, profileUrl),
+            MemberAccountCreatedEmail.BuildText(user.FirstName, profileUrl),
             new TransactionalEmailSender.Recipient(user.Email, user.Id),
             ct: ct);
     }

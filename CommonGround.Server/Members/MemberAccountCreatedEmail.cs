@@ -12,9 +12,9 @@ public static class MemberAccountCreatedEmail
 {
     public const string Subject = "Your Seaford Wetlands Community Garden account";
 
-    public static string BuildHtml(string? displayName, string? profileUrl)
+    public static string BuildHtml(string? firstName, string? profileUrl)
     {
-        var greetingName = string.IsNullOrWhiteSpace(displayName) ? "there" : WebUtility.HtmlEncode(displayName);
+        var greetingName = string.IsNullOrWhiteSpace(firstName) ? "there" : WebUtility.HtmlEncode(firstName);
         var payLine = string.IsNullOrWhiteSpace(profileUrl)
             ? "<p>To activate your membership, sign in and pay for it from your profile page. If you weren't given a password, use the \"forgot password\" link on the sign-in page to set one.</p>"
             : $"""<p>To activate your membership, <a href="{WebUtility.HtmlEncode(profileUrl)}">sign in and pay for it from your profile page</a>. If you weren't given a password, use the "forgot password" link on the sign-in page to set one.</p>""";
@@ -29,9 +29,9 @@ public static class MemberAccountCreatedEmail
             """;
     }
 
-    public static string BuildText(string? displayName, string? profileUrl)
+    public static string BuildText(string? firstName, string? profileUrl)
     {
-        var greetingName = string.IsNullOrWhiteSpace(displayName) ? "there" : displayName;
+        var greetingName = string.IsNullOrWhiteSpace(firstName) ? "there" : firstName;
         var payLine = string.IsNullOrWhiteSpace(profileUrl)
             ? "To activate your membership, sign in and pay for it from your profile page. If you weren't given a password, use the \"forgot password\" link on the sign-in page to set one."
             : $"To activate your membership, sign in and pay for it from your profile page: {profileUrl}\nIf you weren't given a password, use the \"forgot password\" link on the sign-in page to set one.";
