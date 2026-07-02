@@ -25,7 +25,7 @@ public static class LeasedBedEmails
     /// The member assignment notice as an HTML fragment, fed to the membership template's BODY
     /// variable (the template supplies the surrounding chrome). Resend renders the plain-text part.
     /// </summary>
-    public static string BuildAssignmentHtml(string memberName, string bedLabel, string fyLabel, DateOnly expiresOn, string? amount, string? profileUrl)
+    public static string BuildAssignmentHtml(string firstName, string bedLabel, string fyLabel, DateOnly expiresOn, string? amount, string? profileUrl)
     {
         var expiry = Enc(expiresOn.ToString("d MMM yyyy"));
         var label = Enc(bedLabel);
@@ -33,7 +33,7 @@ public static class LeasedBedEmails
         if (amount is null)
         {
             return $"""
-                <h2 style="margin:0 0 16px;">Hi {Enc(memberName)},</h2>
+                <h2 style="margin:0 0 16px;">Hi {Enc(firstName)},</h2>
                 <p>You've been assigned bed <strong>{label}</strong> for the {fy} financial year (expires {expiry}).</p>
                 <p>No payment is required &mdash; your lease is confirmed.</p>
                 <p>We look forward to seeing you in the garden.</p>
@@ -43,7 +43,7 @@ public static class LeasedBedEmails
             ? $"Please complete your payment of {Enc(amount)} from your profile to confirm it."
             : $"""Please complete your payment of {Enc(amount)} from <a href="{Enc(profileUrl)}">your profile</a> to confirm it.""";
         return $"""
-            <h2 style="margin:0 0 16px;">Hi {Enc(memberName)},</h2>
+            <h2 style="margin:0 0 16px;">Hi {Enc(firstName)},</h2>
             <p>You've been assigned bed <strong>{label}</strong> for the {fy} financial year (expires {expiry}).</p>
             <p>{payLink}</p>
             """;
