@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.18.0](https://github.com/fordprefect480/CommonGround/compare/v0.17.1...v0.18.0) (2026-07-06)
+
+
+### Features
+
+* distinguish mailing-list-only contacts from lapsed members in admin ([7f285bb](https://github.com/fordprefect480/CommonGround/commit/7f285bb40f792a44743a631c38af3d4a8defba7f))
+* distinguish mailing-list-only contacts from lapsed members in admin ([4202f16](https://github.com/fordprefect480/CommonGround/commit/4202f16e59fab5c5dec1124e9ec9feecd27662c5))
+
 ## [0.17.1](https://github.com/fordprefect480/CommonGround/compare/v0.17.0...v0.17.1) (2026-07-06)
 
 
