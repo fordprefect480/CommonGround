@@ -834,6 +834,24 @@ button.footer-link:disabled {
   border-bottom: 1px solid var(--ink-100);
 }
 
+.admin-table-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.admin-table-sort:hover { color: var(--ink-700); }
+
+.admin-table-sort-arrow { font-size: 0.6rem; }
+
 .admin-table tbody td {
   padding: 0.7rem 0.8rem;
   border-bottom: 1px solid var(--ink-100);
