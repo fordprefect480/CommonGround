@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.17.0](https://github.com/fordprefect480/CommonGround/compare/v0.16.2...v0.17.0) (2026-07-06)
+
+
+### Features
+
+* **admin:** make members table sortable by column headers ([65abbf2](https://github.com/fordprefect480/CommonGround/commit/65abbf2e8eef026b54dbea386740de1d7be46851))
+* **admin:** make members table sortable by column headers, default name ascending ([11444bf](https://github.com/fordprefect480/CommonGround/commit/11444bfb5e921d6cbf2981482a069991e881ddd0))
+* **email:** greet members by first name only ([b33f7e4](https://github.com/fordprefect480/CommonGround/commit/b33f7e4c55a827518762479e0e25246629dea5df))
+* **email:** greet members by first name only ([f4823be](https://github.com/fordprefect480/CommonGround/commit/f4823be1832c2862001530ab2294c7897c8ed7d3))
+
 ## [0.16.2](https://github.com/fordprefect480/CommonGround/compare/v0.16.1...v0.16.2) (2026-07-01)
 
 
