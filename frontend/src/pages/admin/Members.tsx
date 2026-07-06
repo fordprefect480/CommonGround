@@ -42,7 +42,7 @@ function pluralize(n: number, singular: string): string {
   return `${n} ${singular}${n === 1 ? '' : 's'}`
 }
 
-type MembershipStatus = 'paid' | 'notPaid'
+type MembershipStatus = 'paid' | 'notPaid' | 'mailingListOnly'
 
 // "Paid" means the member is paid up for the financial year the next renewal
 // covers (renewalTargetUtc - the next 1 July, with the late-join carry-over,
@@ -50,11 +50,17 @@ type MembershipStatus = 'paid' | 'notPaid'
 // financial year; within the 8-week renewal window it flags members still
 // covered this year but not yet renewed for the year ahead. See
 // isPaidForRenewalYear for why coverage is tested against the year's start.
+// A null paid-through means the user has never held a membership at all -
+// they only joined the mailing list - which is a different thing from a
+// member who has paid before and lapsed.
 function membershipStatus(member: Member, renewalTargetUtc: string): MembershipStatus {
-  return isPaidForRenewalYear(member.membershipPaidThroughUtc, renewalTargetUtc) ? 'paid' : 'notPaid'
+  if (isPaidForRenewalYear(member.membershipPaidThroughUtc, renewalTargetUtc)) return 'paid'
+  return member.membershipPaidThroughUtc ? 'notPaid' : 'mailingListOnly'
 }
 
-type MemberFilter = 'all' | 'paid' | 'notPaid'
+const MEMBERSHIP_RANK: Record<MembershipStatus, number> = { paid: 0, notPaid: 1, mailingListOnly: 2 }
+
+type MemberFilter = 'all' | MembershipStatus
 
 type SortKey = 'name' | 'email' | 'phone' | 'joinedAt' | 'membership' | 'mailingList'
 type SortDir = 'asc' | 'desc'
@@ -73,7 +79,7 @@ function compareMembers(a: Member, b: Member, key: SortKey, renewalTargetUtc: st
     case 'email': return collator.compare(a.email ?? '', b.email ?? '')
     case 'phone': return collator.compare(a.phoneNumber ?? '', b.phoneNumber ?? '')
     case 'joinedAt': return Date.parse(a.joinedAt) - Date.parse(b.joinedAt)
-    case 'membership': return Number(membershipStatus(b, renewalTargetUtc) === 'paid') - Number(membershipStatus(a, renewalTargetUtc) === 'paid')
+    case 'membership': return MEMBERSHIP_RANK[membershipStatus(a, renewalTargetUtc)] - MEMBERSHIP_RANK[membershipStatus(b, renewalTargetUtc)]
     case 'mailingList': return Number(b.isSubscribedToMailingList) - Number(a.isSubscribedToMailingList)
   }
 }
@@ -278,8 +284,7 @@ function MembersList({
   }
 
   const statuses = members.map((m) => membershipStatus(m, renewalTargetUtc))
-  const paidCount = statuses.filter((s) => s === 'paid').length
-  const notPaidCount = statuses.filter((s) => s === 'notPaid').length
+  const countOf = (status: MembershipStatus) => statuses.filter((s) => s === status).length
 
   const visible = members.filter((_, i) => filter === 'all' || statuses[i] === filter)
 
@@ -287,8 +292,9 @@ function MembersList({
     onFilterChange(filter === value ? 'all' : value)
 
   const chips: { value: Exclude<MemberFilter, 'all'>; label: string; count: number }[] = [
-    { value: 'paid', label: 'Paid', count: paidCount },
-    { value: 'notPaid', label: 'Not Yet Paid', count: notPaidCount },
+    { value: 'paid', label: 'Paid', count: countOf('paid') },
+    { value: 'notPaid', label: 'Not Yet Paid', count: countOf('notPaid') },
+    { value: 'mailingListOnly', label: 'Mailing List Only', count: countOf('mailingListOnly') },
   ]
 
   const toggleOne = (id: string) =>
@@ -368,6 +374,7 @@ function MembersList({
 const MEMBERSHIP_PILL: Record<MembershipStatus, { className: string; label: string }> = {
   paid: { className: 'pill pill-ok', label: 'Paid' },
   notPaid: { className: 'pill pill-warn', label: 'Not Yet Paid' },
+  mailingListOnly: { className: 'pill', label: 'Mailing List Only' },
 }
 
 function MembersTable({
