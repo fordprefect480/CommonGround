@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createMember, fetchMembers, fetchMembershipRenewalTarget, type Member } from '../../api/auth'
 import { isPaidForRenewalYear } from '../../format'
@@ -55,6 +55,28 @@ function membershipStatus(member: Member, renewalTargetUtc: string): MembershipS
 }
 
 type MemberFilter = 'all' | 'paid' | 'notPaid'
+
+type SortKey = 'name' | 'email' | 'phone' | 'joinedAt' | 'membership' | 'mailingList'
+type SortDir = 'asc' | 'desc'
+
+const collator = new Intl.Collator('en', { sensitivity: 'base' })
+
+function memberName(member: Member): string {
+  return member.displayName ?? member.email ?? ''
+}
+
+// Ascending order puts paid before not-paid and subscribed before
+// unsubscribed, so the first click surfaces the "good" state on top.
+function compareMembers(a: Member, b: Member, key: SortKey, renewalTargetUtc: string): number {
+  switch (key) {
+    case 'name': return collator.compare(memberName(a), memberName(b))
+    case 'email': return collator.compare(a.email ?? '', b.email ?? '')
+    case 'phone': return collator.compare(a.phoneNumber ?? '', b.phoneNumber ?? '')
+    case 'joinedAt': return Date.parse(a.joinedAt) - Date.parse(b.joinedAt)
+    case 'membership': return Number(membershipStatus(b, renewalTargetUtc) === 'paid') - Number(membershipStatus(a, renewalTargetUtc) === 'paid')
+    case 'mailingList': return Number(b.isSubscribedToMailingList) - Number(a.isSubscribedToMailingList)
+  }
+}
 
 export default function Members() {
   const [state, setState] = useState<State>({ status: 'loading' })
@@ -366,10 +388,28 @@ function MembersTable({
   onToggleAllVisible: () => void
 }) {
   const navigate = useNavigate()
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: 'name', dir: 'asc' })
+
+  const sorted = useMemo(() => {
+    const dir = sort.dir === 'asc' ? 1 : -1
+    return [...members].sort((a, b) => dir * compareMembers(a, b, sort.key, renewalTargetUtc))
+  }, [members, sort, renewalTargetUtc])
 
   if (members.length === 0) {
     return <p className="admin-empty">No members match this filter.</p>
   }
+
+  const toggleSort = (key: SortKey) =>
+    setSort((prev) => (prev.key === key ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }))
+
+  const columns: { key: SortKey; label: string }[] = [
+    { key: 'name', label: 'Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'phone', label: 'Phone' },
+    { key: 'joinedAt', label: 'Member since' },
+    { key: 'membership', label: 'Membership' },
+    { key: 'mailingList', label: 'Mailing list' },
+  ]
 
   return (
     <div className="admin-table-wrap">
@@ -387,19 +427,23 @@ function MembersTable({
                 onChange={onToggleAllVisible}
               />
             </th>
-            <th scope="col">Name</th>
-            <th scope="col">Email</th>
-            <th scope="col">Phone</th>
-            <th scope="col">Member since</th>
-            <th scope="col">Membership</th>
-            <th scope="col">Mailing list</th>
+            {columns.map(({ key, label }) => (
+              <th key={key} scope="col" aria-sort={sort.key === key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
+                <button type="button" className="admin-table-sort" onClick={() => toggleSort(key)}>
+                  {label}
+                  <span className="admin-table-sort-arrow" aria-hidden="true">
+                    {sort.key === key ? (sort.dir === 'asc' ? '▲' : '▼') : ''}
+                  </span>
+                </button>
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {members.map((member) => {
+          {sorted.map((member) => {
             const isAdmin = member.roles.includes(ADMIN_ROLE)
             const pill = MEMBERSHIP_PILL[membershipStatus(member, renewalTargetUtc)]
-            const name = member.displayName ?? member.email ?? '(no name)'
+            const name = memberName(member) || '(no name)'
             const open = () => navigate(`/admin/members/${member.id}`)
             const stop = (e: React.SyntheticEvent) => e.stopPropagation()
             return (
