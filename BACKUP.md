@@ -16,31 +16,34 @@ the Container App / the database / a row, how do I get it back?"*
   `varbinary` BLOBs, not on disk), community events, sent-email records and the
   audit log all live in SQL. This is the thing to protect.
 - **Backups are automatic.** Azure SQL continuously backs the database up, giving a
-  **35-day point-in-time restore (PITR)** window. Two things are configured manually,
-  once per environment (see below): the **PITR retention** and a **delete lock** on
-  the SQL server. For protection older than 35 days, take periodic **`.bacpac`
-  exports** — native long-term retention (LTR) is *not* available here (it is
-  incompatible with the serverless auto-pause this database uses to save cost).
+  **7-day point-in-time restore (PITR)** window — 7 days is the maximum (and the
+  default) on the **Basic tier** this database runs on. One thing is configured
+  manually, once per environment (see below): a **delete lock** on the SQL server.
+  For protection older than 7 days, take periodic **`.bacpac` exports** — native
+  long-term retention (LTR) is not configured here; the `.bacpac` exports are the
+  long-term story (they are offsite and portable, which LTR snapshots are not).
 
 ## What is backed up, and where it's configured
 
 | Layer | Mechanism | Defined in |
 |---|---|---|
-| Point-in-time restore (PITR), 35-day rolling window | Azure SQL automated backups + short-term retention policy | **Manual** (this runbook) — see below |
-| Long-term retention (LTR): weekly/monthly/yearly snapshots | *Not used* — Azure blocks LTR on a serverless DB with auto-pause enabled | — (use `.bacpac` exports instead) |
+| Point-in-time restore (PITR), 7-day rolling window | Azure SQL automated backups + short-term retention policy | Nothing to set — 7 days is the Basic-tier default *and* maximum |
+| Long-term retention (LTR): weekly/monthly/yearly snapshots | *Not used* — available on Basic tier, but `.bacpac` exports are preferred (offsite, portable, restorable anywhere) | — (use `.bacpac` exports instead) |
 | Protection against deleting the SQL server itself | `CanNotDelete` management lock | **Manual** (this runbook) — a lock on the resource group would block `azd` deploys, so it is applied operationally, not in IaC |
 | Long-term / offsite copy (`.bacpac`) | `az sql db export` to Blob Storage | **Manual / scheduled** (this runbook) |
 
 > PITR retention is **not** codified in the AppHost. `Azure.Provisioning.Sql` 1.1.0
 > generates invalid bicep for the retention-policy resources (it omits the required
-> `name`, failing `bicep build` with BCP035), so the policy is set by hand with the
-> `az sql db str-policy set` command below. It is sticky — set it once per environment
-> and it survives redeploys.
+> `name`, failing `bicep build` with BCP035). On the Basic tier this doesn't matter:
+> 7 days is both the default and the maximum, so there is nothing to set — just
+> verify it (below). A longer window (up to 35 days) requires upgrading the database
+> to Standard tier or above.
 >
-> **Native LTR is unavailable here.** `az sql db ltr-policy set` fails with
-> `LtrConfigPolicyUnsupportedIfAutoPauseEnabled` because the database is serverless
-> with auto-pause (`AutoPauseDelay` in `AppHost.cs`), which we keep for cost. For
-> retention beyond the 35-day PITR window, use the scheduled `.bacpac` export below.
+> **Native LTR is not configured.** It became technically possible when the database
+> moved from serverless (where auto-pause blocked it) to Basic tier, but the
+> `.bacpac` exports below remain the long-term story: they live in your own storage
+> account (surviving even server or subscription loss) and restore anywhere, which
+> LTR snapshots do not.
 
 ## One-time setup: lock the SQL server against deletion
 
@@ -77,26 +80,19 @@ az sql server list -g "$RG" -o table
 az sql db list -g "$RG" -s "$SQL_SERVER" -o table   # the app DB is "commongroundDb"
 ```
 
-## One-time setup: configure PITR retention
+## One-time check: verify PITR retention
 
-Run this once per environment. It is not in the AppHost (see the note above), so it
-must be applied by hand; once set it persists across redeploys.
-
-```bash
-# Point-in-time restore (PITR): 35-day rolling window.
-az sql db str-policy set -g "$RG" -s "$SQL_SERVER" -n commongroundDb --retention-days 35
-```
-
-Verify:
+Nothing to configure on the Basic tier — 7 days is the default and the maximum.
+Just confirm it once per environment:
 
 ```bash
-# Expect retentionDays: 35
+# Expect retentionDays: 7 (the Basic-tier maximum)
 az sql db str-policy show -g "$RG" -s "$SQL_SERVER" -n commongroundDb -o jsonc
 ```
 
-> Don't bother with `az sql db ltr-policy set` — it fails with
-> `LtrConfigPolicyUnsupportedIfAutoPauseEnabled` on this serverless + auto-pause
-> database. Long-term coverage comes from the `.bacpac` export below instead.
+> `az sql db str-policy set` with anything above 7 days fails on Basic. If a longer
+> window is ever needed, upgrade the database to Standard tier or above first.
+> Long-term coverage comes from the `.bacpac` export below instead.
 
 ## Restore procedures
 
@@ -116,7 +112,7 @@ container.)
 ### Scenario B — "I corrupted/deleted data and need to roll back" (point-in-time restore)
 
 PITR restores into a **new** database (it never overwrites the live one), so you can
-inspect before swapping. Within the 35-day window:
+inspect before swapping. Within the 7-day window:
 
 ```bash
 # Restore to a point in time, into a new DB name.
@@ -154,11 +150,11 @@ az sql db restore \
   --deleted-time "2026-06-23T09:00:00Z"
 ```
 
-### Scenario D — "Recovery older than the 35-day PITR window"
+### Scenario D — "Recovery older than the 7-day PITR window"
 
-There are **no native LTR snapshots** for this database (LTR is incompatible with the
-serverless auto-pause it uses — see the note near the top). Recovery beyond 35 days
-relies on the `.bacpac` exports — restore one as in **Scenario E** below.
+There are **no native LTR snapshots** for this database (LTR is not configured — see
+the note near the top). Recovery beyond 7 days relies on the `.bacpac` exports —
+restore one as in **Scenario E** below.
 
 ### Scenario E — "Total loss / restore outside Azure SQL" (from a .bacpac)
 
@@ -175,10 +171,10 @@ az sql db import \
 
 ## Scheduled offsite .bacpac export (the long-term backup)
 
-Because native LTR is unavailable here, a periodic `.bacpac` in your own storage
-account **is** the long-term retention story (plus the "what if the whole subscription
-is compromised" tail risk, and a portable artifact you can restore anywhere). Schedule
-this if you need to recover anything older than the 35-day PITR window.
+A periodic `.bacpac` in your own storage account **is** the long-term retention story
+(plus the "what if the whole subscription is compromised" tail risk, and a portable
+artifact you can restore anywhere). With PITR now covering only 7 days on the Basic
+tier, this matters more than it used to — schedule it to recover anything older.
 
 ```bash
 az sql db export \
@@ -196,10 +192,10 @@ blob container to age old exports out.
 
 1. **Apply the `CanNotDelete` lock on the SQL server** — one-time, above. This is the
    real guard against "I blew the whole thing away."
-2. **Set the PITR retention by hand** (35-day window) — one-time, above — and confirm
-   occasionally with the `str-policy show` command. It survives redeploys, so this is
-   a per-environment setup step.
+2. **Verify the PITR retention** occasionally with the `str-policy show` command —
+   nothing to set on the Basic tier (7 days is the default and the maximum), this is
+   just a sanity check.
 3. **Schedule a weekly `.bacpac` export** — this is your only coverage beyond the
-   35-day PITR window (native LTR is unavailable on this serverless + auto-pause DB).
+   7-day PITR window (native LTR is not configured; `.bacpac` exports are preferred).
 4. **Test a restore once** (Scenario B into a throwaway DB name) so the procedure is
    familiar before you ever need it under pressure.

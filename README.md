@@ -341,7 +341,7 @@ Each pair is optional — supply none for the default Azure-generated hostname, 
 
 ### Backup and restore
 
-The Container App is stateless - all durable data lives in the Azure SQL database. A 35-day point-in-time restore window is configured manually per environment (it survives redeploys); coverage beyond 35 days comes from scheduled `.bacpac` exports, since native long-term retention isn't available on this serverless + auto-pause database. See [`BACKUP.md`](BACKUP.md) for the full strategy, the one-time retention and SQL-server delete-lock setup, and step-by-step restore procedures.
+The Container App is stateless - all durable data lives in the Azure SQL database (Basic tier). Azure's automatic backups give a 7-day point-in-time restore window - the Basic-tier maximum, needing no per-environment setup; coverage beyond 7 days comes from scheduled `.bacpac` exports rather than native long-term retention. See [`BACKUP.md`](BACKUP.md) for the full strategy, the one-time SQL-server delete-lock setup, and step-by-step restore procedures.
 
 ## Architecture notes
 

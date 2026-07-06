@@ -17,7 +17,10 @@ var sql = builder.AddAzureSqlServer("sql")
 var worktreeName = Path.GetFileName(Path.GetDirectoryName(builder.AppHostDirectory)) ?? "default";
 var sqlDbName = builder.ExecutionContext.IsPublishMode ? "commongroundDb" : "commongroundDb_" + Regex.Replace(worktreeName, "[^A-Za-z0-9_]", "_");
 
-var commonGroundDb = sql.AddDatabase("commongroundDb", sqlDbName);
+// WithDefaultAzureSku opts out of Aspire's free-offer defaults (useFreeLimit: true),
+// which Azure rejects once the database is on a paid tier ("Cannot update paid
+// database to free database"). The actual SKU is codified below instead.
+var commonGroundDb = sql.AddDatabase("commongroundDb", sqlDbName).WithDefaultAzureSku();
 
 if (builder.ExecutionContext.IsPublishMode)
 {
@@ -26,20 +29,16 @@ if (builder.ExecutionContext.IsPublishMode)
 		var db = infra.GetProvisionableResources().OfType<SqlDatabase>().Single();
 		db.Sku = new SqlSku
 		{
-			Name = "GP_S_Gen5_1",
-			Tier = "GeneralPurpose",
-			Family = "Gen5",
-			Capacity = 1,
+			Name = "Basic",
+			Tier = "Basic",
+			Capacity = 5,
 		};
-		db.MinCapacity = 0.5;
-		db.AutoPauseDelay = 60;
 
-		// Backup retention is NOT codified here. The 35-day PITR window is set manually
-		// (Azure.Provisioning.Sql 1.1.0 emits invalid bicep for the retention-policy
-		// resources — it omits the required `name`, failing `bicep build` with BCP035),
-		// and native long-term retention is unavailable anyway because Azure forbids LTR
-		// on a serverless database with auto-pause enabled (the AutoPauseDelay above).
-		// Long-term coverage is via scheduled .bacpac exports. See BACKUP.md (repo root).
+		// Backup retention is NOT codified here (Azure.Provisioning.Sql 1.1.0 emits
+		// invalid bicep for the retention-policy resources — it omits the required
+		// `name`, failing `bicep build` with BCP035); it is set manually. Basic tier
+		// caps the PITR window at 7 days. Longer coverage is via scheduled .bacpac
+		// exports. See BACKUP.md (repo root).
 	});
 }
 
