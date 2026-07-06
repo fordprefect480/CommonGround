@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.1](https://github.com/fordprefect480/CommonGround/compare/v0.17.0...v0.17.1) (2026-07-06)
+
+
+### Bug Fixes
+
+* **deploy:** align Azure SQL provisioning with Basic tier database ([30243d1](https://github.com/fordprefect480/CommonGround/commit/30243d186519a7d08cb3859d1e34da3d2fbf9ca4))
+
 ## [0.17.0](https://github.com/fordprefect480/CommonGround/compare/v0.16.2...v0.17.0) (2026-07-06)
 
 
