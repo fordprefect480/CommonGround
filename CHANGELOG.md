@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.18.1](https://github.com/fordprefect480/CommonGround/compare/v0.18.0...v0.18.1) (2026-07-07)
+
+
+### Bug Fixes
+
+* leave admin members name column blank when member has no name ([eb4aa05](https://github.com/fordprefect480/CommonGround/commit/eb4aa053799788d62cb8ec2356ace06d78b7fddf))
+* leave admin members name column blank when member has no name ([4f5894c](https://github.com/fordprefect480/CommonGround/commit/4f5894cfa080ed0747f4b5ed8222f67b895a964d))
+* show dash for missing name in admin members table ([9c89abc](https://github.com/fordprefect480/CommonGround/commit/9c89abc166bc87fe6c449931bcbc5ff683f3b784))
+
 ## [0.18.0](https://github.com/fordprefect480/CommonGround/compare/v0.17.1...v0.18.0) (2026-07-06)
 
 
