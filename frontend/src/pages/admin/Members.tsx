@@ -483,7 +483,7 @@ function MembersTable({
                   />
                 </td>
                 <td className="admin-card-title" data-label="Name">
-                  <span className="admin-table-link">{name}</span>
+                  <span className="admin-table-link">{name || '-'}</span>
                   {isAdmin && <span className="pill pill-ok admin-name-badge">Admin</span>}
                 </td>
                 <td data-label="Email">{member.email ?? '-'}</td>
