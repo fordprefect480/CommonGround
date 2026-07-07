@@ -68,7 +68,7 @@ type SortDir = 'asc' | 'desc'
 const collator = new Intl.Collator('en', { sensitivity: 'base' })
 
 function memberName(member: Member): string {
-  return member.displayName ?? member.email ?? ''
+  return member.displayName ?? ''
 }
 
 // Ascending order puts paid before not-paid and subscribed before
@@ -450,7 +450,8 @@ function MembersTable({
           {sorted.map((member) => {
             const isAdmin = member.roles.includes(ADMIN_ROLE)
             const pill = MEMBERSHIP_PILL[membershipStatus(member, renewalTargetUtc)]
-            const name = memberName(member) || '(no name)'
+            const name = memberName(member)
+            const accessibleName = name || member.email || '(no name)'
             const open = () => navigate(`/admin/members/${member.id}`)
             const stop = (e: React.SyntheticEvent) => e.stopPropagation()
             return (
@@ -466,7 +467,7 @@ function MembersTable({
                 }}
                 tabIndex={0}
                 role="link"
-                aria-label={`View membership details for ${name}`}
+                aria-label={`View membership details for ${accessibleName}`}
               >
                 <td
                   className="admin-table-checkbox"
@@ -476,13 +477,13 @@ function MembersTable({
                 >
                   <input
                     type="checkbox"
-                    aria-label={`Select ${name}`}
+                    aria-label={`Select ${accessibleName}`}
                     checked={selectedIds.has(member.id)}
                     onChange={() => onToggleOne(member.id)}
                   />
                 </td>
                 <td className="admin-card-title" data-label="Name">
-                  <span className="admin-table-link">{name}</span>
+                  <span className="admin-table-link">{name || '-'}</span>
                   {isAdmin && <span className="pill pill-ok admin-name-badge">Admin</span>}
                 </td>
                 <td data-label="Email">{member.email ?? '-'}</td>
