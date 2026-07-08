@@ -1142,6 +1142,11 @@ button.footer-link:disabled {
 }
 
 /* Filter chips */
+.admin-search {
+  max-width: 26rem;
+  margin-bottom: 1rem;
+}
+
 .filter-chips {
   display: flex;
   flex-wrap: wrap;

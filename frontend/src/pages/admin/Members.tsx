@@ -84,9 +84,29 @@ function compareMembers(a: Member, b: Member, key: SortKey, renewalTargetUtc: st
   }
 }
 
+// Case- and diacritic-insensitive, so "jose" finds "José" (matching the
+// collator used for sorting, which also ignores accents).
+function fold(value: string): string {
+  return value.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
+}
+
+function matchesSearch(member: Member, query: string): boolean {
+  const q = fold(query.trim())
+  if (!q) return true
+  if (fold(memberName(member)).includes(q) || fold(member.email ?? '').includes(q)) return true
+  const phone = member.phoneNumber ?? ''
+  if (phone.toLowerCase().includes(q)) return true
+  // Digits-only comparison so "0412345678" finds "0412 345 678" and vice
+  // versa - but only when the query looks like a phone number, so a digit in
+  // a name search doesn't match every phone containing it.
+  const looksLikePhone = /^[+()\d\s.-]+$/.test(q) && /\d/.test(q)
+  return looksLikePhone && phone.replace(/\D/g, '').includes(q.replace(/\D/g, ''))
+}
+
 export default function Members() {
   const [state, setState] = useState<State>({ status: 'loading' })
   const [filter, setFilter] = useState<MemberFilter>('all')
+  const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
@@ -258,6 +278,8 @@ export default function Members() {
           renewalTargetUtc={state.renewalTargetUtc}
           filter={filter}
           onFilterChange={setFilter}
+          search={search}
+          onSearchChange={setSearch}
         />
       )}
     </section>
@@ -269,11 +291,15 @@ function MembersList({
   renewalTargetUtc,
   filter,
   onFilterChange,
+  search,
+  onSearchChange,
 }: {
   members: Member[]
   renewalTargetUtc: string
   filter: MemberFilter
   onFilterChange: (filter: MemberFilter) => void
+  search: string
+  onSearchChange: (search: string) => void
 }) {
   const navigate = useNavigate()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -283,10 +309,11 @@ function MembersList({
     return <p className="admin-empty">No users registered yet.</p>
   }
 
-  const statuses = members.map((m) => membershipStatus(m, renewalTargetUtc))
+  const searched = members.filter((m) => matchesSearch(m, search))
+  const statuses = searched.map((m) => membershipStatus(m, renewalTargetUtc))
   const countOf = (status: MembershipStatus) => statuses.filter((s) => s === status).length
 
-  const visible = members.filter((_, i) => filter === 'all' || statuses[i] === filter)
+  const visible = searched.filter((_, i) => filter === 'all' || statuses[i] === filter)
 
   const toggleFilter = (value: Exclude<MemberFilter, 'all'>) =>
     onFilterChange(filter === value ? 'all' : value)
@@ -320,6 +347,17 @@ function MembersList({
 
   return (
     <>
+      <div className="field admin-search">
+        <label className="field-label" htmlFor="member-search">Search</label>
+        <input
+          id="member-search"
+          type="search"
+          placeholder="Search by name, email or phone"
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+        />
+      </div>
+
       <div className="filter-chips" role="group" aria-label="Filter members by membership status">
         {chips.map((chip) => (
           <button
@@ -403,7 +441,7 @@ function MembersTable({
   }, [members, sort, renewalTargetUtc])
 
   if (members.length === 0) {
-    return <p className="admin-empty">No members match this filter.</p>
+    return <p className="admin-empty">No members match this search or filter.</p>
   }
 
   const toggleSort = (key: SortKey) =>
