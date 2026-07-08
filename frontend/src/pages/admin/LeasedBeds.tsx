@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { getLeasedBedPrice } from '../../api/adminTools'
 import { fetchMembers, type Member } from '../../api/auth'
 import {
   assignBed,
+  type AssignResult,
   fetchBedRequests,
   fetchLeasedBeds,
   recordLeasePayment,
@@ -17,6 +19,15 @@ import {
 } from '../../api/leasedBeds'
 import { formatPrice } from '../../format'
 import RecordPaymentModal from './RecordPaymentModal'
+import PromptModal from './PromptModal'
+import ConfirmModal from './ConfirmModal'
+
+interface PendingConfirm {
+  title: string
+  message: string
+  confirmLabel: string
+  onConfirm: () => Promise<void>
+}
 
 type State =
   | { status: 'loading' }
@@ -26,11 +37,19 @@ type State =
 const dateFmt = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
 const formatDate = (value: string) => dateFmt.format(new Date(value))
 
+function memberName(m: Member): string {
+  return m.displayName?.trim() || [m.firstName, m.lastName].filter(Boolean).join(' ').trim() || m.email || m.id
+}
+
 function memberLabel(m: Member): string {
   const name = m.displayName?.trim() || [m.firstName, m.lastName].filter(Boolean).join(' ').trim()
   if (name && m.email) return `${name} (${m.email})`
   return name || m.email || m.id
 }
+
+// Cap the suggestion list so a long membership doesn't render hundreds of rows;
+// the filter narrows things down well before this bites.
+const MEMBER_SUGGESTION_LIMIT = 50
 
 /** Parse a dollar string into whole cents, or return a user-facing error message. */
 function parsePriceCents(priceDollars: string): { cents: number } | { error: string } {
@@ -96,15 +115,20 @@ function leaseStatusLabel(status: BedLeaseStatus): string {
 
 export default function LeasedBeds() {
   const [state, setState] = useState<State>({ status: 'loading' })
-  const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
   const [paymentBed, setPaymentBed] = useState<AdminBed | null>(null)
+  const [noteBed, setNoteBed] = useState<AdminBed | null>(null)
+  const [pendingConfirm, setPendingConfirm] = useState<PendingConfirm | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
   // Members back the "assign to a member" dropdown. Loaded as part of reloadAll so the list
   // stays fresh and a failure surfaces as the page error rather than a silent empty dropdown.
-  // Sorted once here for display rather than per row.
+  // Sorted once here for display rather than per row. Mailing-list-only members (never held a
+  // membership) are excluded - only actual members can hold a bed.
   const [members, setMembers] = useState<Member[]>([])
   const sortedMembers = useMemo(
-    () => [...members].sort((a, b) => memberLabel(a).localeCompare(memberLabel(b))),
+    () =>
+      members
+        .filter((m) => m.membershipPaidThroughUtc !== null)
+        .sort((a, b) => memberLabel(a).localeCompare(memberLabel(b))),
     [members],
   )
 
@@ -125,16 +149,31 @@ export default function LeasedBeds() {
     )
   }, [])
 
-  const handleRelease = async (bed: AdminBed) => {
-    if (!bed.currentLease) return
-    if (!confirm(`Release bed ${bed.label} from ${bed.currentLease.memberName ?? 'this member'}? This frees the bed.`)) return
-    setError(null)
-    try {
-      await releaseLease(bed.currentLease.leaseId)
-      await reloadAll()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not release the lease.')
-    }
+  // Auto-dismiss the success toast so it doesn't linger.
+  useEffect(() => {
+    if (!toast) return
+    const timer = setTimeout(() => setToast(null), 6000)
+    return () => clearTimeout(timer)
+  }, [toast])
+
+  const announceAssignment = (result: AssignResult, bedId: number) => {
+    const label = result.overview.beds.find((b) => b.id === bedId)?.label ?? `#${bedId}`
+    const emailNote = result.emailSent ? ' A confirmation email has been sent to them.' : ''
+    setToast(`Bed ${label} assigned to ${result.memberName}.${emailNote}`)
+  }
+
+  const requestRelease = (bed: AdminBed) => {
+    const lease = bed.currentLease
+    if (!lease) return
+    setPendingConfirm({
+      title: 'Release bed',
+      message: `Release bed ${bed.label} from ${lease.memberName ?? 'this member'}? This frees the bed.`,
+      confirmLabel: 'Release bed',
+      onConfirm: async () => {
+        await releaseLease(lease.leaseId)
+        await reloadAll()
+      },
+    })
   }
 
   const handleRecordPayment = async (amountCents: number) => {
@@ -143,34 +182,22 @@ export default function LeasedBeds() {
     await reloadAll()
   }
 
-  const handleRemove = async (request: AdminBedRequest) => {
-    if (!confirm(`Remove ${request.memberName ?? 'this member'} from the waitlist?`)) return
-    setError(null)
-    try {
-      await removeBedRequest(request.requestId)
-      await reloadAll()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not remove the request.')
-    }
+  const requestRemove = (request: AdminBedRequest) => {
+    setPendingConfirm({
+      title: 'Remove from waitlist',
+      message: `Remove ${request.memberName ?? 'this member'} from the waitlist?`,
+      confirmLabel: 'Remove',
+      onConfirm: async () => {
+        await removeBedRequest(request.requestId)
+        await reloadAll()
+      },
+    })
   }
 
-  const handleEditNote = async (bed: AdminBed) => {
-    const next = window.prompt(`Note for bed ${bed.label} (leave blank to clear):`, bed.notes ?? '')
-    if (next === null) return
-    if (next.length > 500) {
-      setError('A bed note must be 500 characters or fewer.')
-      return
-    }
-    setBusy(true)
-    setError(null)
-    try {
-      await updateBed(bed.id, { notes: next })
-      await reloadAll()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save the note.')
-    } finally {
-      setBusy(false)
-    }
+  const handleSaveNote = async (value: string) => {
+    if (!noteBed) return
+    await updateBed(noteBed.id, { notes: value })
+    await reloadAll()
   }
 
   return (
@@ -181,17 +208,18 @@ export default function LeasedBeds() {
 
       {state.status === 'loading' && <p className="admin-loading">Loading&hellip;</p>}
       {state.status === 'error' && <div className="form-error" role="alert">{state.message}</div>}
-      {error && <div className="form-error" role="alert">{error}</div>}
 
       {state.status === 'ready' && (() => {
         const availableBeds = state.overview.beds.filter((b) => b.isActive && !b.isOccupied)
         const assign = async (requestId: number, bedId: number, customPriceCents: number) => {
-          await assignBed({ requestId, bedId, customPriceCents })
+          const result = await assignBed({ requestId, bedId, customPriceCents })
           await reloadAll()
+          announceAssignment(result, bedId)
         }
         const assignToMember = async (userId: string, bedId: number, customPriceCents: number) => {
-          await assignBed({ userId, bedId, customPriceCents })
+          const result = await assignBed({ userId, bedId, customPriceCents })
           await reloadAll()
+          announceAssignment(result, bedId)
         }
         return (
           <>
@@ -213,7 +241,7 @@ export default function LeasedBeds() {
               availableBeds={availableBeds}
               standardPriceCents={state.standardPriceCents}
               onAssign={assign}
-              onRemove={handleRemove}
+              onRemove={requestRemove}
             />
 
             <h2 className="section-title">All beds</h2>
@@ -239,7 +267,11 @@ export default function LeasedBeds() {
                           <strong>{bed.label}</strong>
                           {!bed.isActive && <> <span className="pill">Out of service</span></>}
                         </td>
-                        <td data-label="Holder" data-empty={!lease && !bed.isActive ? '' : undefined}>{lease?.memberName ?? (bed.isActive ? <span className="pill pill-ok">Available</span> : '—')}</td>
+                        <td data-label="Holder" data-empty={!lease && !bed.isActive ? '' : undefined}>
+                          {lease
+                            ? <Link to={`/admin/members/${lease.memberId}`} className="admin-table-link">{lease.memberName ?? lease.memberId}</Link>
+                            : (bed.isActive ? <span className="pill pill-ok">Available</span> : '—')}
+                        </td>
                         <td data-label="Lease" data-empty={lease ? undefined : ''}>
                           {lease ? <>{leaseStatusLabel(lease.status)}{' · '}{formatPrice(lease.priceAtAllocationCents)}</> : '—'}
                         </td>
@@ -256,7 +288,7 @@ export default function LeasedBeds() {
                             ? <span style={{ whiteSpace: 'pre-wrap' }}>{bed.notes}</span>
                             : <span className="card-note">No note</span>}
                           {' '}
-                          <button type="button" className="footer-link" onClick={() => handleEditNote(bed)} disabled={busy}>
+                          <button type="button" className="footer-link" onClick={() => setNoteBed(bed)}>
                             {bed.notes ? 'Edit' : 'Add'}
                           </button>
                         </td>
@@ -264,11 +296,11 @@ export default function LeasedBeds() {
                           {lease ? (
                             <div className="admin-cell-actions">
                               {lease.status === 'AwaitingPayment' && (
-                                <button type="button" className="footer-link icon-link" onClick={() => setPaymentBed(bed)} disabled={busy}>
+                                <button type="button" className="footer-link icon-link" onClick={() => setPaymentBed(bed)}>
                                   <PaymentIcon />Record manual payment
                                 </button>
                               )}
-                              <button type="button" className="footer-link icon-link" onClick={() => handleRelease(bed)} disabled={busy}>
+                              <button type="button" className="footer-link icon-link" onClick={() => requestRelease(bed)}>
                                 <ReleaseIcon />Release bed
                               </button>
                             </div>
@@ -303,6 +335,36 @@ export default function LeasedBeds() {
         onClose={() => setPaymentBed(null)}
         onConfirm={handleRecordPayment}
       />
+
+      <PromptModal
+        open={noteBed !== null}
+        title={noteBed?.notes ? `Edit note for bed ${noteBed.label}` : `Add a note to bed ${noteBed?.label ?? ''}`}
+        label="Note"
+        description="Leave blank to clear the note."
+        initialValue={noteBed?.notes ?? ''}
+        placeholder="e.g. drip line needs repair"
+        multiline
+        maxLength={500}
+        confirmLabel="Save note"
+        onClose={() => setNoteBed(null)}
+        onConfirm={handleSaveNote}
+      />
+
+      <ConfirmModal
+        open={pendingConfirm !== null}
+        title={pendingConfirm?.title ?? ''}
+        message={pendingConfirm?.message}
+        confirmLabel={pendingConfirm?.confirmLabel}
+        onCancel={() => setPendingConfirm(null)}
+        onConfirm={pendingConfirm?.onConfirm ?? (() => {})}
+      />
+
+      {toast && (
+        <div className="toast toast-success" role="status" aria-live="polite">
+          <span className="toast-message">{toast}</span>
+          <button type="button" className="toast-close" aria-label="Dismiss" onClick={() => setToast(null)}>×</button>
+        </div>
+      )}
     </section>
   )
 }
@@ -397,20 +459,82 @@ function BedAssignControls({
   onAssign: (userId: string, bedId: number, customPriceCents: number) => Promise<void>
 }) {
   const [open, setOpen] = useState(false)
-  const [filter, setFilter] = useState('')
+  const [query, setQuery] = useState('')
   const [userId, setUserId] = useState('')
+  const [comboOpen, setComboOpen] = useState(false)
+  const [dropUp, setDropUp] = useState(false)
+  const [highlight, setHighlight] = useState(0)
   const [priceDollars, setPriceDollars] = useState((standardPriceCents / 100).toString())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const comboRef = useRef<HTMLDivElement | null>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
 
-  const filtered = useMemo(() => {
-    const q = filter.trim().toLowerCase()
-    if (!q) return members
-    return members.filter((m) => memberLabel(m).toLowerCase().includes(q))
-  }, [members, filter])
+  const suggestions = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const matches = q ? members.filter((m) => memberLabel(m).toLowerCase().includes(q)) : members
+    return matches.slice(0, MEMBER_SUGGESTION_LIMIT)
+  }, [members, query])
+
+  // Reset the keyboard highlight to the top whenever the visible list changes.
+  useEffect(() => {
+    setHighlight(0)
+  }, [query, comboOpen])
+
+  // Close the suggestion list on an outside click, matching the recipient
+  // combobox in the email composer.
+  useEffect(() => {
+    if (!comboOpen) return
+    const handler = (e: MouseEvent) => {
+      if (comboRef.current && !comboRef.current.contains(e.target as Node)) setComboOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [comboOpen])
 
   if (!open) {
     return <button type="button" className="footer-link icon-link" onClick={() => setOpen(true)}><AssignIcon />Assign bed</button>
+  }
+
+  // The beds table lives in a horizontally-scrollable wrapper, which (per the
+  // CSS overflow spec) also clips vertically - a downward list on a low row is
+  // cut off. Open upward when there isn't ~a list's height of room below.
+  const openList = () => {
+    const wrap = comboRef.current?.closest('.admin-table-wrap')
+    const inputRect = inputRef.current?.getBoundingClientRect()
+    if (wrap && inputRect) {
+      setDropUp(wrap.getBoundingClientRect().bottom - inputRect.bottom < 260)
+    }
+    setComboOpen(true)
+  }
+
+  const selectMember = (m: Member) => {
+    setUserId(m.id)
+    setQuery(memberLabel(m))
+    setComboOpen(false)
+    setError(null)
+  }
+
+  const onComboKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      openList()
+      setHighlight((h) => (suggestions.length === 0 ? 0 : (h + 1) % suggestions.length))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      openList()
+      setHighlight((h) => (suggestions.length === 0 ? 0 : (h - 1 + suggestions.length) % suggestions.length))
+    } else if (e.key === 'Enter') {
+      if (comboOpen && suggestions.length > 0) {
+        e.preventDefault()
+        selectMember(suggestions[Math.min(highlight, suggestions.length - 1)])
+      }
+    } else if (e.key === 'Escape') {
+      if (comboOpen) {
+        e.preventDefault()
+        setComboOpen(false)
+      }
+    }
   }
 
   const submit = async () => {
@@ -435,34 +559,68 @@ function BedAssignControls({
   }
 
   return (
-    <div className="field" style={{ gap: 6, minWidth: 220 }}>
-      <input
-        type="search"
-        aria-label="Search members"
-        placeholder="Search members"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        disabled={busy}
-      />
-      <select value={userId} onChange={(e) => setUserId(e.target.value)} disabled={busy} aria-label="Member">
-        <option value="">Choose a member…</option>
-        {filtered.map((m) => (
-          <option key={m.id} value={m.id}>{memberLabel(m)}</option>
-        ))}
-      </select>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-        <span aria-hidden="true">$</span>
-        <input
-          type="number"
-          min="0"
-          step="1"
-          inputMode="decimal"
-          aria-label="Lease price"
-          value={priceDollars}
-          onChange={(e) => setPriceDollars(e.target.value)}
-          disabled={busy}
-          style={{ maxWidth: 90 }}
-        />
+    <div className="field bed-assign" style={{ gap: 6, minWidth: 200 }}>
+      <div className="member-combobox" ref={comboRef}>
+        <div
+          className="member-combobox-input"
+          onClick={() => { inputRef.current?.focus(); openList() }}
+          role="presentation"
+        >
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setUserId(''); setComboOpen(true) }}
+            onFocus={() => { openList(); inputRef.current?.select() }}
+            onKeyDown={onComboKeyDown}
+            placeholder="Search members…"
+            aria-label="Member"
+            autoComplete="off"
+            disabled={busy}
+            role="combobox"
+            aria-expanded={comboOpen}
+            aria-autocomplete="list"
+          />
+        </div>
+        {comboOpen && suggestions.length > 0 && (
+          <ul className={`member-suggestions${dropUp ? ' drop-up' : ''}`} role="listbox">
+            {suggestions.map((m, i) => (
+              <li
+                key={m.id}
+                role="option"
+                aria-selected={i === highlight}
+                className={`member-suggestion${i === highlight ? ' is-highlighted' : ''}`}
+                onMouseDown={(e) => { e.preventDefault(); selectMember(m) }}
+                onMouseEnter={() => setHighlight(i)}
+              >
+                <span className="member-suggestion-name">{memberName(m)}</span>
+                {m.email && memberName(m) !== m.email && (
+                  <span className="member-suggestion-email">{m.email}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {comboOpen && suggestions.length === 0 && (
+          <p className="member-suggestions-empty">No matching members.</p>
+        )}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap' }}>
+        <span className="bed-assign-price-field">
+          <span className="bed-assign-price-prefix" aria-hidden="true">$</span>
+          <input
+            className="bed-assign-price"
+            type="number"
+            min="0"
+            max="999"
+            step="1"
+            inputMode="numeric"
+            aria-label="Lease price"
+            value={priceDollars}
+            onChange={(e) => setPriceDollars(e.target.value.slice(0, 3))}
+            disabled={busy}
+          />
+        </span>
         <button type="button" className="primary-button" onClick={submit} disabled={busy}>
           {busy ? 'Assigning…' : 'Assign'}
         </button>
