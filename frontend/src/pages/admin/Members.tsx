@@ -84,14 +84,23 @@ function compareMembers(a: Member, b: Member, key: SortKey, renewalTargetUtc: st
   }
 }
 
+// Case- and diacritic-insensitive, so "jose" finds "José" (matching the
+// collator used for sorting, which also ignores accents).
+function fold(value: string): string {
+  return value.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
+}
+
 function matchesSearch(member: Member, query: string): boolean {
-  const q = query.trim().toLowerCase()
+  const q = fold(query.trim())
   if (!q) return true
-  return (
-    memberName(member).toLowerCase().includes(q) ||
-    (member.email ?? '').toLowerCase().includes(q) ||
-    (member.phoneNumber ?? '').toLowerCase().includes(q)
-  )
+  if (fold(memberName(member)).includes(q) || fold(member.email ?? '').includes(q)) return true
+  const phone = member.phoneNumber ?? ''
+  if (phone.toLowerCase().includes(q)) return true
+  // Digits-only comparison so "0412345678" finds "0412 345 678" and vice
+  // versa - but only when the query looks like a phone number, so a digit in
+  // a name search doesn't match every phone containing it.
+  const looksLikePhone = /^[+()\d\s.-]+$/.test(q) && /\d/.test(q)
+  return looksLikePhone && phone.replace(/\D/g, '').includes(q.replace(/\D/g, ''))
 }
 
 export default function Members() {
@@ -432,7 +441,7 @@ function MembersTable({
   }, [members, sort, renewalTargetUtc])
 
   if (members.length === 0) {
-    return <p className="admin-empty">No members match this filter.</p>
+    return <p className="admin-empty">No members match this search or filter.</p>
   }
 
   const toggleSort = (key: SortKey) =>
