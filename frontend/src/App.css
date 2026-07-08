@@ -773,6 +773,13 @@ button.footer-link:disabled {
   box-shadow: var(--shadow-2);
 }
 
+/* Flip above the input when there isn't room below (e.g. the last rows of a
+   bed table, whose scroll wrapper would otherwise clip a downward list). */
+.member-suggestions.drop-up {
+  top: auto;
+  bottom: calc(100% + 0.25rem);
+}
+
 .member-suggestion {
   display: flex;
   justify-content: space-between;
@@ -821,6 +828,10 @@ button.footer-link:disabled {
   font-family: var(--font-sans);
   font-size: 0.95rem;
 }
+
+/* The leased-beds grid is wider and denser than the other tables, so run its
+   cells at the same size as the note text to keep the row height in check. */
+.admin-table--beds { font-size: 0.82rem; }
 
 .admin-table thead th {
   text-align: left;
@@ -872,12 +883,97 @@ button.footer-link:disabled {
 .admin-cell-actions .footer-link { white-space: nowrap; }
 
 /* Pairs a small leading icon with a link label, keeping them centred and
-   preventing the icon from squashing when the label wraps. */
+   preventing the icon from squashing when the label wraps. Sized to match
+   the note cells so the Actions and Notes columns read as one register;
+   the double class outweighs button.footer-link's `font: inherit`. */
 .icon-link {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
 }
+.footer-link.icon-link { font-size: 0.82rem; }
+
+/* Compact variant for the inline assign-a-member controls in a bed row's
+   Actions cell - full-size form fields overwhelm the table, so everything
+   is pulled down to the same 0.82rem register as the note cells. */
+.bed-assign input:not([type="radio"]):not([type="checkbox"]) {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.82rem;
+}
+.bed-assign .primary-button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.82rem;
+}
+.bed-assign .footer-link { font-size: 0.82rem; }
+
+/* The combobox wrapper carries its own border/padding, so the container
+   shrinks to suit the row (the inner input inherits the compact field rule). */
+.bed-assign .member-combobox { margin-top: 0; }
+.bed-assign .member-combobox-input {
+  min-height: 0;
+  padding: 0.1rem 0.4rem;
+}
+/* The wrapper is the bordered element; the inner input would otherwise pick up
+   the global `.field input` border and focus ring, doubling both. The :not()
+   guards match that rule's specificity so these win. */
+.bed-assign .member-combobox-input input:not([type="radio"]):not([type="checkbox"]) {
+  border: 0;
+  background: transparent;
+  padding: 0.35rem 0.15rem;
+}
+.bed-assign .member-combobox-input input:not([type="radio"]):not([type="checkbox"]):focus {
+  box-shadow: none;
+}
+
+/* Stack each option's name over its email rather than sitting them side by
+   side, so long names and addresses don't collide in the narrow cell. Tight
+   padding keeps each option short; the email is dropped a further tone. */
+.bed-assign .member-suggestion {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 0.25rem 0.6rem;
+}
+.bed-assign .member-suggestion-email {
+  color: var(--ink-400);
+}
+
+/* Lease prices are whole dollars up to 3 digits. The $ is an affix inside the
+   field: the wrapper carries the border and focus ring, the input sits flush
+   and borderless beside a muted prefix. Dropping the spinners keeps the field,
+   Assign and Cancel on one line. */
+.bed-assign-price-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0 0.45rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--r-md);
+  background: var(--input-bg);
+}
+.bed-assign-price-field:focus-within {
+  border-color: var(--apple-600);
+  box-shadow: var(--ring-focus);
+}
+.bed-assign-price-prefix {
+  color: var(--ink-500);
+  font-size: 0.82rem;
+}
+.bed-assign .bed-assign-price:not([type="radio"]):not([type="checkbox"]) {
+  width: 2.25rem;
+  border: 0;
+  background: transparent;
+  padding: 0.35rem 0;
+}
+.bed-assign .bed-assign-price:not([type="radio"]):not([type="checkbox"]):focus {
+  box-shadow: none;
+}
+.bed-assign-price::-webkit-outer-spin-button,
+.bed-assign-price::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.bed-assign-price { -moz-appearance: textfield; appearance: textfield; }
 .icon-link svg { flex-shrink: 0; }
 
 /* Notes are secondary detail, so render them small and muted. Scoped through
@@ -1406,24 +1502,19 @@ button.footer-link:disabled {
     font-size: 1.05rem;
   }
 
-  /* Leased beds: purpose-built cards. The bed label becomes the card title,
-     each remaining field stacks label-above-value, and the "no value" cells
-     (marked data-empty on available beds) drop out entirely so a free bed
-     shows only what matters. Row actions become full-width tap targets. */
+  /* Leased beds cards mirror the members cards - label on the left, value on
+     the right (inherited from the base cell rule) - with two exceptions: the
+     bed label is the card title, and the actions become full-width tap targets.
+     "No value" cells (data-empty on available beds) drop out so a free bed
+     shows only what matters. */
   .admin-table--beds tbody tr { padding: 1rem 1.1rem; }
 
-  .admin-table--beds tbody td {
-    display: block;
-    text-align: left;
-    padding: 0.25rem 0;
-  }
-  .admin-table--beds tbody td::before {
-    display: block;
-    margin-bottom: 0.1rem;
-  }
+  .admin-table--beds tbody td { padding: 0.5rem 0; }
   .admin-table--beds tbody td[data-empty] { display: none; }
 
   .admin-table--beds tbody td[data-label="Bed"] {
+    display: block;
+    text-align: left;
     font-size: 1.2rem;
     font-weight: 700;
     padding: 0 0 0.55rem;
@@ -1432,9 +1523,20 @@ button.footer-link:disabled {
   }
   .admin-table--beds tbody td[data-label="Bed"]::before { content: none; }
 
+  /* Keep the note text beside its Add/Edit button on the right of the row,
+     rather than letting space-between spread them apart. */
+  .admin-table--beds tbody td.admin-note-cell .admin-note-value {
+    min-width: 0;
+    text-align: right;
+  }
+
   /* Buttons are self-describing, so drop the "Actions" label and give the
      links button-sized hit areas stacked full width. */
-  .admin-table--beds tbody td[data-label="Actions"] { padding-top: 0.5rem; }
+  .admin-table--beds tbody td[data-label="Actions"] {
+    display: block;
+    text-align: left;
+    padding-top: 0.5rem;
+  }
   .admin-table--beds tbody td[data-label="Actions"]::before { content: none; }
   .admin-table--beds .admin-cell-actions { width: 100%; gap: 0.5rem; }
 
@@ -1900,3 +2002,50 @@ button.footer-link:disabled {
 .email-html-editor:focus { outline: 2px solid var(--apple-600); outline-offset: -2px; }
 .email-html-editor[aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; }
 .email-html-editor img { max-width: 100%; height: auto; }
+
+/* ---------------------------------------------------------------------
+   Toast - transient success/confirmation banner
+   --------------------------------------------------------------------- */
+
+/* Pinned to the bottom-right of the viewport, above the page. The width caps
+   at a comfortable reading width but never exceeds the viewport (minus a small
+   inset), so it stays in the corner on desktop and hugs the edge on mobile. */
+.toast {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  left: auto;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  max-width: min(30rem, calc(100vw - 2rem));
+  padding: 0.85rem 1rem;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-3);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  animation: fadeInUp 0.25s ease-out;
+}
+
+.toast-success {
+  background: var(--leaf-100);
+  color: var(--leaf-900);
+  border: 1px solid var(--leaf-300);
+}
+
+.toast-message { flex: 1 1 auto; }
+
+.toast-close {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.8;
+}
+.toast-close:hover { opacity: 1; }

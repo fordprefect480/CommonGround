@@ -65,14 +65,14 @@ public class MembershipIntegrationTests
 
         var renewalStart = MembershipPeriod.RenewalYearStart(DateTime.UtcNow);
         SeedUser(factory.Services, "paid@example.com", renewalStart.AddDays(2));         // into the renewal year -> paid
-        SeedUser(factory.Services, "boundary@example.com", renewalStart.AddSeconds(-1)); // just short -> not paid
-        SeedUser(factory.Services, "never@example.com", paidThrough: null);              // never paid -> not paid
+        SeedUser(factory.Services, "boundary@example.com", renewalStart.AddSeconds(-1)); // held membership, just lapsed -> not yet paid
+        SeedUser(factory.Services, "never@example.com", paidThrough: null);              // never held a membership (mailing-list only) -> excluded from both counts
 
         var stats = await client.GetFromJsonAsync<StatsResponse>("/api/admin/members/stats");
 
         Assert.NotNull(stats);
         Assert.Equal(1, stats!.PaidMembers);
-        Assert.Equal(2, stats.NotYetPaidMembers);
+        Assert.Equal(1, stats.NotYetPaidMembers);
     }
 
     [Fact]

@@ -15,6 +15,9 @@ export default defineConfig({
     // Listen on all interfaces (0.0.0.0) so the dev server is reachable
     // from other devices on the LAN (e.g. a phone for mobile previews).
     host: true,
+    // The AppHost pins this port (Aspire's proxy forwards to it); if it's
+    // taken, drifting to 5174 would break the proxy anyway, so fail loudly.
+    strictPort: true,
     proxy: {
       '/api': toBackend,
       // The unsubscribe confirmation page is rendered by the backend (it has no

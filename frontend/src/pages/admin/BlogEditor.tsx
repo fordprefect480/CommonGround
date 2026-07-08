@@ -3,8 +3,9 @@ import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import TextAlign from '@tiptap/extension-text-align'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { uploadBlogImage } from '../../api/blog'
+import PromptModal from './PromptModal'
 
 interface BlogEditorProps {
   value: string
@@ -214,6 +215,9 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
     if (editor && !editor.isDestroyed && editor.getHTML() !== value) editor.commands.setContent(value, { emitUpdate: false })
   }, [value, editor])
 
+  // null = closed; a string is the initial value shown in the link dialog.
+  const [linkInitial, setLinkInitial] = useState<string | null>(null)
+
   if (!editor) return null
 
   const insertImage = async (file: File) => {
@@ -230,19 +234,14 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
     }
   }
 
-  const promptLink = () => {
+  const openLinkModal = () => {
     const previous = editor.getAttributes('link').href as string | undefined
-    const url = window.prompt('Link URL', previous ?? 'https://')
-    if (url === null) return
-    if (url === '') {
-      editor.chain().focus().unsetLink().run()
-      return
-    }
-    if (!/^(https?:|mailto:)/i.test(url)) {
-      alert('Links must start with http://, https://, or mailto:')
-      return
-    }
-    editor.chain().focus().setLink({ href: url }).run()
+    setLinkInitial(previous ?? 'https://')
+  }
+
+  const applyLink = (url: string) => {
+    if (url === '') editor.chain().focus().unsetLink().run()
+    else editor.chain().focus().setLink({ href: url }).run()
   }
 
   const currentBlock = editor.isActive('heading', { level: 2 })
@@ -286,7 +285,7 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
 
         <span className="tiptap-toolbar-divider" aria-hidden="true" />
 
-        <ToolbarButton label="Link" onClick={promptLink} pressed={editor.isActive('link')}><LinkIcon /></ToolbarButton>
+        <ToolbarButton label="Link" onClick={openLinkModal} pressed={editor.isActive('link')}><LinkIcon /></ToolbarButton>
         <label className="tiptap-image-button" title="Insert image">
           <ImageIcon />
           <input
@@ -305,6 +304,20 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
         </label>
       </div>
       <EditorContent editor={editor} className="tiptap-content blog-post-body" />
+
+      <PromptModal
+        open={linkInitial !== null}
+        title="Link"
+        label="Link URL"
+        description="Leave blank to remove the link."
+        initialValue={linkInitial ?? ''}
+        placeholder="https://"
+        inputMode="url"
+        confirmLabel="Apply link"
+        onClose={() => setLinkInitial(null)}
+        validate={(v) => (v === '' || /^(https?:|mailto:)/i.test(v) ? null : 'Links must start with http://, https://, or mailto:')}
+        onConfirm={applyLink}
+      />
     </div>
   )
 }
