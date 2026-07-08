@@ -284,13 +284,15 @@ export default function LeasedBeds() {
                         </td>
                         <td data-label="Expires" data-empty={lease ? undefined : ''}>{lease ? formatDate(lease.expiresOn) : '—'}</td>
                         <td data-label="Notes" className="admin-note-cell">
-                          {bed.notes
-                            ? <span style={{ whiteSpace: 'pre-wrap' }}>{bed.notes}</span>
-                            : <span className="card-note">No note</span>}
-                          {' '}
-                          <button type="button" className="footer-link" onClick={() => setNoteBed(bed)}>
-                            {bed.notes ? 'Edit' : 'Add'}
-                          </button>
+                          <span className="admin-note-value">
+                            {bed.notes
+                              ? <span style={{ whiteSpace: 'pre-wrap' }}>{bed.notes}</span>
+                              : <span className="card-note">No note</span>}
+                            {' '}
+                            <button type="button" className="footer-link" onClick={() => setNoteBed(bed)}>
+                              {bed.notes ? 'Edit' : 'Add'}
+                            </button>
+                          </span>
                         </td>
                         <td data-label="Actions">
                           {lease ? (
