@@ -19,8 +19,11 @@ public sealed class AssignBedEndpoint(
     SiteSettingsService settings,
     LeasedBedNotifications notifications,
     IActivityLogger activityLogger)
-    : Endpoint<AssignBedEndpoint.Request, LeasedBedsOverview>
+    : Endpoint<AssignBedEndpoint.Request, AssignBedEndpoint.Result>
 {
+    /// <summary>The refreshed overview, the assigned member's display name, and whether a confirmation email was sent.</summary>
+    public sealed record Result(LeasedBedsOverview Overview, string MemberName, bool EmailSent);
+
     public sealed class Request
     {
         /// <summary>Fulfils an existing bed request. Provide exactly one of <see cref="RequestId"/> or <see cref="UserId"/>.</summary>
@@ -142,11 +145,13 @@ public sealed class AssignBedEndpoint(
             targetId: lease.Id.ToString(),
             ct: ct);
 
+        var emailSent = false;
         if (user is not null)
         {
-            await notifications.SendAssignmentAsync(user, bed.Label, lease.ExpiresOn, price, ct);
+            emailSent = await notifications.SendAssignmentAsync(user, bed.Label, lease.ExpiresOn, price, ct);
         }
 
-        await Send.OkAsync(await beds.GetOverviewAsync(ct), ct);
+        var memberName = user?.DisplayName ?? user?.Email ?? targetUserId;
+        await Send.OkAsync(new Result(await beds.GetOverviewAsync(ct), memberName, emailSent), ct);
     }
 }

@@ -184,13 +184,19 @@ export interface ReleaseResult {
   waitlistCount: number
 }
 
+export interface AssignResult {
+  overview: LeasedBedsOverview
+  memberName: string
+  emailSent: boolean
+}
+
 export async function fetchBedRequests(): Promise<AdminBedRequests> {
   const res = await fetch('/api/admin/leased-beds/requests', { credentials: 'include' })
   if (!res.ok) throw await readError(res, 'Could not load bed requests')
   return res.json()
 }
 
-export async function assignBed(input: AssignBedInput): Promise<LeasedBedsOverview> {
+export async function assignBed(input: AssignBedInput): Promise<AssignResult> {
   const res = await fetch('/api/admin/leased-beds/assign', {
     method: 'POST',
     credentials: 'include',

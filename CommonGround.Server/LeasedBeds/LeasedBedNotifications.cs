@@ -36,12 +36,15 @@ public sealed class LeasedBedNotifications(
         await emailSender.SendAsync(subject, html, text, new TransactionalEmailSender.Recipient(recipient), ct: ct);
     }
 
-    /// <summary>Notifies the member they've been assigned a bed - payment-required or confirmed-free variant.</summary>
-    public async Task SendAssignmentAsync(ApplicationUser member, string bedLabel, DateOnly expiresOn, int amountCents, CancellationToken ct)
+    /// <summary>
+    /// Notifies the member they've been assigned a bed - payment-required or confirmed-free variant.
+    /// Returns whether an email was actually sent (false when email isn't configured or the member has no address).
+    /// </summary>
+    public async Task<bool> SendAssignmentAsync(ApplicationUser member, string bedLabel, DateOnly expiresOn, int amountCents, CancellationToken ct)
     {
         if (!emailOptions.Value.IsConfigured || string.IsNullOrWhiteSpace(member.Email))
         {
-            return;
+            return false;
         }
 
         var name = member.FirstName ?? "there";
@@ -57,5 +60,6 @@ public sealed class LeasedBedNotifications(
             LeasedBedEmails.AssignedSubject, html,
             new TransactionalEmailSender.Recipient(member.Email, member.Id),
             ct: ct);
+        return true;
     }
 }
