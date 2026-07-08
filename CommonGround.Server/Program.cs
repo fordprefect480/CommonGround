@@ -75,7 +75,22 @@ builder.Services.AddHttpClient<EventbriteClient>(c => c.Timeout = TimeSpan.FromS
 
 builder.Services.AddHttpClient<ResendClient>();
 builder.Services.Configure<ResendClientOptions>(o => o.ApiToken = builder.Configuration[$"{EmailOptions.SectionName}:ApiToken"] ?? "");
-builder.Services.AddTransient<IResend, ResendClient>();
+
+// Guard against mailing real members from a developer machine: when Email:RedirectAllTo
+// is set in Development, every outgoing email is rerouted to that address. IsDevelopment()
+// is an additional backstop so this can never engage in production.
+var redirectAllEmailTo = builder.Configuration[$"{EmailOptions.SectionName}:RedirectAllTo"];
+if (builder.Environment.IsDevelopment() && !string.IsNullOrWhiteSpace(redirectAllEmailTo))
+{
+    builder.Services.AddTransient<IResend>(sp => RedirectingResendProxy.Wrap(
+        sp.GetRequiredService<ResendClient>(),
+        redirectAllEmailTo,
+        sp.GetRequiredService<ILogger<RedirectingResendProxy>>()));
+}
+else
+{
+    builder.Services.AddTransient<IResend, ResendClient>();
+}
 
 builder.Services
     .AddIdentityApiEndpoints<ApplicationUser>()
