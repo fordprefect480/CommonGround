@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.19.0](https://github.com/fordprefect480/CommonGround/compare/v0.18.1...v0.19.0) (2026-07-08)
+
+
+### Features
+
+* add search box to admin members page ([b341f18](https://github.com/fordprefect480/CommonGround/commit/b341f18ef3e0b6361c7ab3dd463a4e790593002b))
+* **leased-beds:** filtering member combobox, holder links, assignment toast, and modal dialogs ([cce2019](https://github.com/fordprefect480/CommonGround/commit/cce201958391fab6eb24bd6047c1bd8a05901597))
+* replace native prompt dialogs with in-app modals ([8f625a3](https://github.com/fordprefect480/CommonGround/commit/8f625a316c87eeefef58ae070f0e2422af606cc1))
+* return member name and email-sent status from assign-bed endpoint ([7a32a4d](https://github.com/fordprefect480/CommonGround/commit/7a32a4d4ceba25b346707c0ec33960e076612652))
+
+
+### Bug Fixes
+
+* address review feedback on member search ([bb63b44](https://github.com/fordprefect480/CommonGround/commit/bb63b443461be0ff091d523654c910b0d16eac64))
+* exclude mailing-list-only members from not-yet-paid count ([faf0a98](https://github.com/fordprefect480/CommonGround/commit/faf0a986cedaef91a1edf107bb972de13ca436c8))
+
 ## [0.18.1](https://github.com/fordprefect480/CommonGround/compare/v0.18.0...v0.18.1) (2026-07-07)
 
 
