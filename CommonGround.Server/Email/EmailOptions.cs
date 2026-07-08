@@ -14,6 +14,13 @@ public sealed class EmailOptions
     /// <summary>Resend template used for transactional/membership mail (welcomes, password reset, bed assignment).</summary>
     public string? TransactionalTemplateId { get; set; }
 
+    /// <summary>
+    /// Development-only safety net: when set, every outgoing email is rerouted to this single
+    /// address instead of its real recipients (see <c>RedirectingResendProxy</c>). Only honoured
+    /// in the Development environment; leave unset in production.
+    /// </summary>
+    public string? RedirectAllTo { get; set; }
+
     public string From =>
         string.IsNullOrWhiteSpace(FromName) ? FromAddress : $"{FromName} <{FromAddress}>";
 
