@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import PromptModal from './PromptModal'
 import {
   cleanupOrphanImages,
   getComingSoon,
@@ -28,28 +29,16 @@ type CleanupState =
 export default function AdminTools() {
   const navigate = useNavigate()
   const [importState, setImportState] = useState<ImportState>({ status: 'idle' })
+  const [importOpen, setImportOpen] = useState(false)
   const [cleanupState, setCleanupState] = useState<CleanupState>({ status: 'idle' })
 
-  const runImport = async () => {
-    const answer = prompt('How many of the most recent posts to import? (leave blank for all)', '5')
-    if (answer === null) return
+  const startImport = (answer: string) => {
     const trimmed = answer.trim()
-    let limit: number | undefined
-    if (trimmed !== '') {
-      const parsed = Number(trimmed)
-      if (!Number.isInteger(parsed) || parsed <= 0) {
-        alert('Please enter a positive whole number, or leave blank to import all.')
-        return
-      }
-      limit = parsed
-    }
+    const limit = trimmed === '' ? undefined : Number(trimmed)
     setImportState({ status: 'running', progress: null })
-    try {
-      const result = await importBlog(limit, (progress) => setImportState({ status: 'running', progress }))
-      setImportState({ status: 'done', result })
-    } catch (err) {
-      setImportState({ status: 'error', message: err instanceof Error ? err.message : 'Import failed' })
-    }
+    importBlog(limit, (progress) => setImportState({ status: 'running', progress }))
+      .then((result) => setImportState({ status: 'done', result }))
+      .catch((err) => setImportState({ status: 'error', message: err instanceof Error ? err.message : 'Import failed' }))
   }
 
   const runCleanup = async () => {
@@ -107,7 +96,7 @@ export default function AdminTools() {
             {importState.status === 'running' ? (
               <ImportProgressBar progress={importState.progress} />
             ) : (
-              <button type="button" className="primary-button" onClick={runImport}>
+              <button type="button" className="primary-button" onClick={() => setImportOpen(true)}>
                 Run import
               </button>
             )}
@@ -133,6 +122,25 @@ export default function AdminTools() {
           </div>
         </div>
       </details>
+
+      <PromptModal
+        open={importOpen}
+        title="Import historical blog posts"
+        label="Number of posts"
+        description="How many of the most recent posts to import? Leave blank to import all."
+        initialValue="5"
+        placeholder="5"
+        inputMode="numeric"
+        confirmLabel="Run import"
+        onClose={() => setImportOpen(false)}
+        validate={(v) => {
+          const t = v.trim()
+          if (t === '') return null
+          const n = Number(t)
+          return Number.isInteger(n) && n > 0 ? null : 'Enter a positive whole number, or leave blank to import all.'
+        }}
+        onConfirm={startImport}
+      />
     </section>
   )
 }
