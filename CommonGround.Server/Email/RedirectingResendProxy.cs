@@ -15,8 +15,9 @@ namespace CommonGround.Server.Email;
 /// ~100 members and only the send operations (<c>EmailSendAsync</c>, <c>EmailBatchAsync</c>)
 /// need intercepting; rewriting by argument type rather than method name keeps it robust
 /// as the surface evolves. Registered only in Development, so it can never fire in production.
+/// Cannot be sealed: <see cref="DispatchProxy.Create{T, TProxy}"/> generates a runtime subclass.
 /// </remarks>
-public sealed class RedirectingResendProxy : DispatchProxy
+public class RedirectingResendProxy : DispatchProxy
 {
     private IResend _inner = null!;
     private string _redirectTo = null!;
