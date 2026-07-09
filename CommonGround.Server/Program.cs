@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 using Polly.Retry;
@@ -62,6 +63,13 @@ builder.AddSqlServerDbContext<AppDbContext>("commongroundDb", settings =>
         ConnectTimeout = 60,
     }.ConnectionString;
     settings.CommandTimeout = 60;
+}, optionsBuilder =>
+{
+    // ApplicationUser carries a soft-delete query filter while its dependents
+    // (payments, leases, requests) keep required FKs to it. That pairing is
+    // deliberate, so silence EF's advisory warning about it.
+    optionsBuilder.ConfigureWarnings(w =>
+        w.Ignore(CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning));
 });
 
 builder.Services.Configure<GardenOptions>(builder.Configuration.GetSection(GardenOptions.SectionName));
