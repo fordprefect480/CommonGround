@@ -24,14 +24,14 @@ public static class BlogPostMetaEndpoint
         var html = indexHtml.GetHtml();
         if (html is null)
         {
-            // No built SPA shell (local dev): let the normal fallback handle it.
+            // No built SPA shell (local dev only, where Vite serves the SPA): return 404.
             return Results.NotFound();
         }
 
         var post = await db.BlogPosts
             .AsNoTracking()
             .Where(p => p.Slug == slug && p.Status == BlogPostStatus.Published)
-            .Select(p => new { p.Title, p.Excerpt, p.BodyHtml, p.FeaturedImageId })
+            .Select(p => new { p.Slug, p.Title, p.Excerpt, p.BodyHtml, p.FeaturedImageId })
             .FirstOrDefaultAsync(ct);
 
         if (post is null)
@@ -42,7 +42,7 @@ public static class BlogPostMetaEndpoint
         var meta = new BlogPostMetaTags.PostMeta(
             post.Title,
             post.Excerpt ?? BlogExcerpt.FromHtml(post.BodyHtml),
-            slug,
+            post.Slug,
             post.FeaturedImageId);
 
         return Results.Content(BlogPostMetaTags.Inject(html, meta, SiteUrl, GardenName), "text/html");

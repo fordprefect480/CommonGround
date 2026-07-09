@@ -1,4 +1,3 @@
-using System.Net.Http;
 using CommonGround.Server.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +26,27 @@ public class BlogPostMetaIntegrationTests
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             File.WriteAllText(Path.Combine(WebRoot, "index.html"), IndexHtml);
+            builder.UseWebRoot(WebRoot);
+            base.ConfigureWebHost(builder);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            if (disposing && Directory.Exists(WebRoot))
+            {
+                Directory.Delete(WebRoot, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>Extends the shared factory with an empty temp web root (no index.html), so <see cref="IndexHtmlProvider"/> returns null.</summary>
+    private sealed class EmptyWebRootFactory : TestApiFactory
+    {
+        public string WebRoot { get; } = Directory.CreateTempSubdirectory("cg-webroot-empty-").FullName;
+
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
             builder.UseWebRoot(WebRoot);
             base.ConfigureWebHost(builder);
         }
@@ -109,5 +129,16 @@ public class BlogPostMetaIntegrationTests
 
         Assert.Contains("hero-image.png", html);
         Assert.DoesNotContain("Draft Post", html);
+    }
+
+    [Fact]
+    public async Task Missing_index_html_returns_not_found()
+    {
+        using var factory = new EmptyWebRootFactory();
+        var client = factory.CreateClient();
+
+        var resp = await client.GetAsync("/blog/anything");
+
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, resp.StatusCode);
     }
 }

@@ -8,8 +8,8 @@ public class BlogPostMetaTagsTests
     private const string GardenName = "Seaford Wetlands Community Garden";
 
     // Mirrors the relevant head tags from frontend/index.html, including the
-    // multi-line <meta name="description"> formatting, so the injector is proven
-    // against the real shape of the file.
+    // multi-line <meta name="description">, og:description, and twitter:description
+    // formatting, so the injector is proven against the real shape of the file.
     private const string Fixture = """
         <!doctype html>
         <html lang="en">
@@ -25,11 +25,17 @@ public class BlogPostMetaTagsTests
             <meta property="og:type" content="website" />
             <meta property="og:url" content="https://seafordwetlandscommunitygarden.com/" />
             <meta property="og:title" content="Seaford Wetlands Community Garden" />
-            <meta property="og:description" content="Default site description." />
+            <meta
+              property="og:description"
+              content="Default site description."
+            />
             <meta property="og:image" content="https://seafordwetlandscommunitygarden.com/swcg/hero-image.png" />
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:title" content="Seaford Wetlands Community Garden" />
-            <meta name="twitter:description" content="Default site description." />
+            <meta
+              name="twitter:description"
+              content="Default site description."
+            />
             <meta name="twitter:image" content="https://seafordwetlandscommunitygarden.com/swcg/hero-image.png" />
             <title>Seaford Wetlands Community Garden</title>
           </head>
