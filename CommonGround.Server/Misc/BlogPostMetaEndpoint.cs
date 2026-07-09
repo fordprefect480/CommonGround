@@ -14,6 +14,10 @@ public static class BlogPostMetaEndpoint
     private const string SiteUrl = "https://seafordwetlandscommunitygarden.com";
     private const string GardenName = "Seaford Wetlands Community Garden";
 
+    // The body is only ever needed as a bounded excerpt fallback, so truncate it in
+    // SQL rather than pulling the whole column on every /blog/{slug} page load.
+    private const int BodyHeadChars = 1000;
+
     public static void MapBlogPostMetaEndpoint(this IEndpointRouteBuilder app)
     {
         app.MapGet("/blog/{slug}", HandleAsync).AllowAnonymous();
@@ -31,7 +35,7 @@ public static class BlogPostMetaEndpoint
         var post = await db.BlogPosts
             .AsNoTracking()
             .Where(p => p.Slug == slug && p.Status == BlogPostStatus.Published)
-            .Select(p => new { p.Slug, p.Title, p.Excerpt, p.BodyHtml, p.FeaturedImageId })
+            .Select(p => new { p.Slug, p.Title, p.Excerpt, BodyHead = p.BodyHtml.Length > BodyHeadChars ? p.BodyHtml.Substring(0, BodyHeadChars) : p.BodyHtml, p.FeaturedImageId })
             .FirstOrDefaultAsync(ct);
 
         if (post is null)
@@ -41,7 +45,7 @@ public static class BlogPostMetaEndpoint
 
         var meta = new BlogPostMetaTags.PostMeta(
             post.Title,
-            post.Excerpt ?? BlogExcerpt.FromHtml(post.BodyHtml),
+            post.Excerpt ?? BlogExcerpt.FromHtml(post.BodyHead),
             post.Slug,
             post.FeaturedImageId);
 

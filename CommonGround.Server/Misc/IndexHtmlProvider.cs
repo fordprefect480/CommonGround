@@ -7,11 +7,11 @@ namespace CommonGround.Server.Misc;
 /// </summary>
 public sealed class IndexHtmlProvider
 {
-    private readonly Lazy<string?> _html;
+    private readonly string? _html;
 
-    public IndexHtmlProvider(IWebHostEnvironment env) => _html = new Lazy<string?>(() => Read(env));
+    public IndexHtmlProvider(IWebHostEnvironment env) => _html = Read(env);
 
-    public string? GetHtml() => _html.Value;
+    public string? GetHtml() => _html;
 
     private static string? Read(IWebHostEnvironment env)
     {

@@ -18,35 +18,21 @@ public class BlogPostMetaIntegrationTests
         </head><body><div id="root"></div></body></html>
         """;
 
-    /// <summary>Extends the shared factory with a temp web root containing index.html.</summary>
-    private sealed class WebRootFactory : TestApiFactory
+    /// <summary>
+    /// Extends the shared factory with a temp web root. Pass HTML to write it as
+    /// <c>index.html</c>; pass <c>null</c> to leave the root empty, so
+    /// <see cref="IndexHtmlProvider"/> returns null (the missing-shell case).
+    /// </summary>
+    private sealed class WebRootFactory(string? indexHtml) : TestApiFactory
     {
         public string WebRoot { get; } = Directory.CreateTempSubdirectory("cg-webroot-").FullName;
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            File.WriteAllText(Path.Combine(WebRoot, "index.html"), IndexHtml);
-            builder.UseWebRoot(WebRoot);
-            base.ConfigureWebHost(builder);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-            if (disposing && Directory.Exists(WebRoot))
+            if (indexHtml is not null)
             {
-                Directory.Delete(WebRoot, recursive: true);
+                File.WriteAllText(Path.Combine(WebRoot, "index.html"), indexHtml);
             }
-        }
-    }
-
-    /// <summary>Extends the shared factory with an empty temp web root (no index.html), so <see cref="IndexHtmlProvider"/> returns null.</summary>
-    private sealed class EmptyWebRootFactory : TestApiFactory
-    {
-        public string WebRoot { get; } = Directory.CreateTempSubdirectory("cg-webroot-empty-").FullName;
-
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
-        {
             builder.UseWebRoot(WebRoot);
             base.ConfigureWebHost(builder);
         }
@@ -95,7 +81,7 @@ public class BlogPostMetaIntegrationTests
     [Fact]
     public async Task Published_post_with_image_gets_injected_og_image_and_title()
     {
-        using var factory = new WebRootFactory();
+        using var factory = new WebRootFactory(IndexHtml);
         var client = factory.CreateClient();
         var imageId = SeedPost(factory.Services, "spring-planting", "Spring Planting", published: true, withImage: true);
 
@@ -109,7 +95,7 @@ public class BlogPostMetaIntegrationTests
     [Fact]
     public async Task Unknown_slug_returns_default_html_unchanged()
     {
-        using var factory = new WebRootFactory();
+        using var factory = new WebRootFactory(IndexHtml);
         var client = factory.CreateClient();
 
         var html = await client.GetStringAsync("/blog/does-not-exist");
@@ -121,7 +107,7 @@ public class BlogPostMetaIntegrationTests
     [Fact]
     public async Task Draft_post_is_not_injected()
     {
-        using var factory = new WebRootFactory();
+        using var factory = new WebRootFactory(IndexHtml);
         var client = factory.CreateClient();
         SeedPost(factory.Services, "draft-post", "Draft Post", published: false, withImage: true);
 
@@ -134,7 +120,7 @@ public class BlogPostMetaIntegrationTests
     [Fact]
     public async Task Missing_index_html_returns_not_found()
     {
-        using var factory = new EmptyWebRootFactory();
+        using var factory = new WebRootFactory(null);
         var client = factory.CreateClient();
 
         var resp = await client.GetAsync("/blog/anything");

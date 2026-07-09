@@ -99,4 +99,36 @@ public class BlogPostMetaTagsTests
         Assert.Contains("""<meta name="twitter:card" content="summary_large_image" />""", html);
         Assert.Contains("""<meta name="robots" content="index, follow" />""", html);
     }
+
+    [Fact]
+    public void Rewrites_the_default_tags_in_the_real_index_html()
+    {
+        // Drift guard: the fixtures above are hand-copied, so they can't catch a
+        // reformat of the real frontend/index.html that stops the regexes matching.
+        // Running Inject against the actual file fails loudly here instead of the
+        // site silently unfurling with stale default tags.
+        var html = BlogPostMetaTags.Inject(
+            ReadRealIndexHtml(),
+            new("Real File Post", "Real excerpt.", "real-file-post", 999),
+            SiteUrl,
+            GardenName);
+
+        Assert.Contains("/api/blog/images/999", html);
+        Assert.DoesNotContain("hero-image.png", html); // both og:image and twitter:image rewritten
+        Assert.Contains("<title>Real File Post | Seaford Wetlands Community Garden</title>", html);
+        Assert.Contains(""""<meta property="og:type" content="article"""", html);
+        Assert.Contains($"{SiteUrl}/blog/real-file-post", html); // og:url + canonical rewritten
+    }
+
+    private static string ReadRealIndexHtml()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "frontend", "index.html")))
+        {
+            dir = dir.Parent;
+        }
+
+        Assert.True(dir is not null, "Could not locate frontend/index.html by walking up from the test output directory.");
+        return File.ReadAllText(Path.Combine(dir!.FullName, "frontend", "index.html"));
+    }
 }
