@@ -49,6 +49,7 @@ builder.Services.AddDataProtection()
     .PersistKeysToDbContext<AppDbContext>()
     .SetApplicationName("CommonGround");
 builder.Services.AddSingleton<UnsubscribeTokenService>();
+builder.Services.AddSingleton<CommonGround.Server.Misc.IndexHtmlProvider>();
 
 builder.AddSqlServerDbContext<AppDbContext>("commongroundDb", settings =>
 {
@@ -191,6 +192,12 @@ app.MapSitemapEndpoint();
 app.MapDefaultEndpoints();
 
 app.UseFileServer();
+
+// Blog-post URLs get their social/SEO meta tags injected server-side so link
+// unfurlers (which don't run the SPA) show the post's featured image. Registered
+// before the fallback so it wins for /blog/{slug}; everything else is a React
+// Router path that needs the untouched index.html.
+app.MapBlogPostMetaEndpoint();
 
 // Serve the SPA shell for client-side routes (e.g. /membership/welcome from the
 // Stripe redirect). API routes are under /api and static assets are served above,

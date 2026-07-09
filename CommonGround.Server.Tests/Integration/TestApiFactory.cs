@@ -17,7 +17,7 @@ namespace CommonGround.Server.Tests.Integration;
 /// database, with every request authenticated as an admin. Each instance gets
 /// its own in-memory store, so create one per test for a clean slate.
 /// </summary>
-public sealed class TestApiFactory : WebApplicationFactory<Program>
+public class TestApiFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbName = $"cg-tests-{Guid.NewGuid()}";
 
