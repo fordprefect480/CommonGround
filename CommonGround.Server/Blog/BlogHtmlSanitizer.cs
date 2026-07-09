@@ -13,7 +13,7 @@ public class BlogHtmlSanitizer
     private static readonly string[] AllowedAttributes = ["href", "src", "alt", "class"];
 
     public static readonly string[] AllowedImageClasses =
-        ["blog-img-small", "blog-img-medium", "blog-img-wide"];
+        ["blog-img-small", "blog-img-medium", "blog-img-wide", "blog-img-left", "blog-img-center", "blog-img-right"];
 
     private readonly HtmlSanitizer _sanitizer;
 
