@@ -172,7 +172,7 @@ export default function LeasedBedCard() {
                   hasActiveLease={state.data.leases.some((l) => l.status === 'Active')}
                   awaitingPayment={pendingLeases.length > 0}
                   busy={busy}
-                  onApply={() => run(applyForBed)}
+                  onApply={(requiresWheelchairAccessible) => run(() => applyForBed(requiresWheelchairAccessible))}
                 />
 
                 {actionError && <div className="form-error" role="alert">{actionError}</div>}
@@ -276,6 +276,9 @@ function PendingRequest({
         <p className="card-note" style={{ margin: 0 }}>
           Your application is pending — an admin will assign you a bed.
         </p>
+        {request.requiresWheelchairAccessible && (
+          <p className="card-note" style={{ margin: 0 }}>You&rsquo;ve asked for a wheelchair-accessible bed.</p>
+        )}
         <div className="admin-actions">
           <button type="button" className="secondary-button" onClick={onWithdraw} disabled={busy}>
             Cancel my application
@@ -291,6 +294,9 @@ function PendingRequest({
         <p className="card-note" style={{ margin: 0 }}>
           You are number {request.waitlistPosition} on the waitlist.
         </p>
+        {request.requiresWheelchairAccessible && (
+          <p className="card-note" style={{ margin: 0 }}>You&rsquo;ve asked for a wheelchair-accessible bed.</p>
+        )}
         <div className="admin-actions">
           <button type="button" className="secondary-button" onClick={onWithdraw} disabled={busy}>
             Leave the waitlist
@@ -314,18 +320,30 @@ function ApplyCta({
   hasActiveLease: boolean
   awaitingPayment: boolean
   busy: boolean
-  onApply: () => void
+  onApply: (requiresWheelchairAccessible: boolean) => void
 }) {
   const { capacity, request } = data
+  const [needsAccessible, setNeedsAccessible] = useState(false)
 
   // An existing application or an assigned-but-unpaid bed already covers the next step.
   if (request?.status === 'Pending' || request?.status === 'Waitlisted' || awaitingPayment) return null
 
   return (
-    <div className="admin-actions">
-      <button type="button" className="primary-button" onClick={onApply} disabled={busy}>
-        {capacity.isFull ? 'Join the waitlist' : hasActiveLease ? 'Apply for another bed' : 'Apply for a bed'}
-      </button>
+    <div className="admin-subsection">
+      <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <input
+          type="checkbox"
+          checked={needsAccessible}
+          onChange={(e) => setNeedsAccessible(e.target.checked)}
+          disabled={busy}
+        />
+        <span className="card-note" style={{ margin: 0 }}>I need a wheelchair-accessible bed</span>
+      </label>
+      <div className="admin-actions">
+        <button type="button" className="primary-button" onClick={() => onApply(needsAccessible)} disabled={busy}>
+          {capacity.isFull ? 'Join the waitlist' : hasActiveLease ? 'Apply for another bed' : 'Apply for a bed'}
+        </button>
+      </div>
     </div>
   )
 }

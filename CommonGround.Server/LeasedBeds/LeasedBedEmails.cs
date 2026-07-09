@@ -9,17 +9,23 @@ public static class LeasedBedEmails
     public const string WaitlistSubject = "New leased bed waitlist entry";
     public const string AssignedSubject = "You've been assigned a garden bed";
 
-    public static string BuildAppliedText(string memberName, int remaining, string publicUrl) =>
-        $"{memberName} has applied for one of the {remaining} remaining beds.\nPlease assign them a bed on the Leased Beds page: {Enc(publicUrl)}admin/leased-beds";
+    public static string BuildAppliedText(string memberName, int remaining, string publicUrl, bool requiresWheelchairAccessible) =>
+        $"{memberName} has applied for one of the {remaining} remaining beds.{WheelchairLineText(requiresWheelchairAccessible)}\nPlease assign them a bed on the Leased Beds page: {Enc(publicUrl)}admin/leased-beds";
 
-    public static string BuildAppliedHtml(string memberName, int remaining, string publicUrl) =>  
-        Wrap($"<p>{Enc(memberName)} has applied for one of the {remaining} remaining beds.</p><p>Please assign them a bed on the <a href=\"{Enc(publicUrl)}admin/leased-beds\">Leased Beds page</a>.</p>");
+    public static string BuildAppliedHtml(string memberName, int remaining, string publicUrl, bool requiresWheelchairAccessible) =>
+        Wrap($"<p>{Enc(memberName)} has applied for one of the {remaining} remaining beds.</p>{WheelchairLineHtml(requiresWheelchairAccessible)}<p>Please assign them a bed on the <a href=\"{Enc(publicUrl)}admin/leased-beds\">Leased Beds page</a>.</p>");
 
-    public static string BuildWaitlistedText(string memberName, int total, string publicUrl) =>
-        $"{memberName} has joined the waitlist for a leased bed. There are now {total} members on the waitlist.\nYou can view the current waitlist on the Leased Beds page: {Enc(publicUrl)}admin/leased-beds";
+    public static string BuildWaitlistedText(string memberName, int total, string publicUrl, bool requiresWheelchairAccessible) =>
+        $"{memberName} has joined the waitlist for a leased bed. There are now {total} members on the waitlist.{WheelchairLineText(requiresWheelchairAccessible)}\nYou can view the current waitlist on the Leased Beds page: {Enc(publicUrl)}admin/leased-beds";
 
-    public static string BuildWaitlistedHtml(string memberName, int total, string publicUrl) =>
-        Wrap($"<p>{Enc(memberName)} has joined the waitlist for a leased bed. There are now {total} members on the waitlist.</p><p>You can view the current waitlist on the <a href=\"{Enc(publicUrl)}admin/leased-beds\">Leased Beds page</a>.</p>");
+    public static string BuildWaitlistedHtml(string memberName, int total, string publicUrl, bool requiresWheelchairAccessible) =>
+        Wrap($"<p>{Enc(memberName)} has joined the waitlist for a leased bed. There are now {total} members on the waitlist.</p>{WheelchairLineHtml(requiresWheelchairAccessible)}<p>You can view the current waitlist on the <a href=\"{Enc(publicUrl)}admin/leased-beds\">Leased Beds page</a>.</p>");
+
+    private static string WheelchairLineText(bool required) =>
+        required ? " This member needs a wheelchair-accessible bed." : "";
+
+    private static string WheelchairLineHtml(bool required) =>
+        required ? "<p><strong>This member needs a wheelchair-accessible bed.</strong></p>" : "";
 
     /// <summary>
     /// The member assignment notice as an HTML fragment, fed to the membership template's BODY

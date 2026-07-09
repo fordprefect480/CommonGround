@@ -327,6 +327,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 beds.Add(new Bed { Id = id++, Label = $"{section}{number}", IsActive = true });
             }
         }
+
+        // Four wheelchair-accessible beds, added 2026-07.
+        for (var number = 1; number <= 4; number++)
+        {
+            beds.Add(new Bed { Id = id++, Label = $"W{number}", IsActive = true, IsWheelchairAccessible = true });
+        }
+
         return beds;
     }
 }

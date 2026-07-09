@@ -23,5 +23,8 @@ public class Bed
     [MaxLength(500)]
     public string? Notes { get; set; }
 
+    /// <summary>Whether this bed is built for wheelchair access (e.g. raised, with clear approach).</summary>
+    public bool IsWheelchairAccessible { get; set; }
+
     public ICollection<BedLease> Leases { get; set; } = new List<BedLease>();
 }

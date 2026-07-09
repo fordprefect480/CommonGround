@@ -17,14 +17,20 @@ public sealed class ApplyForBedEndpoint(
     LeasedBedService beds,
     LeasedBedNotifications notifications,
     IActivityLogger activityLogger)
-    : EndpointWithoutRequest<MyLeasedBedStatus>
+    : Endpoint<ApplyForBedEndpoint.Request, MyLeasedBedStatus>
 {
+    public sealed class Request
+    {
+        /// <summary>Set by the member when they need a wheelchair-accessible bed.</summary>
+        public bool RequiresWheelchairAccessible { get; set; }
+    }
+
     public override void Configure()
     {
         Post("/leased-beds/requests");
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var user = await userManager.GetUserAsync(User);
         if (user is null)
@@ -59,6 +65,7 @@ public sealed class ApplyForBedEndpoint(
             UserId = user.Id,
             Status = status,
             CreatedAtUtc = DateTime.UtcNow,
+            RequiresWheelchairAccessible = req.RequiresWheelchairAccessible,
         });
         await db.SaveChangesAsync(ct);
 
@@ -71,7 +78,7 @@ public sealed class ApplyForBedEndpoint(
 
         var waitlistTotal = await db.BedRequests.CountAsync(r => r.Status == BedRequestStatus.Waitlisted, ct);
         await notifications.SendApplicationReceivedAsync(
-            user.DisplayName ?? user.Email ?? "A member", status, capacity.Remaining, waitlistTotal, ct);
+            user.DisplayName ?? user.Email ?? "A member", status, capacity.Remaining, waitlistTotal, req.RequiresWheelchairAccessible, ct);
 
         await Send.OkAsync(await beds.GetMyStatusAsync(user, ct), ct);
     }

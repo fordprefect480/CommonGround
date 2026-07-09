@@ -35,4 +35,7 @@ public class BedRequest
     public DateTime CreatedAtUtc { get; set; }
 
     public DateTime? ResolvedAtUtc { get; set; }
+
+    /// <summary>Set when the member indicated they need a wheelchair-accessible bed. Informational for the admin who assigns a bed.</summary>
+    public bool RequiresWheelchairAccessible { get; set; }
 }

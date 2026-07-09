@@ -18,6 +18,7 @@ public sealed class AddBedEndpoint(
     {
         public string Label { get; set; } = "";
         public string? Notes { get; set; }
+        public bool IsWheelchairAccessible { get; set; }
     }
 
     public override void Configure()
@@ -46,6 +47,7 @@ public sealed class AddBedEndpoint(
             Label = label,
             Notes = LeasedBedService.NormalizeText(req.Notes),
             IsActive = true,
+            IsWheelchairAccessible = req.IsWheelchairAccessible,
         };
 
         db.Beds.Add(bed);

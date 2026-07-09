@@ -100,6 +100,17 @@ function AssignIcon() {
   )
 }
 
+function WheelchairIcon({ title = 'Wheelchair-accessible' }: { title?: string }) {
+  return (
+    <svg {...iconProps} aria-hidden={undefined} role="img" aria-label={title}>
+      <title>{title}</title>
+      <circle cx="9" cy="4" r="1.6" />
+      <path d="M9 6v6h5l3 6" />
+      <path d="M14 12a5 5 0 1 1-5 5" />
+    </svg>
+  )
+}
+
 function leaseStatusLabel(status: BedLeaseStatus): string {
   switch (status) {
     case 'AwaitingPayment':
@@ -266,6 +277,7 @@ export default function LeasedBeds() {
                         <td data-label="Bed">
                           <strong>{bed.label}</strong>
                           {!bed.isActive && <> <span className="pill">Out of service</span></>}
+                          {bed.isWheelchairAccessible && <> <WheelchairIcon /></>}
                         </td>
                         <td data-label="Holder" data-empty={!lease && !bed.isActive ? '' : undefined}>
                           {lease
@@ -392,6 +404,7 @@ function PendingSection({
           <div key={r.requestId} className="field" style={{ borderTop: '1px solid var(--hairline, #e5e5e5)', paddingTop: 12 }}>
             <strong>{r.memberName ?? r.memberEmail ?? r.memberId}</strong>
             {r.memberEmail && <span className="card-note"> · {r.memberEmail}</span>}
+            {r.requiresWheelchairAccessible && <> <WheelchairIcon title="Needs a wheelchair-accessible bed" /></>}
             <AssignControls
               requestId={r.requestId}
               availableBeds={availableBeds}
@@ -428,6 +441,7 @@ function WaitlistSection({
           <div key={r.requestId} className="field" style={{ borderTop: '1px solid var(--hairline, #e5e5e5)', paddingTop: 12 }}>
             <strong>#{r.position} · {r.memberName ?? r.memberEmail ?? r.memberId}</strong>
             {r.memberEmail && <span className="card-note"> · {r.memberEmail}</span>}
+            {r.requiresWheelchairAccessible && <> <WheelchairIcon title="Needs a wheelchair-accessible bed" /></>}
             <div className="admin-actions" style={{ marginTop: 4 }}>
               <button type="button" className="secondary-button" onClick={() => onRemove(r)}>Remove</button>
             </div>
