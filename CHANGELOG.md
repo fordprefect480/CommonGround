@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.20.0](https://github.com/fordprefect480/CommonGround/compare/v0.19.0...v0.20.0) (2026-07-10)
+
+
+### Features
+
+* add blog image size/align class helpers ([ef7c53a](https://github.com/fordprefect480/CommonGround/commit/ef7c53aec8b810c0b32b3d6f22565dece8dc5759))
+* add server-side OG tag injector for blog posts ([1f85fc6](https://github.com/fordprefect480/CommonGround/commit/1f85fc63d1d04f07c9271ff4b4c34845efd8a372))
+* add wheelchair-accessible leased beds (W1-W4) ([3267245](https://github.com/fordprefect480/CommonGround/commit/32672454988ffc08db976c894dd19d40832e86a3))
+* add wheelchair-accessible leased beds (W1-W4) ([bc341d0](https://github.com/fordprefect480/CommonGround/commit/bc341d000daf3a36880c489a0c6b35a57d37f752))
+* align blog images left, center, or right ([6efdb31](https://github.com/fordprefect480/CommonGround/commit/6efdb3180243d9a1e4da2aadc7dea9d3e334c16b))
+* align blog images left/center/right from the toolbar ([ca994c5](https://github.com/fordprefect480/CommonGround/commit/ca994c53a6f9116e1859952e336781964b0f531c))
+* allow admins to delete (archive) members ([95ae356](https://github.com/fordprefect480/CommonGround/commit/95ae356ac0daa1ca3c3bcc54e9999f84307878dd))
+* allow admins to delete (archive) members ([7e25d0d](https://github.com/fordprefect480/CommonGround/commit/7e25d0d55935491a00a5d2374cf1a37a6525938c))
+* allow image alignment classes through blog sanitizer ([08fdf63](https://github.com/fordprefect480/CommonGround/commit/08fdf63b9023a20803c70437a437eceba3d9957a))
+* serve blog posts with per-post OG tags for social sharing ([de7ca07](https://github.com/fordprefect480/CommonGround/commit/de7ca079c5aa6ddb7988b8b164a12082952c613c))
+* server-render OG tags so blog posts unfurl with their thumbnail ([9c32e05](https://github.com/fordprefect480/CommonGround/commit/9c32e05e29e24d9242d9857e9f38909f04db1de9))
+* warn before assigning a non-accessible bed to a member who needs one ([2bd5310](https://github.com/fordprefect480/CommonGround/commit/2bd5310ed7ac3a1e7319c102cadd45500318cd79))
+
+
+### Bug Fixes
+
+* match editor image-alignment CSS to data-align token ([15c5989](https://github.com/fordprefect480/CommonGround/commit/15c59894cd5b0b81c2b565a98458ba4e69b08934))
+* preserve blog text alignment through the sanitizer ([682455d](https://github.com/fordprefect480/CommonGround/commit/682455d6f617921d03c4f890f50d8367ad8cd1c5))
+* use stored slug for blog OG canonical and cover missing-shell branch ([c6484f0](https://github.com/fordprefect480/CommonGround/commit/c6484f0a1d283a2563d700f291a51853d1e667b6))
+
 ## [0.19.0](https://github.com/fordprefect480/CommonGround/compare/v0.18.1...v0.19.0) (2026-07-08)
 
 
