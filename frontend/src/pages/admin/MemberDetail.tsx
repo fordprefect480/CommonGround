@@ -479,7 +479,7 @@ export default function MemberDetail() {
 
       <EmailHistoryCard memberId={member.id} />
 
-      <section className="card admin-form">
+      <section className="card admin-form danger-zone">
         <h2 className="section-title">Danger zone</h2>
         <p className="card-note" style={{ margin: 0 }}>
           Deleting a member removes them from the members list and frees any garden bed they hold.
@@ -487,7 +487,7 @@ export default function MemberDetail() {
           be able to sign in. This cannot be undone from here.
         </p>
         <div className="admin-actions">
-          <button type="button" className="secondary-button" onClick={() => setConfirmDeleteOpen(true)}>
+          <button type="button" className="secondary-button danger-button" onClick={() => setConfirmDeleteOpen(true)}>
             Delete this member
           </button>
         </div>
