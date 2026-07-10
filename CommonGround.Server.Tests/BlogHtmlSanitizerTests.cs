@@ -26,4 +26,35 @@ public class BlogHtmlSanitizerTests
         Assert.DoesNotContain("totally-not-allowed", result);
         Assert.Contains("blog-img-medium", result);
     }
+
+    [Theory]
+    [InlineData("left")]
+    [InlineData("center")]
+    [InlineData("right")]
+    public void Keeps_text_align_on_paragraphs(string align)
+    {
+        var result = Sanitize($"<p style=\"text-align: {align}\">hi</p>");
+
+        Assert.Contains("text-align", result);
+        Assert.Contains(align, result);
+    }
+
+    [Fact]
+    public void Keeps_text_align_on_headings()
+    {
+        var result = Sanitize("<h2 style=\"text-align: center\">Title</h2>");
+
+        Assert.Contains("text-align", result);
+        Assert.Contains("center", result);
+    }
+
+    [Fact]
+    public void Strips_non_alignment_style_properties()
+    {
+        var result = Sanitize("<p style=\"text-align: center; color: red; position: fixed\">hi</p>");
+
+        Assert.Contains("text-align", result);
+        Assert.DoesNotContain("color", result);
+        Assert.DoesNotContain("position", result);
+    }
 }
