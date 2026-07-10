@@ -24,6 +24,7 @@ export interface AdminBed {
   label: string
   isActive: boolean
   notes: string | null
+  isWheelchairAccessible: boolean
   isOccupied: boolean
   currentLease: AdminBedAllocation | null
 }
@@ -67,6 +68,7 @@ export interface MyLease {
 export interface MyRequestInfo {
   status: 'Pending' | 'Waitlisted'
   waitlistPosition: number | null
+  requiresWheelchairAccessible: boolean
 }
 
 export interface MyLeasedBedStatus {
@@ -82,8 +84,13 @@ export async function fetchMyLeasedBedStatus(): Promise<MyLeasedBedStatus> {
   return res.json()
 }
 
-export async function applyForBed(): Promise<MyLeasedBedStatus> {
-  const res = await fetch('/api/leased-beds/requests', { method: 'POST', credentials: 'include' })
+export async function applyForBed(requiresWheelchairAccessible: boolean): Promise<MyLeasedBedStatus> {
+  const res = await fetch('/api/leased-beds/requests', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requiresWheelchairAccessible }),
+  })
   if (!res.ok) throw await readError(res, 'Could not submit your application')
   return res.json()
 }
@@ -158,6 +165,7 @@ export interface AdminBedRequest {
   memberName: string | null
   memberEmail: string | null
   createdAtUtc: string
+  requiresWheelchairAccessible: boolean
   position: number | null
 }
 

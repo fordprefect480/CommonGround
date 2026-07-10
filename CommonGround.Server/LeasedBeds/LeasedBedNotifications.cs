@@ -16,7 +16,7 @@ public sealed class LeasedBedNotifications(
     IOptions<LeasedBedsOptions> bedOptions)
 {
     /// <summary>Notifies the admin that a member applied (beds available) or joined the waitlist (full).</summary>
-    public async Task SendApplicationReceivedAsync(string memberName, BedRequestStatus status, int remaining, int waitlistTotal, CancellationToken ct)
+    public async Task SendApplicationReceivedAsync(string memberName, BedRequestStatus status, int remaining, int waitlistTotal, bool requiresWheelchairAccessible, CancellationToken ct)
     {
         var recipient = bedOptions.Value.AdminNotificationEmail;
         if (!emailOptions.Value.IsConfigured || string.IsNullOrWhiteSpace(recipient))
@@ -26,11 +26,11 @@ public sealed class LeasedBedNotifications(
 
         var (subject, html, text) = status == BedRequestStatus.Waitlisted
             ? (LeasedBedEmails.WaitlistSubject,
-                LeasedBedEmails.BuildWaitlistedHtml(memberName, waitlistTotal, gardenOptions.Value.PublicUrl),
-                LeasedBedEmails.BuildWaitlistedText(memberName, waitlistTotal, gardenOptions.Value.PublicUrl))
+                LeasedBedEmails.BuildWaitlistedHtml(memberName, waitlistTotal, gardenOptions.Value.PublicUrl, requiresWheelchairAccessible),
+                LeasedBedEmails.BuildWaitlistedText(memberName, waitlistTotal, gardenOptions.Value.PublicUrl, requiresWheelchairAccessible))
             : (LeasedBedEmails.AppliedSubject,
-                LeasedBedEmails.BuildAppliedHtml(memberName, remaining, gardenOptions.Value.PublicUrl),
-                LeasedBedEmails.BuildAppliedText(memberName, remaining, gardenOptions.Value.PublicUrl));
+                LeasedBedEmails.BuildAppliedHtml(memberName, remaining, gardenOptions.Value.PublicUrl, requiresWheelchairAccessible),
+                LeasedBedEmails.BuildAppliedText(memberName, remaining, gardenOptions.Value.PublicUrl, requiresWheelchairAccessible));
 
         // Sent to the admin notification address, so no member is attached.
         await emailSender.SendAsync(subject, html, text, new TransactionalEmailSender.Recipient(recipient), ct: ct);

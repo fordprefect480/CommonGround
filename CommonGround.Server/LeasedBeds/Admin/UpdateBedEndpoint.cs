@@ -28,6 +28,9 @@ public sealed class UpdateBedEndpoint(
         /// but this is intentionally kept and fully functional in case we need to surface it again.
         /// </summary>
         public bool? IsActive { get; set; }
+
+        /// <summary>When provided, sets whether the bed is wheelchair-accessible. Null leaves it unchanged.</summary>
+        public bool? IsWheelchairAccessible { get; set; }
     }
 
     public override void Configure()
@@ -57,6 +60,7 @@ public sealed class UpdateBedEndpoint(
 
         if (!string.IsNullOrWhiteSpace(req.Label)) bed.Label = req.Label.Trim();
         if (req.Notes is not null) bed.Notes = LeasedBedService.NormalizeText(req.Notes);
+        if (req.IsWheelchairAccessible is not null) bed.IsWheelchairAccessible = req.IsWheelchairAccessible.Value;
 
         var serviceChanged = req.IsActive is { } active && active != bed.IsActive;
         if (req.IsActive is not null) bed.IsActive = req.IsActive.Value;

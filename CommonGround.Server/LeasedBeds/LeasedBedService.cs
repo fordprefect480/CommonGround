@@ -73,6 +73,7 @@ public sealed class LeasedBedService(AppDbContext db)
                 bed.Label,
                 bed.IsActive,
                 bed.Notes,
+                bed.IsWheelchairAccessible,
                 IsOccupied: lease is not null,
                 allocation);
         }).ToList();
@@ -135,12 +136,12 @@ public sealed class LeasedBedService(AppDbContext db)
 
         var pending = open
             .Where(r => r.Status == BedRequestStatus.Pending)
-            .Select(r => new AdminBedRequest(r.Id, r.UserId, r.User?.DisplayName, r.User?.Email, r.CreatedAtUtc, null))
+            .Select(r => new AdminBedRequest(r.Id, r.UserId, r.User?.DisplayName, r.User?.Email, r.CreatedAtUtc, r.RequiresWheelchairAccessible, null))
             .ToList();
 
         var waitlist = open
             .Where(r => r.Status == BedRequestStatus.Waitlisted)
-            .Select((r, i) => new AdminBedRequest(r.Id, r.UserId, r.User?.DisplayName, r.User?.Email, r.CreatedAtUtc, i + 1))
+            .Select((r, i) => new AdminBedRequest(r.Id, r.UserId, r.User?.DisplayName, r.User?.Email, r.CreatedAtUtc, r.RequiresWheelchairAccessible, i + 1))
             .ToList();
 
         return new AdminBedRequests(pending, waitlist);
@@ -199,7 +200,7 @@ public sealed class LeasedBedService(AppDbContext db)
                 ? await db.BedRequests.CountAsync(
                     r => r.Status == BedRequestStatus.Waitlisted && r.CreatedAtUtc <= request.CreatedAtUtc, ct)
                 : null;
-            requestInfo = new MyRequestInfo(request.Status.ToString(), position);
+            requestInfo = new MyRequestInfo(request.Status.ToString(), position, request.RequiresWheelchairAccessible);
         }
 
         return new MyLeasedBedStatus(membership, capacity, leaseDtos, requestInfo);

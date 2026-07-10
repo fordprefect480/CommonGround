@@ -23,18 +23,20 @@ public sealed record AdminBed(
     string Label,
     bool IsActive,
     string? Notes,
+    bool IsWheelchairAccessible,
     bool IsOccupied,
     AdminBedAllocation? CurrentLease);
 
 public sealed record LeasedBedsOverview(CapacitySummary Capacity, IReadOnlyList<AdminBed> Beds);
 
-/// <summary>An open request in the admin queue. <paramref name="Position"/> is 1-based for waitlisted entries, null for pending.</summary>
+/// <summary>An open request in the admin queue. <paramref name="RequiresWheelchairAccessible"/> is set when the member asked for an accessible bed. <paramref name="Position"/> is 1-based for waitlisted entries, null for pending.</summary>
 public sealed record AdminBedRequest(
     int RequestId,
     string MemberId,
     string? MemberName,
     string? MemberEmail,
     DateTime CreatedAtUtc,
+    bool RequiresWheelchairAccessible,
     int? Position);
 
 public sealed record AdminBedRequests(
@@ -58,7 +60,7 @@ public sealed record MyLease(
     bool CanRenew);
 
 /// <summary><paramref name="Status"/> is "Pending" or "Waitlisted". Position is 1-based, only set when waitlisted.</summary>
-public sealed record MyRequestInfo(string Status, int? WaitlistPosition);
+public sealed record MyRequestInfo(string Status, int? WaitlistPosition, bool RequiresWheelchairAccessible);
 
 public sealed record MyLeasedBedStatus(
     MembershipInfo Membership,

@@ -10,7 +10,8 @@ const BED_FEATURES: ReadonlyArray<string> = [
   'compost, mulch, fertiliser and water are all included in your rental',
   'standard beds are 2.4m x 1.2m and 0.6m in height',
   'produce from your bed is for your own consumption',
-  'beds for wheelchair users and two communal wicking beds are planned',
+  'wheelchair-accessible beds are available - let us know when you apply',
+  'two communal wicking beds are planned',
   'plants are not to overgrow onto the ground - please use your own trellising within the bed',
 ]
 
