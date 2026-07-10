@@ -4,6 +4,7 @@ import { getLeasedBedPrice } from '../../api/adminTools'
 import { fetchMembers, type Member } from '../../api/auth'
 import {
   assignBed,
+  type AssignBedInput,
   type AssignResult,
   fetchBedRequests,
   fetchLeasedBeds,
@@ -102,12 +103,7 @@ function AssignIcon() {
 
 function WheelchairIcon({ title = 'Wheelchair-accessible' }: { title?: string }) {
   return (
-    <svg {...iconProps} aria-hidden={undefined} role="img" aria-label={title}>
-      <title>{title}</title>
-      <circle cx="9" cy="4" r="1.6" />
-      <path d="M9 6v6h5l3 6" />
-      <path d="M14 12a5 5 0 1 1-5 5" />
-    </svg>
+    <span role="img" aria-label={title} title={title}>♿</span>
   )
 }
 
@@ -222,15 +218,45 @@ export default function LeasedBeds() {
 
       {state.status === 'ready' && (() => {
         const availableBeds = state.overview.beds.filter((b) => b.isActive && !b.isOccupied)
-        const assign = async (requestId: number, bedId: number, customPriceCents: number) => {
-          const result = await assignBed({ requestId, bedId, customPriceCents })
+        const performAssign = async (input: AssignBedInput) => {
+          const result = await assignBed(input)
           await reloadAll()
-          announceAssignment(result, bedId)
+          announceAssignment(result, input.bedId)
+        }
+        // If the member asked for a wheelchair-accessible bed but this bed isn't one,
+        // divert to a confirmation modal instead of assigning straight away. Returns
+        // true when it diverted (caller should stop).
+        const confirmIfAccessibilityMismatch = (
+          bedId: number,
+          memberWantsAccessible: boolean,
+          memberName: string | undefined,
+          proceed: () => Promise<void>,
+        ): boolean => {
+          const bed = state.overview.beds.find((b) => b.id === bedId)
+          if (!memberWantsAccessible || !bed || bed.isWheelchairAccessible) return false
+          setPendingConfirm({
+            title: 'Assign a non-accessible bed?',
+            message: `${memberName ?? 'This member'} asked for a wheelchair-accessible bed, but ${bed.label} is not wheelchair-accessible. Assign it anyway?`,
+            confirmLabel: 'Assign anyway',
+            onConfirm: proceed,
+          })
+          return true
+        }
+        const assign = async (requestId: number, bedId: number, customPriceCents: number) => {
+          const req =
+            state.requests.pending.find((r) => r.requestId === requestId) ??
+            state.requests.waitlist.find((r) => r.requestId === requestId)
+          const proceed = () => performAssign({ requestId, bedId, customPriceCents })
+          if (confirmIfAccessibilityMismatch(bedId, req?.requiresWheelchairAccessible ?? false, req?.memberName ?? req?.memberEmail ?? undefined, proceed)) return
+          await proceed()
         }
         const assignToMember = async (userId: string, bedId: number, customPriceCents: number) => {
-          const result = await assignBed({ userId, bedId, customPriceCents })
-          await reloadAll()
-          announceAssignment(result, bedId)
+          const req =
+            state.requests.pending.find((r) => r.memberId === userId) ??
+            state.requests.waitlist.find((r) => r.memberId === userId)
+          const proceed = () => performAssign({ userId, bedId, customPriceCents })
+          if (confirmIfAccessibilityMismatch(bedId, req?.requiresWheelchairAccessible ?? false, req?.memberName ?? req?.memberEmail ?? undefined, proceed)) return
+          await proceed()
         }
         return (
           <>
@@ -402,9 +428,9 @@ function PendingSection({
       ) : (
         requests.map((r) => (
           <div key={r.requestId} className="field" style={{ borderTop: '1px solid var(--hairline, #e5e5e5)', paddingTop: 12 }}>
-            <strong>{r.memberName ?? r.memberEmail ?? r.memberId}</strong>
-            {r.memberEmail && <span className="card-note"> · {r.memberEmail}</span>}
-            {r.requiresWheelchairAccessible && <> <WheelchairIcon title="Needs a wheelchair-accessible bed" /></>}
+                <strong>{r.memberName ?? r.memberEmail ?? r.memberId}
+                    {r.requiresWheelchairAccessible && <> <WheelchairIcon title="Needs a wheelchair-accessible bed" /></>}</strong>
+            {r.memberEmail && <span className="card-note">{r.memberEmail}</span>}
             <AssignControls
               requestId={r.requestId}
               availableBeds={availableBeds}
@@ -692,7 +718,8 @@ function AssignControls({
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
       <select value={bedId} onChange={(e) => setBedId(e.target.value === '' ? '' : Number(e.target.value))} disabled={busy}>
         {availableBeds.map((b) => (
-          <option key={b.id} value={b.id}>{b.label}</option>
+            <option key={b.id} value={b.id}>{b.label}
+                {b.isWheelchairAccessible && <> <WheelchairIcon title="Needs a wheelchair-accessible bed" /></>}</option>
         ))}
       </select>
       <span aria-hidden="true">$</span>

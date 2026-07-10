@@ -276,9 +276,6 @@ function PendingRequest({
         <p className="card-note" style={{ margin: 0 }}>
           Your application is pending — an admin will assign you a bed.
         </p>
-        {request.requiresWheelchairAccessible && (
-          <p className="card-note" style={{ margin: 0 }}>You&rsquo;ve asked for a wheelchair-accessible bed.</p>
-        )}
         <div className="admin-actions">
           <button type="button" className="secondary-button" onClick={onWithdraw} disabled={busy}>
             Cancel my application
@@ -294,9 +291,6 @@ function PendingRequest({
         <p className="card-note" style={{ margin: 0 }}>
           You are number {request.waitlistPosition} on the waitlist.
         </p>
-        {request.requiresWheelchairAccessible && (
-          <p className="card-note" style={{ margin: 0 }}>You&rsquo;ve asked for a wheelchair-accessible bed.</p>
-        )}
         <div className="admin-actions">
           <button type="button" className="secondary-button" onClick={onWithdraw} disabled={busy}>
             Leave the waitlist
