@@ -6,14 +6,20 @@ import TextAlign from '@tiptap/extension-text-align'
 import { useEffect, useState, type ReactNode } from 'react'
 import { uploadBlogImage } from '../../api/blog'
 import PromptModal from './PromptModal'
+import {
+  IMAGE_SIZE_CLASSES,
+  imageAlignFromClass,
+  imageSizeFromClass,
+  DEFAULT_IMAGE_SIZE,
+  DEFAULT_IMAGE_ALIGN,
+  type ImageAlignClass,
+  type ImageSizeClass,
+} from './blogImageClasses'
 
 interface BlogEditorProps {
   value: string
   onChange: (html: string) => void
 }
-
-const IMAGE_SIZE_CLASSES = ['blog-img-small', 'blog-img-medium', 'blog-img-wide'] as const
-type ImageSizeClass = typeof IMAGE_SIZE_CLASSES[number]
 
 const SIZE_LABELS: Record<ImageSizeClass, string> = {
   'blog-img-small': 'S',
@@ -147,22 +153,23 @@ function ToolbarButton({ label, onClick, pressed, disabled, children }: {
 }
 
 function ImageNodeView({ node, selected, updateAttributes, deleteNode }: ReactNodeViewProps) {
-  const sizeClass = (node.attrs.class as string | null) ?? 'blog-img-medium'
+  const size = (node.attrs.size as ImageSizeClass | undefined) ?? DEFAULT_IMAGE_SIZE
+  const align = (node.attrs.align as ImageAlignClass | undefined) ?? DEFAULT_IMAGE_ALIGN
   return (
-    <NodeViewWrapper className="tiptap-image-nodeview" data-selected={selected || undefined}>
-      <img src={node.attrs.src} alt={node.attrs.alt ?? ''} className={sizeClass} draggable={false} />
+    <NodeViewWrapper className="tiptap-image-nodeview" data-selected={selected || undefined} data-align={align}>
+      <img src={node.attrs.src} alt={node.attrs.alt ?? ''} className={size} draggable={false} />
       {selected && (
         <div className="tiptap-image-menu" contentEditable={false} onMouseDown={(e) => e.preventDefault()}>
-          {IMAGE_SIZE_CLASSES.map((size) => (
+          {IMAGE_SIZE_CLASSES.map((s) => (
             <button
               type="button"
-              key={size}
-              title={SIZE_TITLES[size]}
-              aria-label={SIZE_TITLES[size]}
-              aria-pressed={sizeClass === size}
-              onClick={() => updateAttributes({ class: size })}
+              key={s}
+              title={SIZE_TITLES[s]}
+              aria-label={SIZE_TITLES[s]}
+              aria-pressed={size === s}
+              onClick={() => updateAttributes({ size: s })}
             >
-              {SIZE_LABELS[size]}
+              {SIZE_LABELS[s]}
             </button>
           ))}
           <span className="tiptap-image-menu-divider" aria-hidden="true" />
@@ -179,11 +186,15 @@ const SizedImage = Image.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
-      class: {
-        default: 'blog-img-medium',
-        parseHTML: (el) => el.getAttribute('class'),
-        renderHTML: (attrs: { class?: string | null }) =>
-          attrs.class ? { class: attrs.class } : {},
+      size: {
+        default: DEFAULT_IMAGE_SIZE,
+        parseHTML: (el: HTMLElement) => imageSizeFromClass(el.getAttribute('class')),
+        renderHTML: (attrs: { size?: string | null }) => (attrs.size ? { class: attrs.size } : {}),
+      },
+      align: {
+        default: DEFAULT_IMAGE_ALIGN,
+        parseHTML: (el: HTMLElement) => imageAlignFromClass(el.getAttribute('class')),
+        renderHTML: (attrs: { align?: string | null }) => (attrs.align ? { class: attrs.align } : {}),
       },
     }
   },
@@ -223,12 +234,7 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
   const insertImage = async (file: File) => {
     try {
       const result = await uploadBlogImage(file)
-      editor
-        .chain()
-        .focus()
-        .setImage({ src: result.url, alt: '' })
-        .updateAttributes('image', { class: 'blog-img-medium' })
-        .run()
+      editor.chain().focus().setImage({ src: result.url, alt: '' }).run()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Upload failed')
     }
@@ -279,9 +285,33 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
 
         <span className="tiptap-toolbar-divider" aria-hidden="true" />
 
-        <ToolbarButton label="Align left" onClick={() => editor.chain().focus().setTextAlign('left').run()} pressed={editor.isActive({ textAlign: 'left' })}><AlignLeftIcon /></ToolbarButton>
-        <ToolbarButton label="Align center" onClick={() => editor.chain().focus().setTextAlign('center').run()} pressed={editor.isActive({ textAlign: 'center' })}><AlignCenterIcon /></ToolbarButton>
-        <ToolbarButton label="Align right" onClick={() => editor.chain().focus().setTextAlign('right').run()} pressed={editor.isActive({ textAlign: 'right' })}><AlignRightIcon /></ToolbarButton>
+        <ToolbarButton
+          label="Align left"
+          onClick={() =>
+            editor.isActive('image')
+              ? editor.chain().focus().updateAttributes('image', { align: 'blog-img-left' }).run()
+              : editor.chain().focus().setTextAlign('left').run()
+          }
+          pressed={editor.isActive('image') ? editor.getAttributes('image').align === 'blog-img-left' : editor.isActive({ textAlign: 'left' })}
+        ><AlignLeftIcon /></ToolbarButton>
+        <ToolbarButton
+          label="Align center"
+          onClick={() =>
+            editor.isActive('image')
+              ? editor.chain().focus().updateAttributes('image', { align: 'blog-img-center' }).run()
+              : editor.chain().focus().setTextAlign('center').run()
+          }
+          pressed={editor.isActive('image') ? editor.getAttributes('image').align === 'blog-img-center' : editor.isActive({ textAlign: 'center' })}
+        ><AlignCenterIcon /></ToolbarButton>
+        <ToolbarButton
+          label="Align right"
+          onClick={() =>
+            editor.isActive('image')
+              ? editor.chain().focus().updateAttributes('image', { align: 'blog-img-right' }).run()
+              : editor.chain().focus().setTextAlign('right').run()
+          }
+          pressed={editor.isActive('image') ? editor.getAttributes('image').align === 'blog-img-right' : editor.isActive({ textAlign: 'right' })}
+        ><AlignRightIcon /></ToolbarButton>
 
         <span className="tiptap-toolbar-divider" aria-hidden="true" />
 
