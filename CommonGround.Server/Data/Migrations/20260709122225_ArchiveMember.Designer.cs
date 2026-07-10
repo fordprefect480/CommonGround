@@ -4,6 +4,7 @@ using CommonGround.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CommonGround.Server.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260709122225_ArchiveMember")]
+    partial class ArchiveMember
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -188,9 +191,6 @@ namespace CommonGround.Server.Data.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsWheelchairAccessible")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Label")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -215,7 +215,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 1,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N1"
                         },
                         new
@@ -223,7 +222,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 2,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N2"
                         },
                         new
@@ -231,7 +229,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 3,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N3"
                         },
                         new
@@ -239,7 +236,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 4,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N4"
                         },
                         new
@@ -247,7 +243,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 5,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N5"
                         },
                         new
@@ -255,7 +250,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 6,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N6"
                         },
                         new
@@ -263,7 +257,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 7,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N7"
                         },
                         new
@@ -271,7 +264,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 8,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N8"
                         },
                         new
@@ -279,7 +271,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 9,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N9"
                         },
                         new
@@ -287,7 +278,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 10,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N10"
                         },
                         new
@@ -295,7 +285,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 11,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N11"
                         },
                         new
@@ -303,7 +292,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 12,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N12"
                         },
                         new
@@ -311,7 +299,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 13,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N13"
                         },
                         new
@@ -319,7 +306,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 14,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N14"
                         },
                         new
@@ -327,7 +313,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 15,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N15"
                         },
                         new
@@ -335,7 +320,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 16,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "N16"
                         },
                         new
@@ -343,7 +327,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 17,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S1"
                         },
                         new
@@ -351,7 +334,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 18,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S2"
                         },
                         new
@@ -359,7 +341,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 19,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S3"
                         },
                         new
@@ -367,7 +348,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 20,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S4"
                         },
                         new
@@ -375,7 +355,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 21,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S5"
                         },
                         new
@@ -383,7 +362,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 22,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S6"
                         },
                         new
@@ -391,7 +369,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 23,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S7"
                         },
                         new
@@ -399,7 +376,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 24,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S8"
                         },
                         new
@@ -407,7 +383,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 25,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S9"
                         },
                         new
@@ -415,7 +390,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 26,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S10"
                         },
                         new
@@ -423,7 +397,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 27,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S11"
                         },
                         new
@@ -431,7 +404,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 28,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S12"
                         },
                         new
@@ -439,7 +411,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 29,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S13"
                         },
                         new
@@ -447,7 +418,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 30,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S14"
                         },
                         new
@@ -455,7 +425,6 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 31,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S15"
                         },
                         new
@@ -463,40 +432,7 @@ namespace CommonGround.Server.Data.Migrations
                             Id = 32,
                             IsActive = true,
                             IsDeleted = false,
-                            IsWheelchairAccessible = false,
                             Label = "S16"
-                        },
-                        new
-                        {
-                            Id = 33,
-                            IsActive = true,
-                            IsDeleted = false,
-                            IsWheelchairAccessible = true,
-                            Label = "W1"
-                        },
-                        new
-                        {
-                            Id = 34,
-                            IsActive = true,
-                            IsDeleted = false,
-                            IsWheelchairAccessible = true,
-                            Label = "W2"
-                        },
-                        new
-                        {
-                            Id = 35,
-                            IsActive = true,
-                            IsDeleted = false,
-                            IsWheelchairAccessible = true,
-                            Label = "W3"
-                        },
-                        new
-                        {
-                            Id = 36,
-                            IsActive = true,
-                            IsDeleted = false,
-                            IsWheelchairAccessible = true,
-                            Label = "W4"
                         });
                 });
 
@@ -619,9 +555,6 @@ namespace CommonGround.Server.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("SYSUTCDATETIME()");
-
-                    b.Property<bool>("RequiresWheelchairAccessible")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("ResolvedAtUtc")
                         .HasColumnType("datetime2");

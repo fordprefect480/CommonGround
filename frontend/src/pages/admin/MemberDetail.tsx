@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { fetchMember, fetchMembershipRenewalTarget, recordMembershipPayment, updateMember, type Member } from '../../api/auth'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { deleteMember, fetchMember, fetchMembershipRenewalTarget, recordMembershipPayment, updateMember, type Member } from '../../api/auth'
 import { fetchMemberEmails, type MemberEmailListItem } from '../../api/email'
 import { fetchLeasedBeds, recordLeasePayment, type AdminBed, type BedLeaseStatus } from '../../api/leasedBeds'
 import { useAppConfig } from '../../AppConfigContext'
@@ -9,6 +9,7 @@ import { formatAbsolute, formatRelative } from './activityFormatting'
 import PaymentHistoryTable from './PaymentHistoryTable'
 import RecordPaymentModal from './RecordPaymentModal'
 import AdminBackButton from './AdminBackButton'
+import ConfirmModal from './ConfirmModal'
 
 const ADMIN_ROLE = 'Admin'
 
@@ -269,6 +270,8 @@ export default function MemberDetail() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [paymentsRefresh, setPaymentsRefresh] = useState(0)
+  const navigate = useNavigate()
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -475,6 +478,33 @@ export default function MemberDetail() {
       </section>
 
       <EmailHistoryCard memberId={member.id} />
+
+      <section className="card admin-form danger-zone">
+        <h2 className="section-title">Danger zone</h2>
+        <p className="card-note" style={{ margin: 0 }}>
+          Deleting a member removes them from the members list and frees any garden bed they hold.
+          Their payment records are kept for accounting, but they will no longer appear anywhere or
+          be able to sign in. This cannot be undone from here.
+        </p>
+        <div className="admin-actions">
+          <button type="button" className="secondary-button danger-button" onClick={() => setConfirmDeleteOpen(true)}>
+            Delete this member
+          </button>
+        </div>
+      </section>
+
+      <ConfirmModal
+        open={confirmDeleteOpen}
+        title="Delete this member?"
+        message={`This removes ${heading} from the members list and frees any garden bed they hold. Their payment records are kept for accounting, but they will no longer appear anywhere or be able to sign in. This cannot be undone from here.`}
+        confirmLabel="Delete member"
+        cancelLabel="Cancel"
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={async () => {
+          await deleteMember(member.id)
+          navigate('/admin/members')
+        }}
+      />
     </section>
   )
 }

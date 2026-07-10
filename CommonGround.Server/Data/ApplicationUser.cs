@@ -17,6 +17,10 @@ public class ApplicationUser : IdentityUser
 
     public DateTime? MembershipPaidThroughUtc { get; set; }
 
+    /// <summary>When set, the member is archived (soft-deleted): hidden from every
+    /// admin view and unable to sign in, while their records are retained.</summary>
+    public DateTime? ArchivedAtUtc { get; set; }
+
     public ICollection<SecondaryMember> SecondaryMembers { get; set; } = new List<SecondaryMember>();
 
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;

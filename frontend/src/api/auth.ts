@@ -265,6 +265,15 @@ export async function updateMember(id: string, input: UpdateMemberInput): Promis
   throw new Error(await readErrorMessage(res, 'Update failed'))
 }
 
+export async function deleteMember(id: string): Promise<void> {
+  const res = await fetch(`/api/admin/members/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  })
+  if (res.ok) return
+  throw new Error(await readErrorMessage(res, 'Delete failed'))
+}
+
 async function readErrorMessage(res: Response, fallback: string): Promise<string> {
   const text = await res.text()
   if (!text) return `${fallback} (${res.status})`

@@ -341,6 +341,23 @@ fieldset.field:disabled {
   cursor: not-allowed;
 }
 
+/* Red-outline variant for destructive actions; compose with .secondary-button. */
+.danger-button {
+  color: var(--status-error);
+  border-color: var(--status-error);
+}
+
+.danger-button:hover:not(:disabled) {
+  background: var(--error-bg);
+  border-color: var(--apple-800);
+}
+
+/* Red-bordered card for a destructive section; compose with .card.
+   Selector is .card.danger-zone so it outweighs .card's border shorthand. */
+.card.danger-zone {
+  border-color: var(--status-error);
+}
+
 .admin-actions {
   display: flex;
   align-items: center;

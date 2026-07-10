@@ -51,6 +51,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             b.Property(u => u.JoinedAt).HasDefaultValueSql("SYSUTCDATETIME()");
             b.Property(u => u.IsSubscribedToMailingList).HasDefaultValue(true);
 
+            // Archived (soft-deleted) members drop out of every db.Users query
+            // automatically - including the Identity lookups that gate login.
+            b.HasQueryFilter(u => u.ArchivedAtUtc == null);
+
             b.HasMany(u => u.SecondaryMembers)
                 .WithOne(s => s.User!)
                 .HasForeignKey(s => s.UserId)
