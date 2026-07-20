@@ -10,6 +10,7 @@ import {
 } from '../../api/blog'
 
 const BlogEditor = lazy(() => import('./BlogEditor'))
+const BlogPreviewModal = lazy(() => import('./BlogPreviewModal'))
 
 const STATUS_DRAFT = 0
 const STATUS_PUBLISHED = 1
@@ -51,6 +52,7 @@ export default function BlogPostEditor() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [originalStatus, setOriginalStatus] = useState(STATUS_DRAFT)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   useEffect(() => {
     fetchBlogCategories().then(setCategories).catch(() => setCategories([]))
@@ -112,6 +114,7 @@ export default function BlogPostEditor() {
   if (loading) return <p className="admin-loading">Loading&hellip;</p>
 
   const isPublished = originalStatus === STATUS_PUBLISHED
+  const previewCategoryName = categories.find((c) => c.id === form.categoryId)?.name ?? null
 
   return (
     <section className="admin-page" aria-labelledby="editor-heading">
@@ -150,6 +153,9 @@ export default function BlogPostEditor() {
         </div>
 
         <div className="admin-actions">
+          <button type="button" className="secondary-button" onClick={() => setPreviewOpen(true)}>
+            Preview
+          </button>
           {!isPublished && (
             <button type="button" className="primary-button" disabled={submitting} onClick={() => submit(STATUS_DRAFT)}>
               {submitting ? 'Saving…' : 'Save draft'}
@@ -171,6 +177,17 @@ export default function BlogPostEditor() {
           <button type="button" className="footer-link" onClick={() => navigate('/admin/blog')}>Cancel</button>
         </div>
       </form>
+
+      {previewOpen && (
+        <Suspense fallback={null}>
+          <BlogPreviewModal
+            title={form.title}
+            bodyHtml={form.bodyHtml}
+            categoryName={previewCategoryName}
+            onClose={() => setPreviewOpen(false)}
+          />
+        </Suspense>
+      )}
     </section>
   )
 }
