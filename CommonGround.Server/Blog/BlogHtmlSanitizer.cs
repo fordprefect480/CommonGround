@@ -7,18 +7,20 @@ public class BlogHtmlSanitizer
     private static readonly string[] AllowedTags =
     [
         "p", "h2", "h3", "h4", "ul", "ol", "li", "blockquote",
-        "a", "strong", "em", "code", "pre", "br", "img", "hr",
+        "a", "strong", "em", "code", "pre", "br", "img", "hr", "span",
     ];
 
-    // "style" is allowed only so the editor's text-alignment survives; the sole
-    // permitted CSS property is "text-align" (see AllowedCssProperties below), so
-    // no other inline styling can slip through.
+    // "style" is allowed only so the editor's text-alignment and text colour
+    // survive; the permitted CSS properties are limited to "text-align" and
+    // "color" (see AllowedCssProperties below), so no other inline styling can
+    // slip through. The sanitizer validates values, so only well-formed colours
+    // are kept.
     private static readonly string[] AllowedAttributes = ["href", "src", "alt", "class", "style"];
 
     public static readonly string[] AllowedImageClasses =
         ["blog-img-small", "blog-img-medium", "blog-img-wide", "blog-img-left", "blog-img-center", "blog-img-right"];
 
-    private static readonly string[] AllowedCssProperties = ["text-align"];
+    private static readonly string[] AllowedCssProperties = ["text-align", "color"];
 
     private readonly HtmlSanitizer _sanitizer;
 

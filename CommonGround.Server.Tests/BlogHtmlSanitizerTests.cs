@@ -49,12 +49,32 @@ public class BlogHtmlSanitizerTests
     }
 
     [Fact]
-    public void Strips_non_alignment_style_properties()
+    public void Strips_disallowed_style_properties()
     {
-        var result = Sanitize("<p style=\"text-align: center; color: red; position: fixed\">hi</p>");
+        var result = Sanitize("<p style=\"text-align: center; position: fixed\">hi</p>");
 
         Assert.Contains("text-align", result);
-        Assert.DoesNotContain("color", result);
+        Assert.DoesNotContain("position", result);
+    }
+
+    [Fact]
+    public void Keeps_text_colour_on_spans()
+    {
+        // The sanitizer may re-serialize the colour value (e.g. hex -> rgba), so
+        // assert the span and colour property survive rather than the exact text.
+        var result = Sanitize("<p>hello <span style=\"color: #c84a30\">world</span></p>");
+
+        Assert.Contains("<span", result);
+        Assert.Contains("color", result);
+        Assert.Contains("world", result);
+    }
+
+    [Fact]
+    public void Strips_disallowed_properties_but_keeps_colour()
+    {
+        var result = Sanitize("<span style=\"color: #527e40; position: fixed\">hi</span>");
+
+        Assert.Contains("color", result);
         Assert.DoesNotContain("position", result);
     }
 }

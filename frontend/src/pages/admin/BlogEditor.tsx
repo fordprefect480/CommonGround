@@ -3,7 +3,8 @@ import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import TextAlign from '@tiptap/extension-text-align'
-import { useEffect, useState, type ReactNode } from 'react'
+import { TextStyle, Color } from '@tiptap/extension-text-style'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { uploadBlogImage } from '../../api/blog'
 import PromptModal from './PromptModal'
 import {
@@ -45,6 +46,48 @@ const BLOCK_LEVEL: Record<'title' | 'heading' | 'subheading', 2 | 3 | 4> = {
   heading: 3,
   subheading: 4,
 }
+
+// Text colour palette. Values are lower-cased hex so they compare cleanly
+// against what TipTap reports as the active colour. The first row is drawn from
+// the site's brand tokens; the rest are standard web colours for general use.
+interface ColorGroup {
+  label: string
+  colors: { value: string; label: string }[]
+}
+
+const COLOR_GROUPS: ColorGroup[] = [
+  {
+    label: 'Brand',
+    colors: [
+      { value: '#16140f', label: 'Ink' },
+      { value: '#6a6452', label: 'Stone' },
+      { value: '#c84a30', label: 'Apple red' },
+      { value: '#a13927', label: 'Deep apple' },
+      { value: '#527e40', label: 'Leaf green' },
+      { value: '#2e4f25', label: 'Deep leaf' },
+      { value: '#8c8a2e', label: 'Olive' },
+    ],
+  },
+  {
+    label: 'Standard',
+    colors: [
+      { value: '#000000', label: 'Black' },
+      { value: '#444444', label: 'Dark grey' },
+      { value: '#888888', label: 'Grey' },
+      { value: '#cccccc', label: 'Light grey' },
+      { value: '#ffffff', label: 'White' },
+      { value: '#e03131', label: 'Red' },
+      { value: '#e8590c', label: 'Orange' },
+      { value: '#f08c00', label: 'Amber' },
+      { value: '#2f9e44', label: 'Green' },
+      { value: '#0c8599', label: 'Teal' },
+      { value: '#1971c2', label: 'Blue' },
+      { value: '#6741d9', label: 'Purple' },
+      { value: '#c2255c', label: 'Pink' },
+      { value: '#846358', label: 'Brown' },
+    ],
+  },
+]
 
 const iconProps = {
   width: 18,
@@ -215,6 +258,8 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
         HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' },
       }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      TextStyle,
+      Color,
       SizedImage,
     ],
     content: value,
@@ -228,6 +273,19 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
 
   // null = closed; a string is the initial value shown in the link dialog.
   const [linkInitial, setLinkInitial] = useState<string | null>(null)
+
+  const [colorOpen, setColorOpen] = useState(false)
+  const colorRef = useRef<HTMLDivElement>(null)
+
+  // Close the colour popover when clicking outside it.
+  useEffect(() => {
+    if (!colorOpen) return
+    const onPointerDown = (e: MouseEvent) => {
+      if (colorRef.current && !colorRef.current.contains(e.target as Node)) setColorOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    return () => document.removeEventListener('mousedown', onPointerDown)
+  }, [colorOpen])
 
   if (!editor) return null
 
@@ -263,6 +321,14 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
     else editor.chain().focus().setHeading({ level: BLOCK_LEVEL[value as keyof typeof BLOCK_LEVEL] }).run()
   }
 
+  const currentColor = (editor.getAttributes('textStyle').color as string | undefined)?.toLowerCase()
+
+  const applyColor = (color: string | null) => {
+    if (color) editor.chain().focus().setColor(color).run()
+    else editor.chain().focus().unsetColor().run()
+    setColorOpen(false)
+  }
+
   return (
     <div className="tiptap-wrapper">
       <div className="tiptap-toolbar" role="toolbar" aria-label="Editor formatting">
@@ -276,6 +342,48 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
 
         <ToolbarButton label="Bold" onClick={() => editor.chain().focus().toggleBold().run()} pressed={editor.isActive('bold')}><b>B</b></ToolbarButton>
         <ToolbarButton label="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} pressed={editor.isActive('italic')}><i style={{ display: 'inline-block', transform: 'skewX(-12deg)' }}>I</i></ToolbarButton>
+
+        <div className="tiptap-color-control" ref={colorRef}>
+          <button
+            type="button"
+            className="tiptap-color-button"
+            title="Text colour"
+            aria-label="Text colour"
+            aria-haspopup="true"
+            aria-expanded={colorOpen}
+            onClick={() => setColorOpen((open) => !open)}
+          >
+            <span aria-hidden="true">A</span>
+            <span className="tiptap-color-bar" style={{ background: currentColor ?? 'var(--ink-900)' }} />
+          </button>
+          {colorOpen && (
+            <div className="tiptap-color-popover" role="menu" aria-label="Text colour">
+              {COLOR_GROUPS.map((group) => (
+                <div key={group.label} className="tiptap-color-group" role="group" aria-label={group.label}>
+                  <span className="tiptap-color-group-label">{group.label}</span>
+                  <div className="tiptap-color-swatches">
+                    {group.colors.map((c) => (
+                      <button
+                        type="button"
+                        key={c.value}
+                        role="menuitemradio"
+                        aria-checked={currentColor === c.value}
+                        className="tiptap-color-swatch"
+                        title={c.label}
+                        aria-label={c.label}
+                        style={{ background: c.value }}
+                        onClick={() => applyColor(c.value)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <button type="button" className="tiptap-color-reset" role="menuitem" onClick={() => applyColor(null)}>
+                Default colour
+              </button>
+            </div>
+          )}
+        </div>
 
         <span className="tiptap-toolbar-divider" aria-hidden="true" />
 
