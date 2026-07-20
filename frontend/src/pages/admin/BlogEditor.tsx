@@ -47,16 +47,46 @@ const BLOCK_LEVEL: Record<'title' | 'heading' | 'subheading', 2 | 3 | 4> = {
   subheading: 4,
 }
 
-// Curated palette drawn from the site's brand tokens. Values are lower-cased hex
-// so they compare cleanly against what TipTap reports as the active colour.
-const TEXT_COLORS: { value: string; label: string }[] = [
-  { value: '#16140f', label: 'Ink' },
-  { value: '#6a6452', label: 'Stone' },
-  { value: '#c84a30', label: 'Apple red' },
-  { value: '#a13927', label: 'Deep apple' },
-  { value: '#527e40', label: 'Leaf green' },
-  { value: '#2e4f25', label: 'Deep leaf' },
-  { value: '#8c8a2e', label: 'Olive' },
+// Text colour palette. Values are lower-cased hex so they compare cleanly
+// against what TipTap reports as the active colour. The first row is drawn from
+// the site's brand tokens; the rest are standard web colours for general use.
+interface ColorGroup {
+  label: string
+  colors: { value: string; label: string }[]
+}
+
+const COLOR_GROUPS: ColorGroup[] = [
+  {
+    label: 'Brand',
+    colors: [
+      { value: '#16140f', label: 'Ink' },
+      { value: '#6a6452', label: 'Stone' },
+      { value: '#c84a30', label: 'Apple red' },
+      { value: '#a13927', label: 'Deep apple' },
+      { value: '#527e40', label: 'Leaf green' },
+      { value: '#2e4f25', label: 'Deep leaf' },
+      { value: '#8c8a2e', label: 'Olive' },
+    ],
+  },
+  {
+    label: 'Standard',
+    colors: [
+      { value: '#000000', label: 'Black' },
+      { value: '#444444', label: 'Dark grey' },
+      { value: '#888888', label: 'Grey' },
+      { value: '#cccccc', label: 'Light grey' },
+      { value: '#ffffff', label: 'White' },
+      { value: '#e03131', label: 'Red' },
+      { value: '#e8590c', label: 'Orange' },
+      { value: '#f08c00', label: 'Amber' },
+      { value: '#2f9e44', label: 'Green' },
+      { value: '#0c8599', label: 'Teal' },
+      { value: '#1971c2', label: 'Blue' },
+      { value: '#6741d9', label: 'Purple' },
+      { value: '#c2255c', label: 'Pink' },
+      { value: '#846358', label: 'Brown' },
+    ],
+  },
 ]
 
 const iconProps = {
@@ -328,21 +358,26 @@ export default function BlogEditor({ value, onChange }: BlogEditorProps) {
           </button>
           {colorOpen && (
             <div className="tiptap-color-popover" role="menu" aria-label="Text colour">
-              <div className="tiptap-color-swatches">
-                {TEXT_COLORS.map((c) => (
-                  <button
-                    type="button"
-                    key={c.value}
-                    role="menuitemradio"
-                    aria-checked={currentColor === c.value}
-                    className="tiptap-color-swatch"
-                    title={c.label}
-                    aria-label={c.label}
-                    style={{ background: c.value }}
-                    onClick={() => applyColor(c.value)}
-                  />
-                ))}
-              </div>
+              {COLOR_GROUPS.map((group) => (
+                <div key={group.label} className="tiptap-color-group" role="group" aria-label={group.label}>
+                  <span className="tiptap-color-group-label">{group.label}</span>
+                  <div className="tiptap-color-swatches">
+                    {group.colors.map((c) => (
+                      <button
+                        type="button"
+                        key={c.value}
+                        role="menuitemradio"
+                        aria-checked={currentColor === c.value}
+                        className="tiptap-color-swatch"
+                        title={c.label}
+                        aria-label={c.label}
+                        style={{ background: c.value }}
+                        onClick={() => applyColor(c.value)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
               <button type="button" className="tiptap-color-reset" role="menuitem" onClick={() => applyColor(null)}>
                 Default colour
               </button>
