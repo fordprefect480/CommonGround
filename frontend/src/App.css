@@ -1975,11 +1975,6 @@ button.footer-link:disabled {
   background: var(--ivory); border: 1px solid #d8d2c4; border-radius: 9px;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
 }
-.tiptap-color-group { display: flex; flex-direction: column; gap: 5px; }
-.tiptap-color-group-label {
-  font-family: var(--font-sans); font-size: 11px; font-weight: 700;
-  letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-500);
-}
 .tiptap-color-swatches { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .tiptap-color-swatch {
   width: 26px; height: 26px; min-width: 0; padding: 0;
