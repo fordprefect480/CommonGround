@@ -108,9 +108,7 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
         var article = document.QuerySelector("article");
         if (article is null) return null;
 
-        var imageUrls = new List<string>();
-        var sb = new StringBuilder();
-        WalkNode(article, sb, imageUrls);
+        var (cleanBody, imageUrls) = BuildCleanBody(article);
 
         return new RemotePost(
             Slug: slug,
@@ -119,8 +117,29 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
             PublishedAt: publishedAt,
             Description: NonEmpty(ogDescription),
             CoverImageUrl: coverImageUrl,
-            CleanBodyHtml: sb.ToString(),
+            CleanBodyHtml: cleanBody,
             ImageUrls: imageUrls);
+    }
+
+    /// <summary>
+    /// Rebuilds a post body from a raw <c>&lt;article&gt;</c> HTML fragment, keeping only the
+    /// tags and attributes we trust. Static and network-free so the HTML-cleaning behaviour can be
+    /// unit tested directly; if the fragment has no <c>&lt;article&gt;</c> the whole body is walked.
+    /// </summary>
+    public static (string Html, IReadOnlyList<string> ImageUrls) CleanArticleBody(string articleHtml)
+    {
+        var parser = new HtmlParser();
+        var document = parser.ParseDocument(articleHtml);
+        var root = document.QuerySelector("article") ?? document.Body!;
+        return BuildCleanBody(root);
+    }
+
+    private static (string Html, IReadOnlyList<string> ImageUrls) BuildCleanBody(IElement root)
+    {
+        var imageUrls = new List<string>();
+        var sb = new StringBuilder();
+        WalkNode(root, sb, imageUrls);
+        return (sb.ToString(), imageUrls);
     }
 
     public async Task<(byte[] bytes, string contentType)?> FetchImageAsync(string url, CancellationToken ct)
@@ -240,7 +259,7 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
 
     private static string? NonEmpty(string? s) => string.IsNullOrWhiteSpace(s) ? null : s;
 
-    private void WalkNode(INode node, StringBuilder sb, List<string> imageUrls)
+    private static void WalkNode(INode node, StringBuilder sb, List<string> imageUrls)
     {
         switch (node)
         {
@@ -253,7 +272,7 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
         }
     }
 
-    private void WalkElement(IElement el, StringBuilder sb, List<string> imageUrls)
+    private static void WalkElement(IElement el, StringBuilder sb, List<string> imageUrls)
     {
         var hook = el.GetAttribute("data-hook")?.Trim() ?? "";
 
@@ -305,7 +324,41 @@ public partial class WixBlogClient(HttpClient http, IConfiguration config)
             return;
         }
 
+        // Wix wraps coloured text in <span style="color: ..."> (and similar).
+        // These tags aren't in the passthrough set, so they would otherwise be
+        // unwrapped and their colour lost. Re-emit a colour-only span so the
+        // colour survives; the shared sanitiser validates the value downstream.
+        var color = ExtractColor(el.GetAttribute("style"));
+        if (color is not null)
+        {
+            sb.Append($"<span style=\"color: {System.Net.WebUtility.HtmlEncode(color)}\">");
+            foreach (var child in el.ChildNodes) WalkNode(child, sb, imageUrls);
+            sb.Append("</span>");
+            return;
+        }
+
         foreach (var child in el.ChildNodes) WalkNode(child, sb, imageUrls);
+    }
+
+    // Pulls the "color" declaration out of an inline style string, ignoring all
+    // other properties (and background-color, whose name merely ends in "color").
+    private static string? ExtractColor(string? style)
+    {
+        if (string.IsNullOrWhiteSpace(style)) return null;
+
+        foreach (var declaration in style.Split(';'))
+        {
+            var separator = declaration.IndexOf(':');
+            if (separator <= 0) continue;
+
+            if (!declaration[..separator].Trim().Equals("color", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var value = declaration[(separator + 1)..].Trim();
+            if (value.Length > 0) return value;
+        }
+
+        return null;
     }
 
     private static void EmitFigureImage(IElement figure, StringBuilder sb, List<string> imageUrls)
