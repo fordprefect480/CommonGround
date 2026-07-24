@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.21.0](https://github.com/fordprefect480/CommonGround/compare/v0.20.0...v0.21.0) (2026-07-24)
+
+
+### Features
+
+* add draft preview modal to the blog post editor ([0e8bb36](https://github.com/fordprefect480/CommonGround/commit/0e8bb36cd62c67ae7cfdd9fb437171b473138bd2))
+* add standard colours to the blog editor text colour picker ([133ffa2](https://github.com/fordprefect480/CommonGround/commit/133ffa214f55091fa7428cc38c1c97fbc9903a5e))
+* add text colour control to the blog post editor ([3aa6041](https://github.com/fordprefect480/CommonGround/commit/3aa6041957f1526de3f0bec83a3c82e323cbdf15))
+* preserve text colour when importing blog posts from Wix ([df97bce](https://github.com/fordprefect480/CommonGround/commit/df97bcee6a1990288853e820926199e036280a51))
+
+
+### Bug Fixes
+
+* remove brand colours from the blog editor palette ([ceeb0aa](https://github.com/fordprefect480/CommonGround/commit/ceeb0aa2a7ad715b812e9cd4f66d2efc64690868))
+
 ## [0.20.0](https://github.com/fordprefect480/CommonGround/compare/v0.19.0...v0.20.0) (2026-07-10)
 
 
