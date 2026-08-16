@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.21.1](https://github.com/fordprefect480/CommonGround/compare/v0.21.0...v0.21.1) (2026-08-16)
+
+
+### Bug Fixes
+
+* render blank lines in blog post bodies ([d691736](https://github.com/fordprefect480/CommonGround/commit/d69173661b28a444c898a7dc92aec299dd72e134))
+* render blank lines in blog post bodies ([9530f53](https://github.com/fordprefect480/CommonGround/commit/9530f531f97cad8fce42c46dbcf98ccedb1910db))
+
 ## [0.21.0](https://github.com/fordprefect480/CommonGround/compare/v0.20.0...v0.21.0) (2026-07-24)
 
 
