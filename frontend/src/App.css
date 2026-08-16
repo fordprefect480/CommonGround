@@ -1734,6 +1734,17 @@ button.footer-link:disabled {
 
 .blog-post-body p { margin: 0 0 1rem; }
 
+/* A deliberate blank line is stored as an empty <p></p>. An empty block has no
+   line box, so it renders at zero height and its margins collapse with its
+   neighbours' - the blank line the author inserted disappears. The empty
+   ::before gives the paragraph a line box one line tall. (The editor itself is
+   unaffected: ProseMirror puts a <br> in empty paragraphs, so they are not
+   :empty there and already have height.) */
+.blog-post-body p:empty::before {
+  content: '';
+  display: inline-block;
+}
+
 .blog-post-body a {
   color: var(--apple-700);
   text-underline-offset: 0.2em;
