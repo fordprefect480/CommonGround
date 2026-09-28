@@ -152,6 +152,8 @@ Sections bind to strongly-typed options classes in [`CommonGround.Server/Configu
 | `Email:FromName`         | `appsettings.json`                     | Optional display name for the sender     | empty                                      |
 | `Email:TemplateId`       | secret                                 | Resend template GUID used for **newsletters** (bulk, unsubscribe link) | empty                            |
 | `Email:TransactionalTemplateId` | secret                          | Resend template GUID used for **transactional/membership** mail (welcomes, password reset, bed assignment) | empty      |
+| `Email:DailyLimit`       | `appsettings.json`                     | Resend's cap on emails per rolling 24 hours. Bulk sends over the remaining allowance are queued and finished automatically by a background worker | `100` |
+| `Email:TransactionalReserve` | `appsettings.json`                 | Part of `DailyLimit` bulk sends never use, so welcomes and password resets still go out on a newsletter day | `10` |
 | `ContactForm:RecipientAddress` | `appsettings.json`               | Inbox that contact form submissions are delivered to | empty (contact form returns 503)        |
 | `ContactForm:TurnstileSiteKey` | `appsettings.json`               | Cloudflare Turnstile site key - sent to the frontend so it can render the widget | empty (captcha disabled, form still sends) |
 | `ContactForm:TurnstileSecretKey` | secret                         | Cloudflare Turnstile secret key - used server-side to verify the captcha token | empty (captcha disabled, form still sends) |

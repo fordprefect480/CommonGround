@@ -10,6 +10,7 @@ import PaymentHistoryTable from './PaymentHistoryTable'
 import RecordPaymentModal from './RecordPaymentModal'
 import AdminBackButton from './AdminBackButton'
 import ConfirmModal from './ConfirmModal'
+import { RecipientStatusPill } from './emailQuota'
 
 const ADMIN_ROLE = 'Admin'
 
@@ -234,11 +235,7 @@ function EmailHistoryCard({ memberId }: { memberId: string }) {
                   <td data-label="Subject"><Link to={`/admin/email/${email.id}`}>{email.subject}</Link></td>
                   <td data-label="From">{email.senderEmail ?? '-'}</td>
                   <td data-label="Status">
-                    {email.status === 'failed' ? (
-                      <span className="pill pill-warn" title={email.errorMessage ?? undefined}>Failed</span>
-                    ) : (
-                      <span className="pill pill-ok">Delivered</span>
-                    )}
+                    <RecipientStatusPill status={email.status} title={email.errorMessage ?? undefined} />
                   </td>
                 </tr>
               ))}

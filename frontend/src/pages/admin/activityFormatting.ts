@@ -17,6 +17,7 @@ const ACTIVITY_LABELS: Record<string, string> = {
   'instagram.posts_reordered': 'Instagram tiles reordered',
   'email.test_sent': 'Test email sent',
   'email.newsletter_sent': 'Newsletter sent',
+  'email.queued_batch_sent': 'Waiting emails sent',
   'email.unsubscribed': 'Unsubscribed from mailing list',
   'mailinglist.subscribed': 'Subscribed to mailing list',
   'contact.submitted': 'Contact form submitted',

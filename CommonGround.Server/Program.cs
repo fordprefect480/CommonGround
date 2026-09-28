@@ -46,6 +46,11 @@ builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedCheckoutServi
 builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedActivationService>();
 builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedNotifications>();
 builder.Services.AddScoped<TransactionalEmailSender>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<EmailQuotaService>();
+builder.Services.AddScoped<BulkEmailDispatcher>();
+builder.Services.AddSingleton<BulkEmailQueueWorker>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<BulkEmailQueueWorker>());
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<AppDbContext>()
     .SetApplicationName("CommonGround");

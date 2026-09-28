@@ -20,6 +20,7 @@ public sealed class TransactionalEmailSender(
     IResend resend,
     AppDbContext db,
     IOptions<EmailOptions> emailOptions,
+    TimeProvider time,
     ILogger<TransactionalEmailSender> logger)
 {
     /// <summary>A single recipient, with the member id attached when known.</summary>
@@ -126,6 +127,7 @@ public sealed class TransactionalEmailSender(
         {
             await resend.EmailSendAsync(message, ct);
             record.Status = SentEmailRecipientStatus.Sent;
+            record.SentAtUtc = time.GetUtcNow().UtcDateTime;
             sentEmail.SentCount = 1;
             delivered = true;
         }

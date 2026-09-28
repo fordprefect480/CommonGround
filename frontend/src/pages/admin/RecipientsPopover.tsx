@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { fetchSentEmail, type SentEmailRecipient } from '../../api/email'
+import { RecipientStatusPill } from './emailQuota'
 
 interface RecipientsPopoverProps {
   emailId: number
@@ -76,7 +77,7 @@ export default function RecipientsPopover({ emailId, anchor, onClose }: Recipien
               {state.recipients.map((r) => (
                 <li key={r.id} className={r.status === 'failed' ? 'recipients-popover-failed' : undefined}>
                   <span>{r.email}</span>
-                  {r.status === 'failed' && <span className="pill pill-warn">Failed</span>}
+                  {r.status !== 'sent' && <RecipientStatusPill status={r.status} />}
                 </li>
               ))}
             </ul>

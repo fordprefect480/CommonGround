@@ -6,6 +6,7 @@ import {
   type SendNewsletterResult,
 } from '../../api/email'
 import type { Member } from '../../api/auth'
+import { EmailAllowanceSummary, SendPlanNote, useEmailQuota } from './emailQuota'
 
 // Host-agnostic pieces of the email composer, shared by the New Email modal
 // (EmailComposeModal) and the in-modal composer for selected members
@@ -227,6 +228,7 @@ export function ComposeForm({
   footerNote,
 }: ComposeFormProps) {
   const [send, setSend] = useState<SendState>({ status: 'idle' })
+  const quota = useEmailQuota()
 
   // Drop the cursor into the body the first time the preview loads. Guarded so
   // toggling the newsletter switch (which reloads the template and remounts the
@@ -332,6 +334,8 @@ export function ComposeForm({
             </svg>
           </span>
         </div>
+        <EmailAllowanceSummary quota={quota} />
+        <SendPlanNote recipientCount={recipientCount} quota={quota} />
         <div className="admin-actions">
           <button type="button" className="primary-button" onClick={confirmSend} disabled={!canSend}>
             {recipientCount > 0 ? `Send to ${pluralize(recipientCount, recipientNoun)}` : 'Send'}
@@ -347,6 +351,7 @@ export function ComposeForm({
           <p id="email-confirm-heading">
             <strong>Send &ldquo;{subjectTrimmed}&rdquo; to {pluralize(recipientCount, recipientNoun)}?</strong>
           </p>
+          <SendPlanNote recipientCount={recipientCount} quota={quota} />
           <p>This cannot be undone.</p>
           <div className="admin-actions" style={{ marginTop: '0.75rem' }}>
             <button type="button" className="primary-button" onClick={performSend}>

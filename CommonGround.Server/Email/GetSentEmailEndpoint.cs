@@ -21,6 +21,8 @@ public sealed class GetSentEmailEndpoint(AppDbContext db)
         int RecipientCount,
         int SentCount,
         int FailedCount,
+        int QueuedCount,
+        int SkippedCount,
         IReadOnlyList<Recipient> Recipients);
 
     public sealed record Recipient(
@@ -53,6 +55,7 @@ public sealed class GetSentEmailEndpoint(AppDbContext db)
                 e.RecipientCount,
                 e.SentCount,
                 e.FailedCount,
+                e.QueuedCount,
                 Recipients = e.Recipients
                     .OrderBy(r => r.Status)
                     .ThenBy(r => r.Email)
@@ -60,11 +63,11 @@ public sealed class GetSentEmailEndpoint(AppDbContext db)
                         r.Id,
                         r.UserId,
                         r.Email,
-                        r.Status == SentEmailRecipientStatus.Sent ? "sent" : "failed",
+                        r.Status.ToApiName(),
                         r.ErrorMessage))
                     .ToList(),
             })
-            .FirstOrDefaultAsync(ct);
+            .SingleOrDefaultAsync(ct);
 
         if (entity is null)
         {
@@ -84,6 +87,8 @@ public sealed class GetSentEmailEndpoint(AppDbContext db)
             entity.RecipientCount,
             entity.SentCount,
             entity.FailedCount,
+            entity.QueuedCount,
+            entity.Recipients.Count(r => r.Status == "skipped"),
             entity.Recipients), ct);
     }
 }

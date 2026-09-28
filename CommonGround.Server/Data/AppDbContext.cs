@@ -209,6 +209,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             b.Property(e => e.SenderUserId).HasMaxLength(450);
             b.Property(e => e.SenderEmailSnapshot).HasMaxLength(256);
             b.Property(e => e.IsNewsletter).HasDefaultValue(false);
+            b.Property(e => e.PublicBaseUrl).HasMaxLength(500);
 
             b.HasOne(e => e.Sender)
                 .WithMany()
@@ -237,6 +238,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .OnDelete(DeleteBehavior.SetNull);
 
             b.HasIndex(r => r.SentEmailId).HasDatabaseName("IX_SentEmailRecipient_SentEmailId");
+            b.HasIndex(r => new { r.Status, r.SentAtUtc }).HasDatabaseName("IX_SentEmailRecipient_Status_SentAtUtc");
         });
 
         builder.Entity<SiteSettings>(b =>

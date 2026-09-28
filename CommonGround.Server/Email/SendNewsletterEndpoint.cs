@@ -6,20 +6,17 @@ using FastEndpoints;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Resend;
 
 namespace CommonGround.Server.Email;
 
 public sealed class SendNewsletterEndpoint(
-    IResend resend,
+    BulkEmailDispatcher dispatcher,
     IOptions<EmailOptions> options,
     IOptions<GardenOptions> gardenOptions,
     AppDbContext db,
     UserManager<ApplicationUser> userManager,
     IHttpContextAccessor httpContextAccessor,
-    IActivityLogger activityLogger,
-    UnsubscribeTokenService unsubscribeTokens,
-    ILogger<SendNewsletterEndpoint> logger)
+    IActivityLogger activityLogger)
     : Endpoint<SendNewsletterEndpoint.Request, SendNewsletterEndpoint.Result>
 {
     public sealed record Request(
@@ -30,7 +27,7 @@ public sealed class SendNewsletterEndpoint(
         IReadOnlyList<string>? Emails,
         bool? IsNewsletter);
 
-    public sealed record Result(long Id, int Sent, int Failed);
+    public sealed record Result(long Id, int Sent, int Failed, int Queued);
 
     private const string ModeAllSubscribers = "all_subscribers";
     private const string ModeSpecificMembers = "specific_members";
@@ -71,7 +68,6 @@ public sealed class SendNewsletterEndpoint(
         }
 
         var isNewsletter = req.IsNewsletter ?? true;
-        var templateId = options.Value.TemplateIdFor(isNewsletter);
 
         var mode = string.IsNullOrWhiteSpace(req.Mode) ? ModeAllSubscribers : req.Mode!.Trim();
         List<ResolvedRecipient> recipients;
@@ -143,18 +139,6 @@ public sealed class SendNewsletterEndpoint(
             }
         }
 
-        var publicBaseUrl = ResolvePublicBaseUrl(gardenOptions.Value.PublicUrl, http);
-
-        string BuildUnsubscribeUrl(ResolvedRecipient r)
-        {
-            if (r.UserId is null)
-            {
-                return $"mailto:{options.Value.FromAddress}?subject=Unsubscribe";
-            }
-            var token = unsubscribeTokens.CreateToken(r.UserId);
-            return $"{publicBaseUrl}/unsubscribe?token={Uri.EscapeDataString(token)}";
-        }
-
         var sentEmail = new SentEmail
         {
             Subject = subject,
@@ -163,87 +147,44 @@ public sealed class SendNewsletterEndpoint(
             SenderEmailSnapshot = senderEmail,
             IsNewsletter = isNewsletter,
             RecipientCount = recipients.Count,
+            QueuedCount = recipients.Count,
+            PublicBaseUrl = ResolvePublicBaseUrl(gardenOptions.Value.PublicUrl, http),
         };
-
-        var sent = 0;
-        var failed = 0;
-
         foreach (var r in recipients)
         {
-            ct.ThrowIfCancellationRequested();
-
-            // Newsletters carry a per-recipient unsubscribe link and the List-Unsubscribe
-            // headers (anti-spam law); membership emails don't.
-            var unsubscribeUrl = isNewsletter ? BuildUnsubscribeUrl(r) : null;
-
-            var variables = new Dictionary<string, object> { ["BODY"] = body };
-            if (unsubscribeUrl is not null)
-            {
-                variables["RESEND_UNSUBSCRIBE_URL"] = unsubscribeUrl;
-            }
-
-            var message = new EmailMessage
-            {
-                From = options.Value.From,
-                Subject = subject,
-                Template = new EmailMessageTemplate { TemplateId = templateId, Variables = variables },
-            };
-            message.To.Add(r.Email);
-
-            if (unsubscribeUrl is not null)
-            {
-                message.Headers = new Dictionary<string, string>
-                {
-                    ["List-Unsubscribe"] = $"<{unsubscribeUrl}>",
-                };
-                if (unsubscribeUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-                {
-                    message.Headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
-                }
-            }
-
-            var record = new SentEmailRecipient
+            sentEmail.Recipients.Add(new SentEmailRecipient
             {
                 UserId = r.UserId,
                 Email = r.Email,
-            };
-
-            try
-            {
-                await resend.EmailSendAsync(message, ct);
-                record.Status = SentEmailRecipientStatus.Sent;
-                sent++;
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Failed to send newsletter to {Recipient}", r.Email);
-                record.Status = SentEmailRecipientStatus.Failed;
-                record.ErrorMessage = Truncate(ex.Message, 1000);
-                failed++;
-            }
-
-            sentEmail.Recipients.Add(record);
+                Status = SentEmailRecipientStatus.Queued,
+            });
         }
-
-        sentEmail.SentCount = sent;
-        sentEmail.FailedCount = failed;
 
         db.SentEmails.Add(sentEmail);
         await db.SaveChangesAsync(ct);
 
+        // Everything is queued first; this sends as much as today's allowance allows and the
+        // queue worker delivers the rest as allowance frees up.
+        await dispatcher.DispatchQueuedAsync(ct);
+
+        var sent = sentEmail.SentCount;
+        var failed = sentEmail.FailedCount;
+        var queued = sentEmail.QueuedCount;
+
+        var activitySummary = queued == 0
+            ? $"sent the newsletter \"{subject}\" to {sent} of {recipients.Count} recipient(s)"
+            : $"sent the newsletter \"{subject}\" to {sent} of {recipients.Count} recipient(s); {queued} will go out automatically as the daily email allowance frees up";
+
         await activityLogger.LogAsync(
             "email.newsletter_sent",
-            $"sent the newsletter \"{subject}\" to {sent} of {recipients.Count} recipient(s)",
+            activitySummary,
             targetType: "sentEmail",
             targetId: sentEmail.Id.ToString(),
-            details: new { Subject = subject, Sent = sent, Failed = failed, Recipients = recipients.Count, Mode = mode, IsNewsletter = isNewsletter },
+            details: new { Subject = subject, Sent = sent, Failed = failed, Queued = queued, Recipients = recipients.Count, Mode = mode, IsNewsletter = isNewsletter },
             ct: ct);
 
-        await Send.OkAsync(new Result(sentEmail.Id, sent, failed), ct);
+        await Send.OkAsync(new Result(sentEmail.Id, sent, failed, queued), ct);
     }
-
-    private static string Truncate(string value, int max) =>
-        value.Length <= max ? value : value[..max];
 
     private static string ResolvePublicBaseUrl(string? configured, HttpContext? http)
     {

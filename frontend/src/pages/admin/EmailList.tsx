@@ -4,6 +4,7 @@ import { fetchSentEmails, type SentEmailListItem } from '../../api/email'
 import { formatAbsolute, formatRelative } from './activityFormatting'
 import EmailComposeModal from './EmailComposeModal'
 import RecipientsPopover from './RecipientsPopover'
+import { EmailAllowanceSummary, useEmailQuota } from './emailQuota'
 
 type State =
   | { status: 'loading' }
@@ -15,6 +16,7 @@ export default function EmailList() {
   const [state, setState] = useState<State>({ status: 'loading' })
   const [popover, setPopover] = useState<{ id: number; anchor: DOMRect } | null>(null)
   const [composeOpen, setComposeOpen] = useState(false)
+  const quota = useEmailQuota()
 
   useEffect(() => {
     let cancelled = false
@@ -34,6 +36,8 @@ export default function EmailList() {
           New email
         </button>
       </header>
+
+      <EmailAllowanceSummary quota={quota} />
 
       {state.status === 'loading' && <p className="admin-loading">Loading&hellip;</p>}
       {state.status === 'error' && <div className="form-error" role="alert">{state.message}</div>}
@@ -56,7 +60,12 @@ export default function EmailList() {
               {state.items.map((item) => (
                 <tr key={item.id}>
                   <td data-label="Sent" title={formatAbsolute(item.sentAt)}>{formatRelative(item.sentAt)}</td>
-                  <td data-label="Subject"><Link to={`/admin/email/${item.id}`} className="admin-table-link">{item.subject}</Link></td>
+                  <td data-label="Subject">
+                    <Link to={`/admin/email/${item.id}`} className="admin-table-link">{item.subject}</Link>
+                    {item.queuedCount > 0 && (
+                      <> <span className="pill pill-warn">Sending: {item.sentCount} of {item.recipientCount}</span></>
+                    )}
+                  </td>
                   <td data-label="Type">
                     {item.isNewsletter
                       ? <span className="pill pill-warn">Newsletter</span>

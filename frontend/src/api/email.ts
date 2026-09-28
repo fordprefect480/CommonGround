@@ -2,6 +2,19 @@ export interface SendNewsletterResult {
   id: number
   sent: number
   failed: number
+  queued: number
+}
+
+export type RecipientStatus = 'sent' | 'failed' | 'queued' | 'skipped'
+
+/** Resend's daily sending cap and how much of it is left (rolling 24 hours). */
+export interface EmailQuota {
+  dailyLimit: number
+  transactionalReserve: number
+  sentLast24Hours: number
+  bulkRemaining: number
+  queuedTotal: number
+  nextAllowanceAtUtc: string | null
 }
 
 export interface SentEmailListItem {
@@ -12,13 +25,15 @@ export interface SentEmailListItem {
   isNewsletter: boolean
   recipientEmail: string | null
   recipientCount: number
+  sentCount: number
+  queuedCount: number
 }
 
 export interface SentEmailRecipient {
   id: number
   userId: string | null
   email: string
-  status: 'sent' | 'failed'
+  status: RecipientStatus
   errorMessage: string | null
 }
 
@@ -34,6 +49,8 @@ export interface SentEmailDetail {
   recipientCount: number
   sentCount: number
   failedCount: number
+  queuedCount: number
+  skippedCount: number
   recipients: SentEmailRecipient[]
 }
 
@@ -74,6 +91,12 @@ export async function fetchSubscriberCount(): Promise<number> {
   if (!res.ok) throw new Error(await res.text())
   const body = (await res.json()) as { count: number }
   return body.count
+}
+
+export async function fetchEmailQuota(): Promise<EmailQuota> {
+  const res = await fetch('/api/admin/tools/email/quota', { credentials: 'include' })
+  if (!res.ok) throw new Error(await res.text())
+  return res.json()
 }
 
 export type NewsletterRecipients =
@@ -120,7 +143,7 @@ export interface MemberEmailListItem {
   senderEmail: string | null
   isNewsletter: boolean
   email: string
-  status: 'sent' | 'failed'
+  status: RecipientStatus
   errorMessage: string | null
 }
 
