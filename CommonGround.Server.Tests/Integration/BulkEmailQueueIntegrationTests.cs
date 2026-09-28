@@ -104,6 +104,7 @@ public class BulkEmailQueueIntegrationTests
         Assert.Equal(new SendResponse(result.Id, BulkAllowance, 0, 0), result);
         Assert.Equal(BulkAllowance, factory.Fake.Sent.Count);
         var email = LoadEmail(factory.Services, result.Id);
+        Assert.Equal(email.Recipients.Select(r => $"sent-email-recipient-{r.Id}").Order(), factory.Fake.IdempotencyKeys.Order());
         Assert.All(email.Recipients, r =>
         {
             Assert.Equal(SentEmailRecipientStatus.Sent, r.Status);
@@ -231,6 +232,21 @@ public class BulkEmailQueueIntegrationTests
         var email = LoadEmail(factory.Services, result.Id);
         Assert.Equal(3, email.SentCount);
         Assert.Equal(0, email.FailedCount);
+    }
+
+    [Fact]
+    public async Task Resend_rejecting_a_reused_idempotency_key_records_the_recipient_as_sent()
+    {
+        using var factory = new EmailApiFactory();
+        var client = factory.CreateClient();
+        SeedSubscribers(factory.Services, 2);
+        factory.Fake.FailWith = m => m.To.Single().Email == "member01@example.com" ? FakeResend.AlreadySent() : null;
+
+        var result = await SendNewsletterAsync(client);
+
+        Assert.Equal(2, result.Sent);
+        Assert.Equal(0, result.Failed);
+        Assert.All(LoadEmail(factory.Services, result.Id).Recipients, r => Assert.Equal(SentEmailRecipientStatus.Sent, r.Status));
     }
 
     [Fact]

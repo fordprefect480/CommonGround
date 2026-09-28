@@ -140,11 +140,20 @@ public sealed class BulkEmailDispatcher(
         try
         {
             // Not cancellable: abandoning a request mid-flight would leave us unsure whether it was delivered.
-            await resend.EmailSendAsync(BuildMessage(email, recipient), CancellationToken.None);
-            recipient.Status = SentEmailRecipientStatus.Sent;
-            recipient.SentAtUtc = time.GetUtcNow().UtcDateTime;
-            recipient.ErrorMessage = null;
-            return Outcome.Sent;
+            // The per-recipient idempotency key makes Resend drop a repeat if we crashed before saving the outcome.
+            await resend.EmailSendAsync(IdempotencyKey(recipient), BuildMessage(email, recipient), CancellationToken.None);
+            return MarkSent(recipient);
+        }
+        catch (ResendException ex) when (ex.ErrorType == ErrorType.InvalidIdempotentRequest)
+        {
+            // Resend already accepted a send under this key; this retry only differs by its freshly minted unsubscribe token.
+            logger.LogInformation("Resend already accepted \"{Subject}\" for {Recipient}; recording it as sent", email.Subject, recipient.Email);
+            return MarkSent(recipient);
+        }
+        catch (ResendException ex) when (ex.ErrorType == ErrorType.ConcurrentIdempotentRequests)
+        {
+            logger.LogWarning(ex, "Resend is still processing \"{Subject}\" for {Recipient}; leaving it queued", email.Subject, recipient.Email);
+            return Outcome.AllowanceExhausted;
         }
         catch (ResendException ex) when (ex.ErrorType is ErrorType.DailyQuotaExceeded or ErrorType.MonthlyQuotaExceeded or ErrorType.RateLimitExceeded)
         {
@@ -159,6 +168,16 @@ public sealed class BulkEmailDispatcher(
             return Outcome.Failed;
         }
     }
+
+    private Outcome MarkSent(SentEmailRecipient recipient)
+    {
+        recipient.Status = SentEmailRecipientStatus.Sent;
+        recipient.SentAtUtc = time.GetUtcNow().UtcDateTime;
+        recipient.ErrorMessage = null;
+        return Outcome.Sent;
+    }
+
+    private static string IdempotencyKey(SentEmailRecipient recipient) => $"sent-email-recipient-{recipient.Id}";
 
     private EmailMessage BuildMessage(SentEmail email, SentEmailRecipient recipient)
     {

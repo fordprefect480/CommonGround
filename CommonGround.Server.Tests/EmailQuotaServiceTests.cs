@@ -17,9 +17,12 @@ public class EmailQuotaServiceTests
         return (new EmailQuotaService(db, options, new ManualTimeProvider(Now)), db);
     }
 
-    private static void AddRecipients(AppDbContext db, SentEmailRecipientStatus status, params DateTime?[] sentAt)
+    private static void AddRecipients(AppDbContext db, SentEmailRecipientStatus status, params DateTime?[] sentAt) =>
+        AddEmailWithRecipients(db, status, emailSentAt: default, sentAt);
+
+    private static void AddEmailWithRecipients(AppDbContext db, SentEmailRecipientStatus status, DateTime emailSentAt, params DateTime?[] sentAt)
     {
-        var email = new SentEmail { Subject = "s", HtmlBody = "b" };
+        var email = new SentEmail { Subject = "s", HtmlBody = "b", SentAt = emailSentAt };
         foreach (var at in sentAt)
         {
             email.Recipients.Add(new SentEmailRecipient { Email = "x@example.com", Status = status, SentAtUtc = at });
@@ -42,6 +45,18 @@ public class EmailQuotaServiceTests
         Assert.Equal(8 - 2, snapshot.BulkRemaining);
         Assert.Equal(3, snapshot.QueuedTotal);
         Assert.Null(snapshot.NextAllowanceAtUtc);
+    }
+
+    [Fact]
+    public async Task Sends_recorded_before_SentAtUtc_existed_count_from_their_email_timestamp()
+    {
+        var (quota, db) = Build();
+        AddEmailWithRecipients(db, SentEmailRecipientStatus.Sent, emailSentAt: Now.AddHours(-2), null, null, null);
+        AddEmailWithRecipients(db, SentEmailRecipientStatus.Sent, emailSentAt: Now.AddHours(-30), null, null);
+
+        var snapshot = await quota.GetAsync(default);
+
+        Assert.Equal(3, snapshot.SentLast24Hours);
     }
 
     [Fact]

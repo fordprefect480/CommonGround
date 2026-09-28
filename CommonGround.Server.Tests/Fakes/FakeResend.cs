@@ -12,6 +12,12 @@ namespace CommonGround.Server.Tests.Fakes;
 public class FakeResend : DispatchProxy
 {
     private readonly List<EmailMessage> _sent = [];
+    private readonly List<string> _idempotencyKeys = [];
+
+    public IReadOnlyList<string> IdempotencyKeys
+    {
+        get { lock (_sent) return _idempotencyKeys.ToList(); }
+    }
 
     public IReadOnlyList<EmailMessage> Sent
     {
@@ -27,6 +33,9 @@ public class FakeResend : DispatchProxy
         return proxy;
     }
 
+    public static ResendException AlreadySent() =>
+        new(System.Net.HttpStatusCode.UnprocessableEntity, ErrorType.InvalidIdempotentRequest, "Same idempotency key used with a different request payload.", null);
+
     public static ResendException QuotaExceeded() =>
         new(System.Net.HttpStatusCode.TooManyRequests, ErrorType.DailyQuotaExceeded, "You have reached your daily email sending quota.", null);
 
@@ -39,7 +48,11 @@ public class FakeResend : DispatchProxy
             {
                 return FaultedTaskFor(targetMethod.ReturnType, failure);
             }
-            lock (_sent) _sent.Add(message);
+            lock (_sent)
+            {
+                _sent.Add(message);
+                _idempotencyKeys.AddRange(args!.OfType<string>());
+            }
         }
 
         return CompletedTaskFor(targetMethod.ReturnType);

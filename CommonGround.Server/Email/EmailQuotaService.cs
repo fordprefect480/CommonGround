@@ -34,10 +34,13 @@ public sealed class EmailQuotaService(AppDbContext db, IOptions<EmailOptions> op
         var now = time.GetUtcNow().UtcDateTime;
         var windowStart = now - Window;
 
+        // Rows recorded before SentAtUtc existed fall back to their email's timestamp; back then every
+        // recipient went out within the same request, so that is when Resend counted them.
         var sentTimes = await db.SentEmailRecipients
-            .Where(r => r.Status == SentEmailRecipientStatus.Sent && r.SentAtUtc > windowStart)
-            .OrderBy(r => r.SentAtUtc)
-            .Select(r => r.SentAtUtc!.Value)
+            .Where(r => r.Status == SentEmailRecipientStatus.Sent)
+            .Select(r => r.SentAtUtc ?? r.SentEmail.SentAt)
+            .Where(sentAt => sentAt > windowStart)
+            .OrderBy(sentAt => sentAt)
             .ToListAsync(ct);
 
         var queuedTotal = await db.SentEmailRecipients
