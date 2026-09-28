@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.22.1](https://github.com/fordprefect480/CommonGround/compare/v0.22.0...v0.22.1) (2026-09-28)
+
+
+### Bug Fixes
+
+* upgrade Aspire to 13.5.4 to fix Azure SQL role provisioning ([640f62a](https://github.com/fordprefect480/CommonGround/commit/640f62ab703aa3a0270672b3d352d6f6d2673505))
+
 ## [0.22.0](https://github.com/fordprefect480/CommonGround/compare/v0.21.1...v0.22.0) (2026-09-28)
 
 
