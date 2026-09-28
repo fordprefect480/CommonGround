@@ -1,5 +1,6 @@
 using CommonGround.Server.Auth;
 using CommonGround.Server.Data;
+using CommonGround.Server.Email;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,7 +46,7 @@ public sealed class ListMemberEmailsEndpoint(AppDbContext db)
                 r.SentEmail.SenderEmailSnapshot,
                 r.SentEmail.IsNewsletter,
                 r.Email,
-                r.Status == SentEmailRecipientStatus.Sent ? "sent" : "failed",
+                r.Status.ToApiName(),
                 r.ErrorMessage))
             .ToListAsync(ct);
 

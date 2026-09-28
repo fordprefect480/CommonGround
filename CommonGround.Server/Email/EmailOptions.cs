@@ -14,6 +14,18 @@ public sealed class EmailOptions
     /// <summary>Resend template used for transactional/membership mail (welcomes, password reset, bed assignment).</summary>
     public string? TransactionalTemplateId { get; set; }
 
+    /// <summary>Resend's sending cap: the most emails accepted in any 24-hour period.</summary>
+    public int DailyLimit { get; set; } = 100;
+
+    /// <summary>
+    /// Slice of <see cref="DailyLimit"/> that bulk sends never use, so welcome, password-reset and
+    /// bed-assignment emails can still go out on a day a newsletter has used the rest.
+    /// </summary>
+    public int TransactionalReserve { get; set; } = 10;
+
+    /// <summary>How many bulk-send recipients can go out in any 24-hour period.</summary>
+    public int BulkDailyAllowance => Math.Max(0, DailyLimit - TransactionalReserve);
+
     public string From =>
         string.IsNullOrWhiteSpace(FromName) ? FromAddress : $"{FromName} <{FromAddress}>";
 

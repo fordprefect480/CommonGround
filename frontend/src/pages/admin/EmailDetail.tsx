@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { fetchSentEmail, type SentEmailDetail } from '../../api/email'
 import { formatAbsolute } from './activityFormatting'
 import AdminBackButton from './AdminBackButton'
+import { describeNextBatch, RecipientStatusPill, useEmailQuota } from './emailQuota'
 
 type State =
   | { status: 'loading' }
@@ -12,6 +13,8 @@ type State =
 export default function EmailDetailPage() {
   const { id } = useParams()
   const [state, setState] = useState<State>({ status: 'loading' })
+  const stillSending = state.status === 'ready' && state.email.queuedCount > 0
+  const quota = useEmailQuota(stillSending)
 
   useEffect(() => {
     if (!id) return
@@ -60,7 +63,15 @@ export default function EmailDetailPage() {
           <span className="field-readonly">
             {email.sentCount} of {email.recipientCount} delivered
             {email.failedCount > 0 && <> &middot; {email.failedCount} failed</>}
+            {email.queuedCount > 0 && <> &middot; {email.queuedCount} waiting to send</>}
+            {email.skippedCount > 0 && <> &middot; {email.skippedCount} skipped</>}
           </span>
+          {stillSending && (
+            <span className="card-note" style={{ fontStyle: 'normal' }}>
+              Our email service lets us send {quota?.dailyLimit ?? 'a limited number of'} emails a day, so the rest will be
+              sent automatically{quota && <>, starting {describeNextBatch(quota.nextAllowanceAtUtc)}</>}. You don&rsquo;t need to do anything.
+            </span>
+          )}
         </div>
         <div className="field">
           <span className="field-label">Body</span>
@@ -90,11 +101,7 @@ export default function EmailDetailPage() {
                         ? <Link to={`/admin/members/${r.userId}`} className="admin-table-link">{r.email}</Link>
                         : r.email}
                     </td>
-                    <td>
-                      <span className={r.status === 'sent' ? 'pill pill-ok' : 'pill pill-warn'}>
-                        {r.status === 'sent' ? 'Sent' : 'Failed'}
-                      </span>
-                    </td>
+                    <td><RecipientStatusPill status={r.status} /></td>
                     <td>{r.errorMessage ?? ''}</td>
                   </tr>
                 ))}

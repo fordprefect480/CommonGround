@@ -21,5 +21,14 @@ public class SentEmail
     public int SentCount { get; set; }
     public int FailedCount { get; set; }
 
+    /// <summary>Recipients still waiting for daily sending allowance. Non-zero means the email is still going out.</summary>
+    public int QueuedCount { get; set; }
+
+    /// <summary>
+    /// Public site origin captured at send time, so queued newsletters delivered later by the
+    /// background worker (which has no HTTP request) can still build unsubscribe links.
+    /// </summary>
+    public string? PublicBaseUrl { get; set; }
+
     public ICollection<SentEmailRecipient> Recipients { get; set; } = new List<SentEmailRecipient>();
 }
