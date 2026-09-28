@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.22.0](https://github.com/fordprefect480/CommonGround/compare/v0.21.1...v0.22.0) (2026-09-28)
+
+
+### Features
+
+* batch bulk emails to stay within Resend's daily limit ([62c4ac2](https://github.com/fordprefect480/CommonGround/commit/62c4ac26054f74e1a022887ce05a5da66eb3f9bd))
+* batch bulk emails to stay within Resend's daily limit ([c242f27](https://github.com/fordprefect480/CommonGround/commit/c242f27475f8382138314acf9a09d9e2d401c38e))
+
+
+### Bug Fixes
+
+* count pre-upgrade sends and make queued sends idempotent ([13da2de](https://github.com/fordprefect480/CommonGround/commit/13da2de12a5c59c6b5a597bee98cd86bbb7e9bf0))
+
 ## [0.21.1](https://github.com/fordprefect480/CommonGround/compare/v0.21.0...v0.21.1) (2026-08-16)
 
 
