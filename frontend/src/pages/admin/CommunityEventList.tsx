@@ -163,6 +163,14 @@ export default function CommunityEventList() {
                       <button
                         type="button"
                         className="footer-link"
+                        onClick={() => navigate(`/admin/events/new?duplicate=${ev.id}`)}
+                      >
+                        Duplicate
+                      </button>
+                      {' · '}
+                      <button
+                        type="button"
+                        className="footer-link"
                         onClick={() => handleDelete(ev)}
                       >
                         Delete
