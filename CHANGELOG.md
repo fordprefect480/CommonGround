@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.0](https://github.com/fordprefect480/CommonGround/compare/v0.22.1...v0.23.0) (2026-10-02)
+
+
+### Features
+
+* add Duplicate action for admin events ([#99](https://github.com/fordprefect480/CommonGround/issues/99)) ([f7d6de0](https://github.com/fordprefect480/CommonGround/commit/f7d6de0684091fe5ab5c9002550a8c52eddc6d0f))
+
 ## [0.22.1](https://github.com/fordprefect480/CommonGround/compare/v0.22.0...v0.22.1) (2026-09-28)
 
 
