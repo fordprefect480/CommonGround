@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.24.0](https://github.com/fordprefect480/CommonGround/compare/v0.23.0...v0.24.0) (2026-10-02)
+
+
+### Features
+
+* hide admin events older than a month ([8d5d802](https://github.com/fordprefect480/CommonGround/commit/8d5d8028c3177844f9c0848afb8e69b9ceabe952))
+* hide admin events older than a month ([15bacd5](https://github.com/fordprefect480/CommonGround/commit/15bacd5b1d39e616389a99cdb2664dea991320e8))
+
 ## [0.23.0](https://github.com/fordprefect480/CommonGround/compare/v0.22.1...v0.23.0) (2026-10-02)
 
 
