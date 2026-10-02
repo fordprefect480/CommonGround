@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import AdminBackButton from './AdminBackButton'
 import {
   createCommunityEvent,
@@ -100,19 +100,21 @@ function countOccurrences(
 
 export default function CommunityEventEditor() {
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const isNew = !id
+  const sourceId = id ?? searchParams.get('duplicate')
 
   const [form, setForm] = useState<FormState>(EMPTY)
-  const [loading, setLoading] = useState(!isNew)
+  const [loading, setLoading] = useState(sourceId !== null)
   const [submitting, setSubmitting] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (isNew) return
+    if (sourceId === null) return
     setLoading(true)
-    fetchAdminCommunityEvent(Number(id))
+    fetchAdminCommunityEvent(Number(sourceId))
       .then((ev) => {
         setForm({
           title: ev.title,
@@ -131,7 +133,7 @@ export default function CommunityEventEditor() {
         setError(err instanceof Error ? err.message : 'Load failed'),
       )
       .finally(() => setLoading(false))
-  }, [id, isNew])
+  }, [sourceId])
 
   const update = (patch: Partial<FormState>) =>
     setForm((prev) => ({ ...prev, ...patch }))
