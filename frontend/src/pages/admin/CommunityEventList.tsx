@@ -7,6 +7,7 @@ import {
   type CommunityEventAdmin,
   type UpcomingEvent,
 } from '../../api/events'
+import { isOlderThanAMonth } from './eventAge'
 
 type State =
   | { status: 'loading' }
@@ -37,6 +38,7 @@ export default function CommunityEventList() {
   }, [])
 
   const [state, setState] = useState<State>({ status: 'loading' })
+  const [showOlder, setShowOlder] = useState(false)
 
   const reload = () => {
     setState({ status: 'loading' })
@@ -73,6 +75,13 @@ export default function CommunityEventList() {
   const now = Date.now()
   const isEmpty =
     state.status === 'ready' && state.events.length === 0 && state.eventbrite.length === 0
+  const olderCount =
+    state.status === 'ready' ? state.events.filter((ev) => isOlderThanAMonth(ev, now)).length : 0
+  const shownEvents =
+    state.status === 'ready'
+      ? state.events.filter((ev) => showOlder || !isOlderThanAMonth(ev, now))
+      : []
+  const hasRows = state.status === 'ready' && shownEvents.length + state.eventbrite.length > 0
 
   return (
     <section className="admin-page" aria-labelledby="events-heading">
@@ -122,7 +131,16 @@ export default function CommunityEventList() {
       {isEmpty && (
         <p className="admin-empty">No manual events yet. Click "New event" to add one.</p>
       )}
-      {state.status === 'ready' && !isEmpty && (
+      {olderCount > 0 && (
+        <p className="admin-empty">
+          <button type="button" className="footer-link" onClick={() => setShowOlder((v) => !v)}>
+            {showOlder
+              ? 'Hide events older than a month'
+              : `Show older events (${olderCount})`}
+          </button>
+        </p>
+      )}
+      {hasRows && (
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
@@ -134,7 +152,7 @@ export default function CommunityEventList() {
               </tr>
             </thead>
             <tbody>
-              {state.events.map((ev) => {
+              {shownEvents.map((ev) => {
                 const start = new Date(ev.startUtc)
                 const past = (ev.endUtc ? new Date(ev.endUtc) : start).getTime() < now
                 return (
@@ -179,7 +197,7 @@ export default function CommunityEventList() {
                   </tr>
                 )
               })}
-              {state.eventbrite.map((ev) => (
+              {state.status === 'ready' && state.eventbrite.map((ev) => (
                 <tr key={ev.id} className="admin-table-row-muted">
                   <td data-label="Title">
                     {ev.title}
