@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.25.0](https://github.com/fordprefect480/CommonGround/compare/v0.24.0...v0.25.0) (2026-11-05)
+
+
+### Features
+
+* add No Longer Members filter chip to admin members ([fec1eee](https://github.com/fordprefect480/CommonGround/commit/fec1eeed5b9060ba0d3156cff21a116d8f155c80))
+* add No Longer Members filter chip to admin members ([9400fd1](https://github.com/fordprefect480/CommonGround/commit/9400fd16f5cf001c8141a61fabbbd0395f0b567b))
+* bulk delete members from the admin Members page ([72c9193](https://github.com/fordprefect480/CommonGround/commit/72c9193c7bd9a8ae6bb24d0e381be5642ee0c33f))
+* bulk delete members from the admin Members page ([5cb3570](https://github.com/fordprefect480/CommonGround/commit/5cb3570a34eafb323354c67095dae6c6d231befb))
+* record manual Stripe refunds from the member page ([7d81830](https://github.com/fordprefect480/CommonGround/commit/7d818302e69f5b910e9b1a5e66df5897e6e4b78a))
+* record manual Stripe refunds from the member page ([bc583cb](https://github.com/fordprefect480/CommonGround/commit/bc583cba1703065fbb60fe3ad2e37471c2a5c703))
+* show last membership payment date on admin members list ([1cab833](https://github.com/fordprefect480/CommonGround/commit/1cab83336c07ac66f4366c988661a6c434447510))
+* show last membership payment date on admin members list ([28a4fec](https://github.com/fordprefect480/CommonGround/commit/28a4fec14ba0382903f06b8f4bbce4e088b09e2c))
+
+
+### Bug Fixes
+
+* exclude fully refunded payments from members' last payment date ([8ed3655](https://github.com/fordprefect480/CommonGround/commit/8ed3655588f0d5405f785f73efb650844cc1b028))
+* keep $0 comped payments covering the year when another payment is refunded ([90dda76](https://github.com/fordprefect480/CommonGround/commit/90dda76b823ecef850c183b38b50ecd85e5ea0f4))
+* pass last membership payment to MemberDto in refund endpoint ([516bda9](https://github.com/fordprefect480/CommonGround/commit/516bda9eab5267b66844c6fdc7bacc1ac9f3da67))
+
 ## [0.24.0](https://github.com/fordprefect480/CommonGround/compare/v0.23.0...v0.24.0) (2026-10-02)
 
 
