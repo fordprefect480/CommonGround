@@ -7,6 +7,8 @@ interface RecordPaymentModalProps {
   description?: string
   /** Pre-filled amount in cents (the standard price); the admin can change it. */
   initialAmountCents: number
+  amountLabel?: string
+  confirmLabel?: string
   onClose: () => void
   onConfirm: (amountCents: number) => Promise<void>
 }
@@ -18,6 +20,8 @@ export default function RecordPaymentModal({
   title,
   description,
   initialAmountCents,
+  amountLabel = 'Amount received',
+  confirmLabel = 'Record payment',
   onClose,
   onConfirm,
 }: RecordPaymentModalProps) {
@@ -78,7 +82,7 @@ export default function RecordPaymentModal({
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <label className="field">
-            <span className="field-label">Amount received</span>
+            <span className="field-label">{amountLabel}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span aria-hidden="true">$</span>
               <input
@@ -99,7 +103,7 @@ export default function RecordPaymentModal({
 
           <div className="admin-actions">
             <button type="submit" className="primary-button" disabled={busy}>
-              {busy ? 'Recording…' : 'Record payment'}
+              {busy ? 'Recording…' : confirmLabel}
             </button>
             <button type="button" className="secondary-button" onClick={onClose} disabled={busy}>
               Cancel

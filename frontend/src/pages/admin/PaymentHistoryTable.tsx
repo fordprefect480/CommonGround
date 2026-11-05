@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import {
   fetchMemberPayments,
   fetchMyPayments,
+  recordRefund,
+  type Member,
   type PaymentRecord,
 } from '../../api/auth'
+import RecordPaymentModal from './RecordPaymentModal'
 
 type State =
   | { status: 'loading' }
@@ -64,12 +67,32 @@ const STATUS_PILL: Record<string, string> = {
   Pending: 'pill',
 }
 
+function refundableCents(p: PaymentRecord): number {
+  return p.status === 'Paid' ? p.amountCents - p.refundedAmountCents : 0
+}
+
+function statusLabel(p: PaymentRecord): string {
+  if (p.status !== 'Paid' || p.refundedAmountCents === 0) return p.status
+  return p.refundedAmountCents >= p.amountCents ? 'Refunded' : 'Partly refunded'
+}
+
 // Admin views pass a memberId and see a Status column (Paid/Failed); the member's
 // own profile omits memberId and sees only their successful payments. Bumping
-// refreshToken re-fetches - e.g. after an admin records a manual payment.
-export default function PaymentHistoryTable({ memberId, refreshToken }: { memberId?: string; refreshToken?: number }) {
+// refreshToken re-fetches - e.g. after an admin records a manual payment. Admins can also
+// record a refund they made in Stripe; onRefunded receives the updated member so the page
+// can show any change to their renewal date.
+export default function PaymentHistoryTable({
+  memberId,
+  refreshToken,
+  onRefunded,
+}: {
+  memberId?: string
+  refreshToken?: number
+  onRefunded?: (member: Member) => void
+}) {
   const showStatus = memberId !== undefined
   const [state, setState] = useState<State>({ status: 'loading' })
+  const [refunding, setRefunding] = useState<PaymentRecord | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -111,24 +134,61 @@ export default function PaymentHistoryTable({ memberId, refreshToken }: { member
             <th scope="col">Method</th>
             <th scope="col">For</th>
             {showStatus && <th scope="col">Status</th>}
+            {showStatus && <th scope="col" aria-label="Actions" />}
           </tr>
         </thead>
         <tbody>
           {state.payments.map((p) => (
             <tr key={`${p.kind}-${p.id}`}>
               <td data-label="Date">{formatDateTime(p.paidAtUtc ?? p.createdAtUtc)}</td>
-              <td data-label="Amount">{formatAmount(p.amountCents, p.currency)}</td>
+              <td data-label="Amount">
+                <span>
+                  {formatAmount(p.amountCents, p.currency)}
+                  {p.refundedAmountCents > 0 && (
+                    <>
+                      <br />
+                      <span className="card-note">
+                        {formatAmount(p.refundedAmountCents, p.currency)} refunded {formatDate(p.refundedAtUtc)}
+                      </span>
+                    </>
+                  )}
+                </span>
+              </td>
               <td data-label="Method">{p.method === 'Manual' ? 'Manual' : 'Stripe'}</td>
               <td data-label="For">{describePayment(p)}</td>
               {showStatus && (
                 <td data-label="Status">
-                  <span className={STATUS_PILL[p.status] ?? 'pill'}>{p.status}</span>
+                  <span className={p.refundedAmountCents > 0 ? 'pill' : (STATUS_PILL[p.status] ?? 'pill')}>{statusLabel(p)}</span>
+                </td>
+              )}
+              {showStatus && (
+                <td data-label="">
+                  {refundableCents(p) > 0 && (
+                    <button type="button" className="secondary-button" onClick={() => setRefunding(p)}>
+                      Record refund
+                    </button>
+                  )}
                 </td>
               )}
             </tr>
           ))}
         </tbody>
       </table>
+      {memberId && (
+        <RecordPaymentModal
+          open={refunding !== null}
+          title="Record a refund"
+          description="First refund the money in Stripe (or hand back the cash), then record it here. If this refunds the whole payment and no other payment covers the year, their renewal date goes back."
+          initialAmountCents={refunding ? refundableCents(refunding) : 0}
+          amountLabel="Amount refunded"
+          confirmLabel="Record refund"
+          onClose={() => setRefunding(null)}
+          onConfirm={async (amountCents) => {
+            if (!refunding) return
+            onRefunded?.(await recordRefund(memberId, refunding, amountCents))
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -45,4 +45,10 @@ public class BedLeasePayment
     public DateTime CreatedAtUtc { get; set; }
 
     public DateTime? PaidAtUtc { get; set; }
+
+    /// <summary>Total refunded so far, in cents. Refunds are made in Stripe (or in cash) and recorded here by an admin.</summary>
+    public int RefundedAmountCents { get; set; }
+
+    /// <summary>When the most recent refund was recorded; null if never refunded.</summary>
+    public DateTime? RefundedAtUtc { get; set; }
 }

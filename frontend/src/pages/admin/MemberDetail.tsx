@@ -471,7 +471,11 @@ export default function MemberDetail() {
 
       <section className="card admin-form">
         <h2 className="section-title">Payment history</h2>
-        <PaymentHistoryTable memberId={member.id} refreshToken={paymentsRefresh} />
+        <PaymentHistoryTable
+          memberId={member.id}
+          refreshToken={paymentsRefresh}
+          onRefunded={(updated) => { setState({ status: 'ready', member: updated }); setForm(memberToForm(updated)); setPaymentsRefresh((n) => n + 1) }}
+        />
       </section>
 
       <EmailHistoryCard memberId={member.id} />

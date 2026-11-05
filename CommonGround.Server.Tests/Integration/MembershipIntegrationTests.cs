@@ -76,7 +76,7 @@ public class MembershipIntegrationTests
         Assert.Equal(1, stats.NotYetPaidMembers);
     }
 
-    private static void SeedPayment(IServiceProvider services, string userId, MembershipPaymentStatus status, DateTime? paidAtUtc)
+    private static void SeedPayment(IServiceProvider services, string userId, MembershipPaymentStatus status, DateTime? paidAtUtc, int amountCents = 2500, int refundedCents = 0)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -84,7 +84,8 @@ public class MembershipIntegrationTests
         {
             UserId = userId,
             Method = PaymentMethod.Manual,
-            AmountCents = 2500,
+            AmountCents = amountCents,
+            RefundedAmountCents = refundedCents,
             Status = status,
             CreatedAtUtc = paidAtUtc ?? DateTime.UtcNow,
             PaidAtUtc = paidAtUtc,
@@ -114,6 +115,35 @@ public class MembershipIntegrationTests
 
         var detail = await client.GetFromJsonAsync<LastPaymentResponse>($"/api/admin/members/{payerId}");
         Assert.Equal(newer, detail!.LastMembershipPaymentUtc);
+    }
+
+    [Fact]
+    public async Task Last_payment_skips_fully_refunded_payments_but_keeps_partial_refunds_and_comped_payments()
+    {
+        using var factory = new TestApiFactory();
+        var client = factory.CreateClient();
+
+        var older = new DateTime(2025, 7, 3, 0, 0, 0, DateTimeKind.Utc);
+        var newer = new DateTime(2026, 6, 20, 0, 0, 0, DateTimeKind.Utc);
+        var refundedId = SeedUser(factory.Services, "refunded@example.com", paidThrough: null);
+        SeedPayment(factory.Services, refundedId, MembershipPaymentStatus.Paid, older);
+        SeedPayment(factory.Services, refundedId, MembershipPaymentStatus.Paid, newer, refundedCents: 2500);
+        var onlyRefundedId = SeedUser(factory.Services, "only-refunded@example.com", paidThrough: null);
+        SeedPayment(factory.Services, onlyRefundedId, MembershipPaymentStatus.Paid, newer, refundedCents: 2500);
+        var partialId = SeedUser(factory.Services, "partial@example.com", paidThrough: null);
+        SeedPayment(factory.Services, partialId, MembershipPaymentStatus.Paid, newer, refundedCents: 1000);
+        var compedId = SeedUser(factory.Services, "comped@example.com", paidThrough: null);
+        SeedPayment(factory.Services, compedId, MembershipPaymentStatus.Paid, newer, amountCents: 0);
+
+        var members = await client.GetFromJsonAsync<List<LastPaymentResponse>>("/api/admin/members");
+        Assert.NotNull(members);
+        Assert.Equal(older, members!.Single(m => m.Id == refundedId).LastMembershipPaymentUtc);
+        Assert.Null(members.Single(m => m.Id == onlyRefundedId).LastMembershipPaymentUtc);
+        Assert.Equal(newer, members.Single(m => m.Id == partialId).LastMembershipPaymentUtc);
+        Assert.Equal(newer, members.Single(m => m.Id == compedId).LastMembershipPaymentUtc);
+
+        var detail = await client.GetFromJsonAsync<LastPaymentResponse>($"/api/admin/members/{refundedId}");
+        Assert.Equal(older, detail!.LastMembershipPaymentUtc);
     }
 
     [Fact]
