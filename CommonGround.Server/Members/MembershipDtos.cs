@@ -32,15 +32,17 @@ public sealed record PaymentDto(
     DateTime? PeriodStartUtc,
     DateTime? PeriodEndUtc,
     string? BedLabel,
-    DateTime CreatedAtUtc);
+    DateTime CreatedAtUtc,
+    int RefundedAmountCents,
+    DateTime? RefundedAtUtc);
 
 internal static class PaymentMapping
 {
     public static PaymentDto ToDto(this MembershipPayment p) =>
         new(p.Id, "Membership", p.AmountCents, p.Currency, p.Status.ToString(), p.Method.ToString(),
-            p.PaidAtUtc, p.PeriodStartUtc, p.PeriodEndUtc, null, p.CreatedAtUtc);
+            p.PaidAtUtc, p.PeriodStartUtc, p.PeriodEndUtc, null, p.CreatedAtUtc, p.RefundedAmountCents, p.RefundedAtUtc);
 
     public static PaymentDto ToDto(this BedLeasePayment p, string? bedLabel) =>
         new(p.Id, "LeasedBed", p.AmountCents, p.Currency, p.Status.ToString(), p.Method.ToString(),
-            p.PaidAtUtc, null, null, bedLabel, p.CreatedAtUtc);
+            p.PaidAtUtc, null, null, bedLabel, p.CreatedAtUtc, p.RefundedAmountCents, p.RefundedAtUtc);
 }

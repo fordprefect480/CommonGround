@@ -219,6 +219,25 @@ export interface PaymentRecord {
   periodEndUtc: string | null
   bedLabel: string | null
   createdAtUtc: string
+  refundedAmountCents: number
+  refundedAtUtc: string | null
+}
+
+// Records a refund the admin has already made in Stripe (or in cash). Returns the member, whose
+// paid-through date may have rolled back if this fully refunded the payment covering it.
+export async function recordRefund(
+  memberId: string,
+  payment: Pick<PaymentRecord, 'id' | 'kind'>,
+  amountCents: number,
+): Promise<Member> {
+  const res = await fetch(`/api/admin/members/${encodeURIComponent(memberId)}/payments/${payment.id}/refund`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: json,
+    body: JSON.stringify({ kind: payment.kind, amountCents }),
+  })
+  if (res.ok) return res.json()
+  throw new Error(await readErrorMessage(res, 'Could not record the refund'))
 }
 
 export async function recordMembershipPayment(id: string, amountCents: number): Promise<Member> {

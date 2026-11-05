@@ -17,7 +17,7 @@ namespace CommonGround.Server.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -576,6 +576,12 @@ namespace CommonGround.Server.Data.Migrations
                     b.Property<DateTime?>("PaidAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("RefundedAmountCents")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RefundedAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -931,6 +937,12 @@ namespace CommonGround.Server.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("PeriodStartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RefundedAmountCents")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RefundedAtUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("Status")
