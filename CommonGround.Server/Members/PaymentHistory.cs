@@ -6,6 +6,24 @@ namespace CommonGround.Server.Members;
 internal static class PaymentHistory
 {
     /// <summary>
+    /// Returns when the member last made a paid membership payment, or null if they never have.
+    /// </summary>
+    public static Task<DateTime?> LastMembershipPaymentAsync(AppDbContext db, string userId, CancellationToken ct) =>
+        db.MembershipPayments
+            .Where(p => p.UserId == userId && p.Status == MembershipPaymentStatus.Paid)
+            .MaxAsync(p => p.PaidAtUtc, ct);
+
+    /// <summary>
+    /// Loads the most recent paid membership payment date for every member who has one, keyed by user id.
+    /// </summary>
+    public static Task<Dictionary<string, DateTime?>> LastMembershipPaymentsAsync(AppDbContext db, CancellationToken ct) =>
+        db.MembershipPayments
+            .Where(p => p.Status == MembershipPaymentStatus.Paid)
+            .GroupBy(p => p.UserId)
+            .Select(g => new { UserId = g.Key, LastPaidAtUtc = g.Max(p => p.PaidAtUtc) })
+            .ToDictionaryAsync(x => x.UserId, x => x.LastPaidAtUtc, ct);
+
+    /// <summary>
     /// Loads a member's membership and leased-bed payments as one list, newest first. Paid
     /// payments are always included; set <paramref name="includeFailed"/> to also surface failed
     /// payments (useful for admin "I paid but it didn't work" support). Pending checkouts are
