@@ -37,10 +37,12 @@ public sealed class ListMembersEndpoint(AppDbContext db)
             .GroupBy(x => x.UserId)
             .ToDictionary(g => g.Key, g => g.Select(x => x.FullName).ToArray());
 
+        var lastPaymentByUser = await PaymentHistory.LastMembershipPaymentsAsync(db, ct);
+
         var members = users
             .Select(u => new MemberDto(
                 u.Id, u.Email, u.UserName, u.FirstName, u.LastName, u.DisplayName,
-                u.PhoneNumber, u.Address, u.JoinedAt, u.MembershipPaidThroughUtc, u.EmailConfirmed,
+                u.PhoneNumber, u.Address, u.JoinedAt, u.MembershipPaidThroughUtc, lastPaymentByUser.GetValueOrDefault(u.Id), u.EmailConfirmed,
                 u.IsSubscribedToMailingList, secondaryByUser.GetValueOrDefault(u.Id, []), rolesByUser.GetValueOrDefault(u.Id, [])))
             .ToList();
 

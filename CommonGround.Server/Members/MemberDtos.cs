@@ -11,6 +11,7 @@ public record MemberDto(
     string? Address,
     DateTime JoinedAt,
     DateTime? MembershipPaidThroughUtc,
+    DateTime? LastMembershipPaymentUtc,
     bool EmailConfirmed,
     bool IsSubscribedToMailingList,
     string[] SecondaryMembers,

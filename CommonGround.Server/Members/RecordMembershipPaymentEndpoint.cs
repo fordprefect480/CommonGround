@@ -79,7 +79,7 @@ public sealed class RecordMembershipPaymentEndpoint(
             .ToArrayAsync(ct);
         await Send.OkAsync(new MemberDto(
             user.Id, user.Email, user.UserName, user.FirstName, user.LastName, user.DisplayName,
-            user.PhoneNumber, user.Address, user.JoinedAt, user.MembershipPaidThroughUtc,
+            user.PhoneNumber, user.Address, user.JoinedAt, user.MembershipPaidThroughUtc, now,
             user.EmailConfirmed, user.IsSubscribedToMailingList, secondaryMembers, roles.ToArray()), ct);
     }
 }

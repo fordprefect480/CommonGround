@@ -39,9 +39,11 @@ public sealed class GetMemberEndpoint(
             .Select(s => s.FullName)
             .ToArrayAsync(ct);
 
+        var lastPayment = await PaymentHistory.LastMembershipPaymentAsync(db, user.Id, ct);
+
         await Send.OkAsync(new MemberDto(
             user.Id, user.Email, user.UserName, user.FirstName, user.LastName, user.DisplayName,
-            user.PhoneNumber, user.Address, user.JoinedAt, user.MembershipPaidThroughUtc,
+            user.PhoneNumber, user.Address, user.JoinedAt, user.MembershipPaidThroughUtc, lastPayment,
             user.EmailConfirmed, user.IsSubscribedToMailingList, secondaryMembers, roles.ToArray()), ct);
     }
 }
