@@ -13,8 +13,7 @@ public static class MembershipRefund
     public static DateTime? RecalculatePaidThrough(
         DateTime? currentPaidThroughUtc, MembershipPayment refunded, IEnumerable<MembershipPayment> otherPayments)
     {
-        var fullyRefunded = refunded.RefundedAmountCents >= refunded.AmountCents;
-        if (!fullyRefunded || refunded.PeriodEndUtc is null || currentPaidThroughUtc != refunded.PeriodEndUtc)
+        if (!IsFullyRefunded(refunded) || refunded.PeriodEndUtc is null || currentPaidThroughUtc != refunded.PeriodEndUtc)
         {
             return currentPaidThroughUtc;
         }
@@ -22,13 +21,16 @@ public static class MembershipRefund
         var stillCovered = otherPayments
             .Where(p => p.Id != refunded.Id
                 && p.Status == MembershipPaymentStatus.Paid
-                && p.RefundedAmountCents < p.AmountCents
+                && !IsFullyRefunded(p)
                 && p.PeriodEndUtc is not null)
             .Select(p => p.PeriodEndUtc)
             .Max();
 
         return stillCovered ?? CoverageBefore(refunded);
     }
+
+    // A $0 (comped) payment can't be refunded, so it always keeps covering its year.
+    private static bool IsFullyRefunded(MembershipPayment p) => p.AmountCents > 0 && p.RefundedAmountCents >= p.AmountCents;
 
     // A mid-year payment starts after the year it covers began, so falling back to PeriodStartUtc
     // would still read as paid for that year; roll back to the start of the covered year instead.

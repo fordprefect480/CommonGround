@@ -73,6 +73,18 @@ public class MembershipRefundTests
     }
 
     [Fact]
+    public void Full_refund_keeps_paid_through_when_a_free_payment_covers_the_year()
+    {
+        var comped = Payment(1);
+        comped.AmountCents = 0;
+        var refunded = Payment(2, refundedCents: 2500);
+
+        var result = MembershipRefund.RecalculatePaidThrough(YearEnd, refunded, [comped, refunded]);
+
+        Assert.Equal(YearEnd, result);
+    }
+
+    [Fact]
     public void Paid_through_not_set_by_the_refunded_payment_is_left_alone()
     {
         var handSet = YearEnd.AddYears(1);
