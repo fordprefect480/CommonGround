@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using CommonGround.Server.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -5,20 +6,26 @@ namespace CommonGround.Server.Members;
 
 internal static class PaymentHistory
 {
+    // A fully refunded payment wasn't really a payment, so it mustn't show as "last payment". $0 comped
+    // payments can't be refunded and always count.
+    private static readonly Expression<Func<MembershipPayment, bool>> IsKeptMembershipPayment = p =>
+        p.Status == MembershipPaymentStatus.Paid && (p.AmountCents == 0 || p.RefundedAmountCents < p.AmountCents);
+
     /// <summary>
-    /// Returns when the member last made a paid membership payment, or null if they never have.
+    /// Returns when the member last made a paid membership payment that wasn't fully refunded, or null if they never have.
     /// </summary>
     public static Task<DateTime?> LastMembershipPaymentAsync(AppDbContext db, string userId, CancellationToken ct) =>
         db.MembershipPayments
-            .Where(p => p.UserId == userId && p.Status == MembershipPaymentStatus.Paid)
+            .Where(IsKeptMembershipPayment)
+            .Where(p => p.UserId == userId)
             .MaxAsync(p => p.PaidAtUtc, ct);
 
     /// <summary>
-    /// Loads the most recent paid membership payment date for every member who has one, keyed by user id.
+    /// Loads the most recent paid, not fully refunded, membership payment date for every member who has one, keyed by user id.
     /// </summary>
     public static Task<Dictionary<string, DateTime?>> LastMembershipPaymentsAsync(AppDbContext db, CancellationToken ct) =>
         db.MembershipPayments
-            .Where(p => p.Status == MembershipPaymentStatus.Paid)
+            .Where(IsKeptMembershipPayment)
             .GroupBy(p => p.UserId)
             .Select(g => new { UserId = g.Key, LastPaidAtUtc = g.Max(p => p.PaidAtUtc) })
             .ToDictionaryAsync(x => x.UserId, x => x.LastPaidAtUtc, ct);
