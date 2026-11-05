@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createMember, fetchMembers, fetchMembershipRenewalTarget, type Member } from '../../api/auth'
+import { createMember, deleteMembers, fetchMembers, fetchMembershipRenewalTarget, type Member } from '../../api/auth'
+import { fetchLeasedBeds } from '../../api/leasedBeds'
+import { bedsFreedText } from './bedsFreedText'
+import ConfirmModal from './ConfirmModal'
 import MemberEmailModal from './MemberEmailModal'
 import { matchesMemberFilter, membershipStatus, type MemberFilter, type MembershipStatus } from './memberFilter'
 
@@ -268,6 +271,7 @@ export default function Members() {
           onFilterChange={setFilter}
           search={search}
           onSearchChange={setSearch}
+          onDeleted={reload}
         />
       )}
     </section>
@@ -281,6 +285,7 @@ function MembersList({
   onFilterChange,
   search,
   onSearchChange,
+  onDeleted,
 }: {
   members: Member[]
   renewalTargetUtc: string
@@ -288,10 +293,13 @@ function MembersList({
   onFilterChange: (filter: MemberFilter) => void
   search: string
   onSearchChange: (search: string) => void
+  onDeleted: () => Promise<void>
 }) {
   const navigate = useNavigate()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [emailOpen, setEmailOpen] = useState(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  const [bedLabels, setBedLabels] = useState<string[] | null>(null)
 
   if (members.length === 0) {
     return <p className="admin-empty">No users registered yet.</p>
@@ -303,8 +311,15 @@ function MembersList({
 
   const visible = searched.filter((m, i) => matchesMemberFilter(m, statuses[i], filter))
 
-  const toggleFilter = (value: Exclude<MemberFilter, 'all'>) =>
+  const changeSearch = (value: string) => {
+    setSelectedIds(new Set())
+    onSearchChange(value)
+  }
+
+  const toggleFilter = (value: Exclude<MemberFilter, 'all'>) => {
+    setSelectedIds(new Set())
     onFilterChange(filter === value ? 'all' : value)
+  }
 
   const chips: { value: Exclude<MemberFilter, 'all'>; label: string; count: number }[] = [
     { value: 'paid', label: 'Paid', count: countOf('paid') },
@@ -334,6 +349,17 @@ function MembersList({
 
   const selectedMembers = members.filter((m) => selectedIds.has(m.id))
 
+  const openDeleteConfirm = async () => {
+    setBedLabels(null)
+    setConfirmDeleteOpen(true)
+    try {
+      const { beds } = await fetchLeasedBeds()
+      setBedLabels(beds.filter((b) => b.currentLease && selectedIds.has(b.currentLease.memberId)).map((b) => b.label))
+    } catch {
+      setBedLabels(null)
+    }
+  }
+
   return (
     <>
       <div className="field admin-search">
@@ -343,7 +369,7 @@ function MembersList({
           type="search"
           placeholder="Search by name, email or phone"
           value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
+          onChange={(e) => changeSearch(e.target.value)}
         />
       </div>
 
@@ -366,6 +392,9 @@ function MembersList({
           <span className="card-note">{pluralize(selectedIds.size, 'member')} selected</span>
           <button type="button" className="primary-button" onClick={() => setEmailOpen(true)}>
             Email selected
+          </button>
+          <button type="button" className="secondary-button danger-button" onClick={openDeleteConfirm}>
+            Delete selected
           </button>
           <button type="button" className="footer-link" onClick={() => setSelectedIds(new Set())}>
             Clear
@@ -394,7 +423,41 @@ function MembersList({
           }}
         />
       )}
+
+      <ConfirmModal
+        open={confirmDeleteOpen}
+        title={`Delete ${pluralize(selectedMembers.length, 'member')}?`}
+        confirmLabel={`Delete ${pluralize(selectedMembers.length, 'member')}`}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={async () => {
+          await deleteMembers(selectedMembers.map((m) => m.id))
+          await onDeleted()
+        }}
+      >
+        <SelectedMemberNames members={selectedMembers} />
+        <p className="card-note" style={{ margin: 0 }}>What happens:</p>
+        <ul className="card-note" style={{ margin: 0, paddingLeft: '1.25rem' }}>
+          <li>They are removed from the members list and will not be able to sign in.</li>
+          <li>{bedsFreedText(bedLabels)}</li>
+          <li>They will not receive newsletter emails.</li>
+          <li>Their payment records are kept.</li>
+        </ul>
+        <p className="card-note" style={{ margin: 0 }}><strong>This cannot be undone from here.</strong></p>
+      </ConfirmModal>
     </>
+  )
+}
+
+const NAMES_SHOWN = 5
+
+function SelectedMemberNames({ members }: { members: Member[] }) {
+  const names = members.map((m) => memberName(m) || m.email || '(no name)')
+  const hidden = names.length - NAMES_SHOWN
+  return (
+    <p className="card-note" style={{ margin: 0 }}>
+      {names.slice(0, NAMES_SHOWN).join(', ')}
+      {hidden > 0 && ` and ${hidden} more`}
+    </p>
   )
 }
 

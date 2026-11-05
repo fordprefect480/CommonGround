@@ -7,6 +7,7 @@ interface ConfirmModalProps {
   message?: string
   confirmLabel?: string
   cancelLabel?: string
+  children?: React.ReactNode
   onCancel: () => void
   onConfirm: () => void | Promise<void>
 }
@@ -20,6 +21,7 @@ export default function ConfirmModal({
   message,
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
+  children,
   onCancel,
   onConfirm,
 }: ConfirmModalProps) {
@@ -68,6 +70,7 @@ export default function ConfirmModal({
       >
         <h2 className="section-title">{title}</h2>
         {message && <p className="card-note" style={{ margin: 0 }}>{message}</p>}
+        {children}
 
         {error && <div className="form-error" role="alert">{error}</div>}
 

@@ -207,4 +207,172 @@ public class ArchiveMemberIntegrationTests
             Assert.True(await db.MembershipPayments.AnyAsync(p => p.UserId == userId));
         }
     }
+
+    [Fact]
+    public async Task Archiving_a_member_frees_their_email_for_the_unique_username_index()
+    {
+        using var factory = new TestApiFactory();
+        var client = factory.CreateClient();
+        var userId = SeedUser(factory.Services, "rejoin@example.com");
+        using (var scope = factory.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = await userManager.FindByIdAsync(userId);
+            await userManager.UpdateNormalizedUserNameAsync(user!);
+        }
+
+        var delete = await client.DeleteAsync($"/api/admin/members/{userId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var archived = await db.Users.IgnoreQueryFilters().SingleAsync(u => u.Id == userId);
+            Assert.NotEqual("REJOIN@EXAMPLE.COM", archived.NormalizedUserName);
+            Assert.Equal("rejoin@example.com", archived.Email);
+        }
+    }
+
+    [Fact]
+    public async Task A_deleted_member_can_join_the_mailing_list_again()
+    {
+        using var factory = new TestApiFactory();
+        var client = factory.CreateClient();
+        var oldId = SeedUser(factory.Services, "comeback@example.com");
+
+        var delete = await client.DeleteAsync($"/api/admin/members/{oldId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+
+        var subscribe = await client.PostAsJsonAsync("/api/subscribe", new { email = "comeback@example.com", captchaToken = (string?)null });
+        Assert.Equal(HttpStatusCode.OK, subscribe.StatusCode);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var rejoined = await db.Users.SingleAsync(u => u.Email == "comeback@example.com");
+        Assert.NotEqual(oldId, rejoined.Id);
+    }
+
+    [Fact]
+    public async Task A_deleted_member_can_be_added_again_by_an_admin()
+    {
+        using var factory = new TestApiFactory();
+        var client = factory.CreateClient();
+        var oldId = SeedUser(factory.Services, "readded@example.com");
+
+        var delete = await client.DeleteAsync($"/api/admin/members/{oldId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+
+        var create = await client.PostAsJsonAsync("/api/admin/members", new { email = "readded@example.com", password = "TestPass123!", isAdmin = false, isSubscribedToMailingList = true });
+        Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+    }
+
+    private static Task<HttpResponseMessage> BulkDelete(HttpClient client, params string[] ids) =>
+        client.PostAsJsonAsync("/api/admin/members/bulk-delete", new { ids });
+
+    [Fact]
+    public async Task Bulk_delete_archives_every_selected_member_and_releases_leases()
+    {
+        using var factory = new TestApiFactory();
+        var client = factory.CreateClient();
+        var firstId = SeedUser(factory.Services, "bulk1@example.com");
+        var secondId = SeedUser(factory.Services, "bulk2@example.com");
+        var keptId = SeedUser(factory.Services, "kept@example.com");
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.BedLeases.Add(new BedLease
+            {
+                BedId = 1,
+                UserId = secondId,
+                StartDate = new DateOnly(2026, 7, 1),
+                ExpiresOn = new DateOnly(2027, 6, 30),
+                Status = BedLeaseStatus.Active,
+                PriceAtAllocationCents = 8000,
+            });
+            db.SaveChanges();
+        }
+
+        var response = await BulkDelete(client, firstId, secondId);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            Assert.False(await db.Users.AnyAsync(u => u.Id == firstId || u.Id == secondId));
+            Assert.True(await db.Users.AnyAsync(u => u.Id == keptId));
+            var lease = await db.BedLeases.SingleAsync(l => l.UserId == secondId);
+            Assert.Equal(BedLeaseStatus.Released, lease.Status);
+        }
+    }
+
+    [Fact]
+    public async Task Bulk_delete_including_yourself_archives_no_one()
+    {
+        using var factory = new TestApiFactory();
+        var client = factory.CreateClient();
+        SeedUser(factory.Services, "self@example.com", id: "test-admin");
+        var otherId = SeedUser(factory.Services, "other@example.com");
+
+        var response = await BulkDelete(client, otherId, "test-admin");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.True(await db.Users.AnyAsync(u => u.Id == otherId));
+    }
+
+    [Fact]
+    public async Task Bulk_delete_of_every_administrator_is_rejected()
+    {
+        using var factory = new TestApiFactory();
+        var client = factory.CreateClient();
+        var firstAdmin = await SeedAdmin(factory.Services, "admin1@example.com");
+        var secondAdmin = await SeedAdmin(factory.Services, "admin2@example.com");
+
+        var response = await BulkDelete(client, firstAdmin, secondAdmin);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.Equal(2, await db.Users.CountAsync(u => u.Id == firstAdmin || u.Id == secondAdmin));
+    }
+
+    [Fact]
+    public async Task Bulk_delete_ignores_ids_that_no_longer_exist()
+    {
+        using var factory = new TestApiFactory();
+        var client = factory.CreateClient();
+        var memberId = SeedUser(factory.Services, "real@example.com");
+
+        var response = await BulkDelete(client, memberId, "no-such-member");
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Assert.False(await db.Users.AnyAsync(u => u.Id == memberId));
+    }
+
+    [Fact]
+    public async Task Bulk_delete_of_some_administrators_is_allowed_when_one_remains()
+    {
+        using var factory = new TestApiFactory();
+        var client = factory.CreateClient();
+        var firstAdmin = await SeedAdmin(factory.Services, "admin1@example.com");
+        await SeedAdmin(factory.Services, "admin2@example.com");
+        var memberId = SeedUser(factory.Services, "member@example.com");
+
+        var response = await BulkDelete(client, firstAdmin, memberId);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Bulk_delete_with_no_ids_is_rejected()
+    {
+        using var factory = new TestApiFactory();
+        var client = factory.CreateClient();
+
+        var response = await BulkDelete(client);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }
