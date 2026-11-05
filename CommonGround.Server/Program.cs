@@ -40,6 +40,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IActivityLogger, ActivityLogger>();
 builder.Services.AddScoped<CommonGround.Server.Members.MembershipActivationService>();
 builder.Services.AddScoped<CommonGround.Server.Members.MembershipCheckoutService>();
+builder.Services.AddScoped<CommonGround.Server.Members.MemberArchiveService>();
 builder.Services.AddScoped<SiteSettingsService>();
 builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedService>();
 builder.Services.AddScoped<CommonGround.Server.LeasedBeds.LeasedBedCheckoutService>();

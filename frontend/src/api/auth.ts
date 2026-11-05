@@ -274,6 +274,17 @@ export async function deleteMember(id: string): Promise<void> {
   throw new Error(await readErrorMessage(res, 'Delete failed'))
 }
 
+export async function deleteMembers(ids: string[]): Promise<void> {
+  const res = await fetch('/api/admin/members/bulk-delete', {
+    method: 'POST',
+    headers: json,
+    credentials: 'include',
+    body: JSON.stringify({ ids }),
+  })
+  if (res.ok) return
+  throw new Error(await readErrorMessage(res, 'Delete failed'))
+}
+
 async function readErrorMessage(res: Response, fallback: string): Promise<string> {
   const text = await res.text()
   if (!text) return `${fallback} (${res.status})`
