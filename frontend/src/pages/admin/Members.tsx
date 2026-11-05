@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createMember, fetchMembers, fetchMembershipRenewalTarget, type Member } from '../../api/auth'
-import { isPaidForRenewalYear } from '../../format'
 import MemberEmailModal from './MemberEmailModal'
+import { matchesMemberFilter, membershipStatus, type MemberFilter, type MembershipStatus } from './memberFilter'
 
 const ADMIN_ROLE = 'Admin'
 
@@ -43,25 +43,7 @@ function pluralize(n: number, singular: string): string {
   return `${n} ${singular}${n === 1 ? '' : 's'}`
 }
 
-type MembershipStatus = 'paid' | 'notPaid' | 'mailingListOnly'
-
-// "Paid" means the member is paid up for the financial year the next renewal
-// covers (renewalTargetUtc - the next 1 July, with the late-join carry-over,
-// from the server's MembershipPeriod). For most of the year that's the current
-// financial year; within the 8-week renewal window it flags members still
-// covered this year but not yet renewed for the year ahead. See
-// isPaidForRenewalYear for why coverage is tested against the year's start.
-// A null paid-through means the user has never held a membership at all -
-// they only joined the mailing list - which is a different thing from a
-// member who has paid before and lapsed.
-function membershipStatus(member: Member, renewalTargetUtc: string): MembershipStatus {
-  if (isPaidForRenewalYear(member.membershipPaidThroughUtc, renewalTargetUtc)) return 'paid'
-  return member.membershipPaidThroughUtc ? 'notPaid' : 'mailingListOnly'
-}
-
 const MEMBERSHIP_RANK: Record<MembershipStatus, number> = { paid: 0, notPaid: 1, mailingListOnly: 2 }
-
-type MemberFilter = 'all' | MembershipStatus
 
 type SortKey = 'name' | 'email' | 'phone' | 'lastPayment' | 'membership' | 'mailingList'
 type SortDir = 'asc' | 'desc'
@@ -317,9 +299,9 @@ function MembersList({
 
   const searched = members.filter((m) => matchesSearch(m, search))
   const statuses = searched.map((m) => membershipStatus(m, renewalTargetUtc))
-  const countOf = (status: MembershipStatus) => statuses.filter((s) => s === status).length
+  const countOf = (f: MemberFilter) => searched.filter((m, i) => matchesMemberFilter(m, statuses[i], f)).length
 
-  const visible = searched.filter((_, i) => filter === 'all' || statuses[i] === filter)
+  const visible = searched.filter((m, i) => matchesMemberFilter(m, statuses[i], filter))
 
   const toggleFilter = (value: Exclude<MemberFilter, 'all'>) =>
     onFilterChange(filter === value ? 'all' : value)
@@ -328,6 +310,7 @@ function MembersList({
     { value: 'paid', label: 'Paid', count: countOf('paid') },
     { value: 'notPaid', label: 'Not Yet Paid', count: countOf('notPaid') },
     { value: 'mailingListOnly', label: 'Mailing List Only', count: countOf('mailingListOnly') },
+    { value: 'noLongerMember', label: 'No Longer Members', count: countOf('noLongerMember') },
   ]
 
   const toggleOne = (id: string) =>
