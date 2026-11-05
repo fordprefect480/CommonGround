@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createMember, deleteMembers, fetchMembers, fetchMembershipRenewalTarget, type Member } from '../../api/auth'
 import { fetchLeasedBeds } from '../../api/leasedBeds'
-import { isPaidForRenewalYear } from '../../format'
 import { bedsFreedText } from './bedsFreedText'
 import ConfirmModal from './ConfirmModal'
 import MemberEmailModal from './MemberEmailModal'
+import { matchesMemberFilter, membershipStatus, type MemberFilter, type MembershipStatus } from './memberFilter'
 
 const ADMIN_ROLE = 'Admin'
 
@@ -36,7 +36,8 @@ const EMPTY_FORM: FormState = {
 
 const dateFormatter = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
-function formatJoinedAt(iso: string): string {
+function formatDate(iso: string | null): string {
+  if (!iso) return '-'
   const d = new Date(iso)
   return Number.isNaN(d.getTime()) ? '-' : dateFormatter.format(d)
 }
@@ -45,27 +46,9 @@ function pluralize(n: number, singular: string): string {
   return `${n} ${singular}${n === 1 ? '' : 's'}`
 }
 
-type MembershipStatus = 'paid' | 'notPaid' | 'mailingListOnly'
-
-// "Paid" means the member is paid up for the financial year the next renewal
-// covers (renewalTargetUtc - the next 1 July, with the late-join carry-over,
-// from the server's MembershipPeriod). For most of the year that's the current
-// financial year; within the 8-week renewal window it flags members still
-// covered this year but not yet renewed for the year ahead. See
-// isPaidForRenewalYear for why coverage is tested against the year's start.
-// A null paid-through means the user has never held a membership at all -
-// they only joined the mailing list - which is a different thing from a
-// member who has paid before and lapsed.
-function membershipStatus(member: Member, renewalTargetUtc: string): MembershipStatus {
-  if (isPaidForRenewalYear(member.membershipPaidThroughUtc, renewalTargetUtc)) return 'paid'
-  return member.membershipPaidThroughUtc ? 'notPaid' : 'mailingListOnly'
-}
-
 const MEMBERSHIP_RANK: Record<MembershipStatus, number> = { paid: 0, notPaid: 1, mailingListOnly: 2 }
 
-type MemberFilter = 'all' | MembershipStatus
-
-type SortKey = 'name' | 'email' | 'phone' | 'joinedAt' | 'membership' | 'mailingList'
+type SortKey = 'name' | 'email' | 'phone' | 'lastPayment' | 'membership' | 'mailingList'
 type SortDir = 'asc' | 'desc'
 
 const collator = new Intl.Collator('en', { sensitivity: 'base' })
@@ -74,14 +57,19 @@ function memberName(member: Member): string {
   return member.displayName ?? ''
 }
 
-// Ascending order puts paid before not-paid and subscribed before
-// unsubscribed, so the first click surfaces the "good" state on top.
+// Members who have never paid sort as the oldest, so they sit together at the bottom.
+function paymentTime(member: Member): number {
+  return member.lastMembershipPaymentUtc ? Date.parse(member.lastMembershipPaymentUtc) : 0
+}
+
+// Ascending order puts paid before not-paid, subscribed before unsubscribed
+// and the most recent payment first, so the first click surfaces the "good" state on top.
 function compareMembers(a: Member, b: Member, key: SortKey, renewalTargetUtc: string): number {
   switch (key) {
     case 'name': return collator.compare(memberName(a), memberName(b))
     case 'email': return collator.compare(a.email ?? '', b.email ?? '')
     case 'phone': return collator.compare(a.phoneNumber ?? '', b.phoneNumber ?? '')
-    case 'joinedAt': return Date.parse(a.joinedAt) - Date.parse(b.joinedAt)
+    case 'lastPayment': return paymentTime(b) - paymentTime(a)
     case 'membership': return MEMBERSHIP_RANK[membershipStatus(a, renewalTargetUtc)] - MEMBERSHIP_RANK[membershipStatus(b, renewalTargetUtc)]
     case 'mailingList': return Number(b.isSubscribedToMailingList) - Number(a.isSubscribedToMailingList)
   }
@@ -319,9 +307,9 @@ function MembersList({
 
   const searched = members.filter((m) => matchesSearch(m, search))
   const statuses = searched.map((m) => membershipStatus(m, renewalTargetUtc))
-  const countOf = (status: MembershipStatus) => statuses.filter((s) => s === status).length
+  const countOf = (f: MemberFilter) => searched.filter((m, i) => matchesMemberFilter(m, statuses[i], f)).length
 
-  const visible = searched.filter((_, i) => filter === 'all' || statuses[i] === filter)
+  const visible = searched.filter((m, i) => matchesMemberFilter(m, statuses[i], filter))
 
   const changeSearch = (value: string) => {
     setSelectedIds(new Set())
@@ -337,6 +325,7 @@ function MembersList({
     { value: 'paid', label: 'Paid', count: countOf('paid') },
     { value: 'notPaid', label: 'Not Yet Paid', count: countOf('notPaid') },
     { value: 'mailingListOnly', label: 'Mailing List Only', count: countOf('mailingListOnly') },
+    { value: 'noLongerMember', label: 'No Longer Members', count: countOf('noLongerMember') },
   ]
 
   const toggleOne = (id: string) =>
@@ -514,7 +503,7 @@ function MembersTable({
     { key: 'name', label: 'Name' },
     { key: 'email', label: 'Email' },
     { key: 'phone', label: 'Phone' },
-    { key: 'joinedAt', label: 'Member since' },
+    { key: 'lastPayment', label: 'Last payment' },
     { key: 'membership', label: 'Membership' },
     { key: 'mailingList', label: 'Mailing list' },
   ]
@@ -589,7 +578,7 @@ function MembersTable({
                 </td>
                 <td data-label="Email">{member.email ?? '-'}</td>
                 <td data-label="Phone">{member.phoneNumber ?? '-'}</td>
-                <td data-label="Member since">{formatJoinedAt(member.joinedAt)}</td>
+                <td data-label="Last payment">{formatDate(member.lastMembershipPaymentUtc)}</td>
                 <td data-label="Membership">
                   <span className={pill.className}>{pill.label}</span>
                 </td>

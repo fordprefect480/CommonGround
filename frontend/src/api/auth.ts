@@ -23,6 +23,7 @@ export interface Member {
   secondaryMembers: string[]
   joinedAt: string
   membershipPaidThroughUtc: string | null
+  lastMembershipPaymentUtc: string | null
   emailConfirmed: boolean
   isSubscribedToMailingList: boolean
   roles: string[]

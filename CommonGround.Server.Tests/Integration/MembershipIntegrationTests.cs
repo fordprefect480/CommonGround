@@ -12,6 +12,7 @@ public class MembershipIntegrationTests
     private sealed record MemberResponse(string Id, DateTime? MembershipPaidThroughUtc);
     private sealed record StatsResponse(int PaidMembers, int NotYetPaidMembers, int NewMembersLast30Days);
     private sealed record RenewalResponse(DateTime RenewalTargetUtc);
+    private sealed record LastPaymentResponse(string Id, DateTime? LastMembershipPaymentUtc);
 
     private static string SeedUser(IServiceProvider services, string email, DateTime? paidThrough)
     {
@@ -73,6 +74,46 @@ public class MembershipIntegrationTests
         Assert.NotNull(stats);
         Assert.Equal(1, stats!.PaidMembers);
         Assert.Equal(1, stats.NotYetPaidMembers);
+    }
+
+    private static void SeedPayment(IServiceProvider services, string userId, MembershipPaymentStatus status, DateTime? paidAtUtc)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.MembershipPayments.Add(new MembershipPayment
+        {
+            UserId = userId,
+            Method = PaymentMethod.Manual,
+            AmountCents = 2500,
+            Status = status,
+            CreatedAtUtc = paidAtUtc ?? DateTime.UtcNow,
+            PaidAtUtc = paidAtUtc,
+        });
+        db.SaveChanges();
+    }
+
+    [Fact]
+    public async Task Members_list_and_detail_report_the_most_recent_paid_membership_payment()
+    {
+        using var factory = new TestApiFactory();
+        var client = factory.CreateClient();
+
+        var older = new DateTime(2025, 7, 3, 0, 0, 0, DateTimeKind.Utc);
+        var newer = new DateTime(2026, 6, 20, 0, 0, 0, DateTimeKind.Utc);
+        var payerId = SeedUser(factory.Services, "payer@example.com", paidThrough: null);
+        SeedPayment(factory.Services, payerId, MembershipPaymentStatus.Paid, older);
+        SeedPayment(factory.Services, payerId, MembershipPaymentStatus.Paid, newer);
+        SeedPayment(factory.Services, payerId, MembershipPaymentStatus.Failed, paidAtUtc: null);
+        var neverPaidId = SeedUser(factory.Services, "never@example.com", paidThrough: null);
+        SeedPayment(factory.Services, neverPaidId, MembershipPaymentStatus.Pending, paidAtUtc: null);
+
+        var members = await client.GetFromJsonAsync<List<LastPaymentResponse>>("/api/admin/members");
+        Assert.NotNull(members);
+        Assert.Equal(newer, members!.Single(m => m.Id == payerId).LastMembershipPaymentUtc);
+        Assert.Null(members.Single(m => m.Id == neverPaidId).LastMembershipPaymentUtc);
+
+        var detail = await client.GetFromJsonAsync<LastPaymentResponse>($"/api/admin/members/{payerId}");
+        Assert.Equal(newer, detail!.LastMembershipPaymentUtc);
     }
 
     [Fact]
